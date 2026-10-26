@@ -3,12 +3,11 @@
 [ext_resource type="Script" path="res://src/scripts/board/board.gd" id="1_board"]
 
 [node name="board" type="Control"]
-editor_description = "核心放牌區。cards 放 playing_card，placements 由 board 依上下左右空位建立。可在 gameplay 調整本節點的位置與尺寸；牌陣會置中並縮放到此範圍。"
+editor_description = "牌陣覆蓋完整背景並顯示於黑邊下層。鏡頭適配所有卡牌與合法待放格，置中於黑邊和固定介面內的安全範圍。"
 texture_filter = 1
 layout_mode = 0
 offset_right = 500.0
 offset_bottom = 482.0
-clip_contents = true
 mouse_filter = 2
 script = ExtResource("1_board")
 

@@ -1,0 +1,21 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/combo/combo.gd" id="1_script"]
+[ext_resource type="Script" path="res://src/configs/combo/combo_entry.gd" id="2_entry"]
+[ext_resource type="Resource" path="res://src/configs/combo/preview_flush.tres" id="3_flush"]
+[ext_resource type="Resource" path="res://src/configs/combo/preview_full_house.tres" id="4_house"]
+[ext_resource type="Resource" path="res://src/configs/combo/preview_pair.tres" id="5_pair"]
+
+[node name="combo" type="Control"]
+editor_description = "Preview Entries 僅供編輯器排版，執行場景從空清單開始。遊戲更新 entries 時依索引沿用框形，結算後呼叫 reroll_layout 重新抽序列。可在 Inspector 調整框色，並用按鈕預覽重新抽樣。"
+texture_filter = 1
+layout_mode = 0
+offset_right = 130.0
+offset_bottom = 100.0
+mouse_filter = 2
+script = ExtResource("1_script")
+preview_entries = Array[ExtResource("2_entry")]([ExtResource("3_flush"), ExtResource("4_house"), ExtResource("5_pair")])
+
+[node name="rows" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2

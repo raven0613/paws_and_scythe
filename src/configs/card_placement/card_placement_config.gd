@@ -9,3 +9,5 @@ const FRAME_COLOR = Color("b1cff9")
 const ACTIVE_COLOR = Color("e1efff")
 const HOVER_COLOR = Color("54759c")
 const HINT_FONT_SIZE = 12
+const FADE_DURATION = 0.14
+const HIDDEN_SCALE = Vector2(0.92, 0.92)

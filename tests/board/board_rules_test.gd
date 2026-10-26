@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Config = preload("res://src/configs/board/board_config.gd")
+const GameRules = preload("res://src/configs/gameplay/game_rules.gd")
 const Rules = preload("res://src/service/board/board_rules.gd")
 const Layout = preload("res://src/service/board/board_layout.gd")
 
@@ -28,11 +29,9 @@ func _init() -> void:
 			_check(Rules.can_place(occupied, cell + direction), "Each island exposes neighbors at unrestricted coordinates.")
 	_check(not Rules.can_place(occupied, Config.INITIAL_CELL), "An occupied board does not recreate an unrelated initial cell.")
 	occupied.clear()
-	for index in range(Config.MAX_PLAYS_PER_TURN * Config.NEIGHBORS.size()):
+	for index in range(GameRules.BOARD_LIMIT + GameRules.MAX_PLAYS):
 		occupied.append(Vector2i(index, 0))
 	_check(Rules.can_place(occupied, Vector2i(occupied.size(), 0)), "Board capacity is decided at settlement, not by placement geometry.")
-	for count in range(Config.MAX_PLAYS_PER_TURN + 1):
-		_check(Rules.can_play_this_turn(count) == (count < Config.MAX_PLAYS_PER_TURN), "The turn placement limit must follow config.")
 	var all_cells: Array[Vector2i] = occupied.duplicate()
 	all_cells.append_array(Rules.get_placements(occupied))
 	var bounds: Rect2 = Layout.get_bounds(all_cells)
@@ -41,8 +40,21 @@ func _init() -> void:
 	_check(zoom <= Config.DEFAULT_ZOOM, "Auto-fit must not enlarge cards past their native scale.")
 	_check(bounds.size.x * zoom <= view.x - Config.VIEW_PADDING * 2, "Wide boards and their placements must fit.")
 	_check(bounds.size.y * zoom <= view.y - Config.VIEW_PADDING * 2, "Tall boards and their placements must fit.")
+	var anchor := Config.CARD_SIZE * Vector2(3, 2)
+	var position := -Config.CELL_STEP
+	var before := (anchor - position) / Config.DEFAULT_ZOOM
+	var after := Layout.zoom_position(position, Config.DEFAULT_ZOOM, Config.ZOOM_STEP, anchor)
+	_check(((anchor - after) / Config.ZOOM_STEP).is_equal_approx(before), "Cursor world position is preserved when zooming")
+	var restored := Layout.zoom_position(after, Config.ZOOM_STEP, Config.DEFAULT_ZOOM, anchor)
+	_check(restored.is_equal_approx(position), "Zooming in and out at the same cursor restores position")
+	var actual_bounds := Layout.get_bounds([Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP])
+	var fit := Layout.get_fit_zoom(actual_bounds, view, Config.MAX_ZOOM)
+	var centered := view / 2 - actual_bounds.get_center() * fit
+	_check((centered + actual_bounds.get_center() * fit).is_equal_approx(view / 2), "Fit centers asymmetrical card groups")
+	_check(actual_bounds.size.x * fit <= view.x - Config.VIEW_PADDING * 2, "Reset fit contains all card widths")
+	_check(actual_bounds.size.y * fit <= view.y - Config.VIEW_PADDING * 2, "Reset fit contains all card heights")
 	if failures == 0:
-		print("Board rules passed: initial cell, neighbors, holes, islands, uniqueness, turn limit and view fitting.")
+		print("Board rules passed: initial cell, neighbors, holes, islands, uniqueness and view fitting.")
 	quit(int(failures > 0))
 
 

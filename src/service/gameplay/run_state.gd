@@ -1,0 +1,204 @@
+extends RefCounted
+
+const Config = preload("res://src/configs/gameplay/game_rules.gd")
+const Deck = preload("res://src/service/gameplay/deck.gd")
+const Scoring = preload("res://src/service/gameplay/scoring.gd")
+const BoardRules = preload("res://src/service/board/board_rules.gd")
+enum Status { PLAYING, LEVEL_CLEARED, WON, LOST }
+
+var deck = Deck.new()
+var money := Config.STARTING_MONEY
+var last_draw: Array[Dictionary] = []
+var hand: Array = []
+var board: Dictionary = {}
+var played: Array = []
+var history: Array[Dictionary] = []
+var level := 1
+var score := 0.0
+var turns_left := Config.SETTLEMENTS
+var discards_left := Config.DISCARDS
+var swaps_used := 0
+var digs_used := 0
+var hand_limit := Config.HAND_LIMIT
+var status := Status.PLAYING
+var loss_reason := ""
+
+func start(seed_value: int = -1) -> void:
+	if seed_value < 0:
+		deck.rng.randomize()
+	else:
+		deck.rng.seed = seed_value
+	level = 1
+	money = Config.STARTING_MONEY
+	_begin_level()
+
+func _begin_level() -> void:
+	board.clear()
+	deck.reset()
+	last_draw.clear()
+	hand = _draw(hand_limit)
+	score = 0
+	turns_left = Config.SETTLEMENTS
+	discards_left = Config.DISCARDS
+	status = Status.PLAYING
+	loss_reason = ""
+	_clear_turn()
+
+func target() -> int:
+	return Config.LEVEL_TARGETS[level - 1]
+
+func can_settle() -> bool:
+	return status == Status.PLAYING and not played.is_empty()
+
+func can_place(card: int, cell: Vector2i) -> bool:
+	var cells: Array[Vector2i] = []
+	cells.assign(board.keys())
+	return status == Status.PLAYING and hand.has(card) and played.size() < Config.MAX_PLAYS and BoardRules.can_place(cells, cell)
+
+func place(card: int, cell: Vector2i) -> bool:
+	if not can_place(card, cell):
+		return false
+	history.append({"kind": "place", "cell": cell, "card": card, "index": hand.find(card)})
+	hand.erase(card)
+	board[cell] = card
+	played.append(card)
+	return true
+
+func swaps_left() -> int:
+	return Config.SWAP_COSTS.size() - swaps_used
+
+func digs_left() -> int:
+	return Config.DIGS - digs_used
+
+func next_swap_cost() -> int:
+	return Config.SWAP_COSTS[swaps_used] if swaps_left() > 0 else 0
+
+func swap(a: Vector2i, b: Vector2i) -> bool:
+	if status != Status.PLAYING or swaps_left() == 0 or a == b or not board.has(a) or not board.has(b):
+		return false
+	history.append({"kind": "swap", "a": a, "b": b})
+	_swap(a, b)
+	swaps_used += 1
+	return true
+
+func _swap(a: Vector2i, b: Vector2i) -> void:
+	var card: int = board[a]
+	board[a] = board[b]
+	board[b] = card
+
+func dig(cell: Vector2i) -> bool:
+	if status != Status.PLAYING or digs_left() == 0 or not board.has(cell):
+		return false
+	history.append({"kind": "dig", "cell": cell, "card": board[cell]})
+	board.erase(cell)
+	digs_used += 1
+	return true
+
+func can_discard(cards: Array) -> bool:
+	if status != Status.PLAYING or discards_left == 0 or cards.is_empty() or cards.size() > Config.MAX_DISCARD:
+		return false
+	var seen := {}
+	for card in cards:
+		if not hand.has(card) or seen.has(card):
+			return false
+		seen[card] = true
+	return true
+
+func discard(cards: Array) -> bool:
+	if not can_discard(cards):
+		return false
+	deck.discard_pile.append_array(cards)
+	last_draw.clear()
+	var replacements: Array = _draw(cards.size())
+	# 替換原槽位，保留已出牌撤銷時的插入位置與其他手牌順序。
+	for i in range(hand.size() - 1, -1, -1):
+		if cards.has(hand[i]):
+			if replacements.is_empty():
+				hand.remove_at(i)
+			else:
+				hand[i] = replacements.pop_back()
+	discards_left -= 1
+	return true
+
+func undo() -> bool:
+	if status != Status.PLAYING or history.is_empty():
+		return false
+	var action: Dictionary = history.pop_back()
+	match action.kind:
+		"place":
+			board.erase(action.cell)
+			hand.insert(mini(action.index, hand.size()), action.card)
+			played.erase(action.card)
+		"swap":
+			_swap(action.a, action.b)
+			swaps_used -= 1
+		"dig":
+			board[action.cell] = action.card
+			digs_used -= 1
+	return true
+
+func pending_cost() -> int:
+	var cost := digs_used * Config.DIG_COST
+	for i in swaps_used:
+		cost += Config.SWAP_COSTS[i]
+	return cost
+
+func reserved_cards() -> Array:
+	var result: Array = []
+	for action in history:
+		if action.kind == "dig":
+			result.append(action.card)
+	return result
+
+func preview() -> Dictionary:
+	return Scoring.evaluate(board, played, pending_cost())
+
+func settle() -> Dictionary:
+	if not can_settle():
+		return {}
+	last_draw.clear()
+	var result := preview()
+	score += result.net
+	turns_left -= 1
+	# 可撤銷的挖牌在確認後進入可洗回的棄牌堆。
+	deck.discard_pile.append_array(reserved_cards())
+	_clear_turn()
+	if score >= target():
+		status = Status.WON if level == Config.LEVEL_TARGETS.size() else Status.LEVEL_CLEARED
+	elif board.size() >= Config.BOARD_LIMIT:
+		_lose("場上牌數已達上限")
+	elif turns_left == 0:
+		_lose("結算次數已用完")
+	else:
+		hand.append_array(_draw(hand_limit - hand.size()))
+		if hand.is_empty():
+			_lose("牌庫耗盡，已無可出的手牌")
+	return result
+
+func _clear_turn() -> void:
+	played.clear()
+	history.clear()
+	swaps_used = 0
+	digs_used = 0
+
+func _lose(reason: String) -> void:
+	status = Status.LOST
+	loss_reason = reason
+
+func advance() -> bool:
+	if status != Status.LEVEL_CLEARED:
+		return false
+	level += 1
+	_begin_level()
+	return true
+
+
+func _draw(count: int) -> Array:
+	var cards: Array = []
+	for i in count:
+		var drawn: Array = deck.draw(1)
+		if drawn.is_empty():
+			break
+		cards.append(drawn[0])
+		last_draw.append({"card": drawn[0], "remaining": deck.draw_pile.size()})
+	return cards

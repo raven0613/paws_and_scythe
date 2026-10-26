@@ -2,17 +2,24 @@
 
 [ext_resource type="PackedScene" path="res://src/scenes/gameplay_bg/gameplay_bg.tscn" id="1_background"]
 [ext_resource type="PackedScene" uid="uid://c23ty6exren0c" path="res://src/scenes/gameplay/gameplay_frame.tscn" id="2_frame"]
-[ext_resource type="PackedScene" path="res://src/scenes/level_board.tscn" id="3_level"]
-[ext_resource type="PackedScene" path="res://src/scenes/action_buttons/action_buttons.tscn" id="4_actions"]
-[ext_resource type="PackedScene" path="res://src/scenes/cat_card_area.tscn" id="5_cats"]
-[ext_resource type="PackedScene" path="res://src/scenes/hand_area.tscn" id="6_hand"]
-[ext_resource type="PackedScene" path="res://src/scenes/convert_card_area.tscn" id="7_convert"]
-[ext_resource type="PackedScene" path="res://src/scenes/boss/boss.tscn" id="8_boss"]
+[ext_resource type="PackedScene" uid="uid://bhf1pcp7u1t57" path="res://src/scenes/level_board.tscn" id="3_level"]
+[ext_resource type="PackedScene" uid="uid://cdqu7pjgyi17t" path="res://src/scenes/action_buttons/action_buttons.tscn" id="4_actions"]
+[ext_resource type="PackedScene" uid="uid://bxskw0prfwjav" path="res://src/scenes/cat_card_area.tscn" id="5_cats"]
+[ext_resource type="PackedScene" uid="uid://c12fhmwi7bx8t" path="res://src/scenes/hand_area.tscn" id="6_hand"]
+[ext_resource type="PackedScene" uid="uid://dg6n0d021ew4c" path="res://src/scenes/convert_card_area.tscn" id="7_convert"]
+[ext_resource type="PackedScene" uid="uid://df6gcdv8bddne" path="res://src/scenes/boss/boss.tscn" id="8_boss"]
 [ext_resource type="PackedScene" path="res://src/scenes/board/board.tscn" id="9_board"]
-[ext_resource type="Script" path="res://src/scripts/gameplay/gameplay_placement.gd" id="10_placement"]
+[ext_resource type="Script" path="res://src/scripts/gameplay/gameplay.gd" id="10_gameplay"]
+[ext_resource type="PackedScene" path="res://src/scenes/combo/combo.tscn" id="11_combo"]
+
+[ext_resource type="PackedScene" path="res://src/scenes/gameplay/gameplay_hud.tscn" id="12_hud"]
+
+[ext_resource type="PackedScene" path="res://src/scenes/score/settlement_score.tscn" id="13_score"]
+
+[ext_resource type="PackedScene" path="res://src/scenes/gameplay_controls/camera_controls.tscn" id="14_camera"]
+[ext_resource type="PackedScene" path="res://src/scenes/gameplay_controls/resources_display.tscn" id="15_resources"]
 
 [node name="gameplay" type="Control" unique_id=791794535]
-script = ExtResource("10_placement")
 texture_filter = 1
 layout_mode = 3
 anchors_preset = 15
@@ -21,57 +28,100 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("10_gameplay")
 
 [node name="gameplay_bg" parent="." unique_id=1726969417 instance=ExtResource("1_background")]
 layout_mode = 1
+z_index = -3
+
+[node name="board" parent="." unique_id=144779883 instance=ExtResource("9_board")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+z_index = -2
 
 [node name="gameplay_frame" parent="." unique_id=2054333953 instance=ExtResource("2_frame")]
 layout_mode = 1
 
-[node name="board" parent="." instance=ExtResource("9_board")]
-layout_mode = 1
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 260.0
-offset_top = 60.0
-offset_right = -392.0
-offset_bottom = -106.0
-
-[node name="level_board" parent="." instance=ExtResource("3_level")]
+[node name="level_board" parent="." unique_id=1621591441 instance=ExtResource("3_level")]
 layout_mode = 0
 offset_left = 17.0
 offset_top = 23.0
 offset_right = 192.0
 offset_bottom = 94.0
 
-[node name="action_buttons" parent="." instance=ExtResource("4_actions")]
+[node name="action_buttons" parent="." unique_id=1257096098 instance=ExtResource("4_actions")]
 layout_mode = 0
 offset_left = 197.0
 offset_top = 15.0
 offset_right = 670.0
 offset_bottom = 54.0
 
-[node name="cat_card_area" parent="." instance=ExtResource("5_cats")]
+[node name="combo" parent="." unique_id=1602632391 instance=ExtResource("11_combo")]
+custom_minimum_size = Vector2(124, 97)
+anchors_preset = 0
+offset_left = 54.0
+offset_top = 101.0
+offset_right = 178.0
+offset_bottom = 198.0
+
+[node name="cat_card_area" parent="." unique_id=15474241 instance=ExtResource("5_cats")]
 layout_mode = 1
 offset_left = 6.0
 offset_top = -306.0
 offset_right = 256.0
 offset_bottom = -109.0
 
-[node name="hand_area" parent="." instance=ExtResource("6_hand")]
+[node name="hand_area" parent="." unique_id=858876913 instance=ExtResource("6_hand")]
+custom_minimum_size = Vector2(490, 0)
 layout_mode = 1
 offset_top = -94.0
-offset_right = 500.0
+offset_right = 490.0
 offset_bottom = 0.0
 
-[node name="convert_card_area" parent="." instance=ExtResource("7_convert")]
+[node name="convert_card_area" parent="." unique_id=1592751529 instance=ExtResource("7_convert")]
 layout_mode = 1
 offset_left = -404.0
 offset_top = -93.0
 offset_right = -226.0
 offset_bottom = 0.0
 
-[node name="boss" parent="." instance=ExtResource("8_boss")]
+[node name="boss" parent="." unique_id=108824264 instance=ExtResource("8_boss")]
 layout_mode = 1
 offset_left = -230.0
 offset_right = 0.0
+
+[node name="camera_controls" parent="." instance=ExtResource("14_camera")]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -244.0
+offset_right = -228.0
+offset_bottom = -136.0
+
+[node name="resources_display" parent="." instance=ExtResource("15_resources")]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -406.0
+offset_top = 3.0
+offset_right = -266.0
+offset_bottom = 31.0
+
+[node name="gameplay_hud" parent="." instance=ExtResource("12_hud")]
+layout_mode = 1
+
+[node name="settlement_score" parent="." instance=ExtResource("13_score")]
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 60.0
+offset_right = 150.0
+offset_bottom = 194.0

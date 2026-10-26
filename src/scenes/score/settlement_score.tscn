@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/score/score_counter.gd" id="1_counter"]
+
+[node name="settlement_score" type="Control"]
+visible = false
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 134.0
+mouse_filter = 2
+
+[node name="caption" type="Label" parent="."]
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 25.0
+mouse_filter = 2
+horizontal_alignment = 1
+text = "本次得分"
+
+[node name="number" type="Control" parent="."]
+layout_mode = 0
+offset_top = 26.0
+offset_right = 300.0
+offset_bottom = 92.0
+mouse_filter = 2
+script = ExtResource("1_counter")
+
+[node name="controls" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_top = 102.0
+offset_right = 300.0
+offset_bottom = 134.0
+mouse_filter = 2
+alignment = 1
+
+[node name="fast" type="CheckButton" parent="controls"]
+layout_mode = 2
+text = "加速"
+
+[node name="skip" type="Button" parent="controls"]
+layout_mode = 2
+text = "跳過動畫"

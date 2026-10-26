@@ -1,0 +1,8 @@
+extends RefCounted
+
+const CARD_INTERVAL = 0.07
+const GROW_DURATION = 0.09
+const FLIGHT_DURATION = 0.22
+const INITIAL_SCALE = 0.08
+const LAUNCH_SCALE = 0.42
+const FLIGHT_LAYER = 20

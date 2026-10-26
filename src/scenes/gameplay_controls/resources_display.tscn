@@ -1,0 +1,53 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/gameplay_controls/resources_display.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://src/assets/icon_deck.png" id="2_deck"]
+[ext_resource type="Texture2D" path="res://src/assets/icon_money.png" id="3_money"]
+[ext_resource type="Shader" path="res://src/scripts/gameplay_controls/icon_tint.gdshader" id="4_tint"]
+
+[sub_resource type="ShaderMaterial" id="Material_deck"]
+resource_local_to_scene = true
+shader = ExtResource("4_tint")
+
+[sub_resource type="ShaderMaterial" id="Material_money"]
+resource_local_to_scene = true
+shader = ExtResource("4_tint")
+
+[node name="resources_display" type="Control"]
+offset_right = 140.0
+offset_bottom = 28.0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="deck_icon" type="TextureRect" parent="."]
+offset_top = 3.0
+offset_right = 32.0
+offset_bottom = 23.0
+texture = ExtResource("2_deck")
+mouse_filter = 2
+material = SubResource("Material_deck")
+
+[node name="deck_count" type="Label" parent="."]
+offset_left = 38.0
+offset_top = 1.0
+offset_right = 72.0
+offset_bottom = 25.0
+mouse_filter = 2
+vertical_alignment = 1
+
+[node name="money_icon" type="TextureRect" parent="."]
+offset_left = 74.0
+offset_top = 5.0
+offset_right = 102.0
+offset_bottom = 21.0
+texture = ExtResource("3_money")
+mouse_filter = 2
+material = SubResource("Material_money")
+
+[node name="money_count" type="Label" parent="."]
+offset_left = 106.0
+offset_top = 1.0
+offset_right = 140.0
+offset_bottom = 25.0
+mouse_filter = 2
+vertical_alignment = 1

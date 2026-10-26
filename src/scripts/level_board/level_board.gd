@@ -1,36 +1,83 @@
 @tool
 extends Control
 
+const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Config = preload("res://src/configs/level_board/level_board_config.gd")
+const Feedback = preload("res://src/configs/score/score_feedback_config.gd")
+
+var _actual_score := float(Config.PREVIEW_CURRENT_SCORE)
 
 @export var level: int = Config.PREVIEW_LEVEL:
 	set(value):
 		level = maxi(value, Config.MIN_LEVEL)
 		_update_display()
-
-@export var current_score: int = Config.PREVIEW_CURRENT_SCORE:
+@export var current_score: float = Config.PREVIEW_CURRENT_SCORE:
+	get:
+		return _actual_score
 	set(value):
-		current_score = value
-		_update_display()
-
+		if _actual_score == value:
+			return
+		_actual_score = value
+		if not is_node_ready():
+			return
+		if Engine.is_editor_hint():
+			_displayed_score = value
+			_update_display()
+		else:
+			begin_score_count(value)
+			_tween = create_tween()
+			_tween.tween_method(score_count_progress, 0.0, 1.0, Feedback.LEVEL_COUNT_DURATION)
+			_tween.tween_callback(finish_score_count.bind(value))
 @export var target_score: int = Config.PREVIEW_TARGET_SCORE:
 	set(value):
 		target_score = maxi(value, Config.MIN_TARGET_SCORE)
 		_update_display()
 
-@onready var _level_label: Label = $level_label
-@onready var _progress_label: Label = $progress_label
-@onready var _progress_bar: ProgressBar = $progress_bar
-
+var _displayed_score := 0.0
+var _count_from := 0.0
+var _count_target := 0.0
+var _tween: Tween
 
 func _ready() -> void:
+	$progress_label.z_index = Feedback.NUMBER_LAYER
+	_displayed_score = current_score
 	_update_display()
 
+func reset_score(value: float) -> void:
+	finish_score_count(value)
 
-func _update_display() -> void:
+func begin_score_count(target: float) -> void:
+	if _tween:
+		_tween.kill()
+	_count_from = _displayed_score
+	_count_target = target
+
+func score_count_progress(progress: float) -> void:
+	var tail := minf(Feedback.COUNT_TAIL, absf(_count_target - _count_from))
+	var direction := signf(_count_target - _count_from)
+	if progress < Feedback.COUNT_MAIN_RATIO:
+		var k := progress / Feedback.COUNT_MAIN_RATIO
+		_displayed_score = lerpf(_count_from, _count_target - direction * tail, 1.0 - pow(1.0 - k, 2))
+	else:
+		var k := (progress - Feedback.COUNT_MAIN_RATIO) / (1.0 - Feedback.COUNT_MAIN_RATIO)
+		_displayed_score = _count_target - direction * tail * (1.0 - k)
+	_update_display(progress >= 1.0)
+
+func finish_score_count(value: float) -> void:
+	if _tween:
+		_tween.kill()
+	_displayed_score = value
+	_actual_score = value
+	_update_display()
+
+func score_destination() -> Vector2:
+	return $progress_bar.get_global_transform() * ($progress_bar.size / 2)
+
+func _update_display(exact: bool = true) -> void:
 	if not is_node_ready():
 		return
-	_level_label.text = Config.LEVEL_TEXT_FORMAT % level
-	_progress_label.text = Config.PROGRESS_TEXT_FORMAT % [current_score, target_score]
-	_progress_bar.max_value = target_score
-	_progress_bar.value = current_score
+	$level_label.text = Config.LEVEL_TEXT_FORMAT % level
+	var displayed := _displayed_score if exact else floorf(_displayed_score)
+	$progress_label.text = Config.PROGRESS_TEXT_FORMAT % [Numbers.number(displayed), Numbers.number(target_score)]
+	$progress_bar.max_value = target_score
+	$progress_bar.value = _displayed_score

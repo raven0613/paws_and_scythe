@@ -31,7 +31,3 @@ static func can_place(occupied: Array[Vector2i], cell: Vector2i) -> bool:
 		if occupied.has(cell + direction):
 			return true
 	return false
-
-
-static func can_play_this_turn(cards_played: int) -> bool:
-	return cards_played < Config.MAX_PLAYS_PER_TURN

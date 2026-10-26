@@ -9,6 +9,14 @@ func _ready() -> void:
 	_update_edges()
 
 
+func _has_point(point: Vector2) -> bool:
+	var reference := point * Config.REFERENCE_SIZE / size
+	if reference.x < Config.LEFT_WIDTH or reference.y < Config.TOP_HEIGHT or reference.y >= Config.REFERENCE_SIZE.y - Config.BOTTOM_HEIGHT:
+		return true
+	var boss: Sprite2D = $edges/boss_bg
+	return boss.is_pixel_opaque(boss.to_local(get_global_transform() * point))
+
+
 func _update_edges() -> void:
 	var width := Config.REFERENCE_SIZE.x
 	var height := Config.REFERENCE_SIZE.y

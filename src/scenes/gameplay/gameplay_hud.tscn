@@ -1,0 +1,75 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/gameplay/gameplay_hud.gd" id="1_script"]
+
+[node name="gameplay_hud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="outcome" type="Control" parent="."]
+visible = false
+z_index = 100
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="shade" type="ColorRect" parent="outcome"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.025, 0.04, 0.07, 0.8)
+
+[node name="center" type="CenterContainer" parent="outcome"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="panel" type="PanelContainer" parent="outcome/center"]
+layout_mode = 2
+custom_minimum_size = Vector2(440, 230)
+
+[node name="margin" type="MarginContainer" parent="outcome/center/panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="content" type="VBoxContainer" parent="outcome/center/panel/margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="title" type="Label" parent="outcome/center/panel/margin/content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="detail" type="Label" parent="outcome/center/panel/margin/content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="buttons" type="HBoxContainer" parent="outcome/center/panel/margin/content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="continue" type="Button" parent="outcome/center/panel/margin/content/buttons"]
+layout_mode = 2
+text = "下一關"
+
+[node name="restart" type="Button" parent="outcome/center/panel/margin/content/buttons"]
+layout_mode = 2
+text = "重新開始"
