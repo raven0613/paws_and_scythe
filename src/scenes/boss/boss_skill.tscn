@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/boss/boss_skill.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/scenes/boss/boss_skill_panel.tscn" id="2_panel"]
+[ext_resource type="PackedScene" path="res://src/scenes/boss/boss_light.tscn" id="3_light"]
+
+[node name="boss_skill" type="Control"]
+editor_description = "三燈技能區。每過一個等級呼叫 complete_level()；第三燈亮後，前牌上移淡出、後牌旋轉遞補、新後牌從暗處補入，完成後重置燈號。Skill Texts 提供依序循環的技能文字。"
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 84.0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="lights" type="Node2D" parent="."]
+z_index = 4
+
+[node name="light_01" parent="lights" instance=ExtResource("3_light")]
+
+[node name="light_02" parent="lights" instance=ExtResource("3_light")]
+position = Vector2(12, 0)
+
+[node name="light_03" parent="lights" instance=ExtResource("3_light")]
+position = Vector2(24, 0)
+
+[node name="panels" type="Node2D" parent="."]
+editor_description = "移動此節點可調整整組技能牌位置；切換動畫使用群組內的相對座標。"
+position = Vector2(0, 16)
+
+[node name="reserve" parent="panels" instance=ExtResource("2_panel")]
+visible = false
+layout_mode = 0
+offset_left = 16.0
+offset_top = 36.0
+offset_right = 193.0
+offset_bottom = 74.0
+
+[node name="back" parent="panels" instance=ExtResource("2_panel")]
+modulate = Color(0.4640884, 0.4029851, 0.4864865, 1)
+z_index = 1
+layout_mode = 0
+offset_left = 10.0
+offset_top = 13.0
+offset_right = 187.0
+offset_bottom = 51.0
+rotation = 0.045
+
+[node name="front" parent="panels" instance=ExtResource("2_panel")]
+z_index = 2
+layout_mode = 0

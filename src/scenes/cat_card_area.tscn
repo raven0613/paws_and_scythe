@@ -1,0 +1,121 @@
+[gd_scene format=3 uid="uid://bxskw0prfwjav"]
+
+[ext_resource type="Texture2D" uid="uid://bixdrtok73c4w" path="res://src/assets/cat_bg.png" id="1_background"]
+[ext_resource type="PackedScene" uid="uid://dtcdxiuivwsx0" path="res://src/scenes/cat_card.tscn" id="2_card"]
+[ext_resource type="Script" uid="uid://vt12rnsnqd3w" path="res://src/scripts/cat_card_area/cat_card_area.gd" id="3_area"]
+
+[node name="cat_card_area" type="Control" unique_id=235430581]
+editor_description = "手牌區上方的貓卡區，card_count 預設五張、最多二十張。預設上二下三，增加時依上排、下排交替補入。六張為基準，更多卡牌會在固定範圍內重疊排列，上排右緣維持在下排右緣以內。"
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -648.0
+offset_right = 250.0
+offset_bottom = -451.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("3_area")
+
+[node name="cat_card_bg" type="Sprite2D" parent="." unique_id=246367966]
+editor_description = "使用 cat_bg.png 的固定背景；位置可在編輯器自由調整。"
+texture = ExtResource("1_background")
+centered = false
+
+[node name="cards" type="Control" parent="." unique_id=1941535319]
+editor_description = "整個卡片群的位置可自由調整。程式只依張數設定子卡片的相對位置，初始間距與上下排間距位於 cat_card_area_config.gd。"
+anchors_preset = 0
+offset_left = 10.0
+offset_right = 241.0
+offset_bottom = 188.0
+mouse_filter = 2
+
+[node name="card_01" parent="cards" unique_id=223975535 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_top = 96.0
+offset_bottom = 188.0
+
+[node name="card_02" parent="cards" unique_id=2111523643 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 10.0
+offset_right = 83.0
+
+[node name="card_03" parent="cards" unique_id=1811385928 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 79.0
+offset_top = 96.0
+offset_right = 152.0
+offset_bottom = 188.0
+
+[node name="card_04" parent="cards" unique_id=563706951 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 89.0
+offset_right = 162.0
+
+[node name="card_05" parent="cards" unique_id=1127230675 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 158.0
+offset_top = 96.0
+offset_right = 231.0
+offset_bottom = 188.0
+
+[node name="card_06" parent="cards" unique_id=610744608 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_07" parent="cards" unique_id=1655429333 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_08" parent="cards" unique_id=1734119087 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_09" parent="cards" unique_id=1563612114 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_10" parent="cards" unique_id=1068569717 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_11" parent="cards" unique_id=338534871 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_12" parent="cards" unique_id=2058601493 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_13" parent="cards" unique_id=347024975 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_14" parent="cards" unique_id=752615115 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_15" parent="cards" unique_id=2028649432 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_16" parent="cards" unique_id=1523424666 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_17" parent="cards" unique_id=128787848 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_18" parent="cards" unique_id=477941153 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_19" parent="cards" unique_id=1042757973 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+
+[node name="card_20" parent="cards" unique_id=1583799500 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0

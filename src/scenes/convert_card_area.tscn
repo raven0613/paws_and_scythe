@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://dg6n0d021ew4c"]
+
+[ext_resource type="Texture2D" uid="uid://c1gmxtfvaq6gn" path="res://src/assets/convert_card_bg.png" id="1_background"]
+[ext_resource type="PackedScene" path="res://src/scenes/convert_card.tscn" id="2_card"]
+[ext_resource type="Script" uid="uid://b3d2sh61mdim8" path="res://src/scripts/convert_card_area/convert_card_area.gd" id="3_area"]
+
+[node name="convert_card_area" type="Control" unique_id=1346545937]
+editor_description = "右下角 Convert 卡區，card_count 可設定零至兩張，預覽預設兩張。背景與 cards 群組的位置可自由調整；程式只設定各張卡片的 X 與顯示狀態。"
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -1152.0
+offset_top = -641.0
+offset_right = -974.0
+offset_bottom = -548.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("3_area")
+
+[node name="convert_bg" type="Sprite2D" parent="." unique_id=1449444675]
+editor_description = "固定尺寸的 Convert 區背景，位置可在編輯器自由調整。"
+texture = ExtResource("1_background")
+centered = false
+
+[node name="cards" type="Control" parent="." unique_id=1595416266]
+editor_description = "可自由移動整個卡片群，也可調整個別卡片的 Y。卡片 X 與間距由 convert_card_area_config.gd 設定。"
+anchors_preset = 0
+offset_left = 13.0
+offset_top = -7.0
+offset_right = 163.0
+offset_bottom = 85.0
+mouse_filter = 2
+
+[node name="card_01" parent="cards" unique_id=794906307 instance=ExtResource("2_card")]
+layout_mode = 0
+
+[node name="card_02" parent="cards" unique_id=259639366 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 77.0
+offset_right = 150.0

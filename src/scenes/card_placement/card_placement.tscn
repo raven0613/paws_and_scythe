@@ -1,0 +1,56 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/card_placement/card_placement.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://src/assets/card/card_placement_bg.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://src/assets/card/card_placement_frame.png" id="3_frame"]
+[ext_resource type="Texture2D" path="res://src/assets/card/card_placement_plus.png" id="4_plus"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBox_empty"]
+
+[sub_resource type="SystemFont" id="SystemFont_hint"]
+font_names = PackedStringArray("Heiti TC", "Noto Sans CJK TC", "sans-serif")
+antialiasing = 0
+subpixel_positioning = 0
+
+[node name="card_placement" type="Button"]
+editor_description = "只負責待放格視覺與輸入。State 可切換 Initial／Available；點擊送出 placement_requested(cell)，合法座標由 board 指定。"
+texture_filter = 1
+custom_minimum_size = Vector2(73, 92)
+offset_right = 73.0
+offset_bottom = 92.0
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("StyleBox_empty")
+theme_override_styles/hover = SubResource("StyleBox_empty")
+theme_override_styles/pressed = SubResource("StyleBox_empty")
+theme_override_styles/disabled = SubResource("StyleBox_empty")
+theme_override_styles/focus = SubResource("StyleBox_empty")
+script = ExtResource("1_script")
+
+[node name="background" type="Sprite2D" parent="."]
+self_modulate = Color(0.23529412, 0.34117648, 0.49019608, 1)
+texture = ExtResource("2_bg")
+centered = false
+
+[node name="frame" type="Sprite2D" parent="."]
+self_modulate = Color(0.69411767, 0.8117647, 0.9764706, 1)
+texture = ExtResource("3_frame")
+centered = false
+
+[node name="plus" type="Sprite2D" parent="."]
+self_modulate = Color(0.69411767, 0.8117647, 0.9764706, 1)
+position = Vector2(31, 40)
+texture = ExtResource("4_plus")
+centered = false
+
+[node name="initial_hint" type="Label" parent="."]
+layout_mode = 0
+offset_left = -32.0
+offset_top = 98.0
+offset_right = 105.0
+offset_bottom = 116.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.69411767, 0.8117647, 0.9764706, 1)
+theme_override_fonts/font = SubResource("SystemFont_hint")
+theme_override_font_sizes/font_size = 12
+text = "放置第一張牌"
+horizontal_alignment = 1

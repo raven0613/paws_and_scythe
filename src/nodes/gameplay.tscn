@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://b5cega588wesg"]
+
+[ext_resource type="PackedScene" path="res://src/scenes/gameplay_bg/gameplay_bg.tscn" id="1_background"]
+[ext_resource type="PackedScene" uid="uid://c23ty6exren0c" path="res://src/scenes/gameplay/gameplay_frame.tscn" id="2_frame"]
+[ext_resource type="PackedScene" path="res://src/scenes/level_board.tscn" id="3_level"]
+[ext_resource type="PackedScene" path="res://src/scenes/action_buttons/action_buttons.tscn" id="4_actions"]
+[ext_resource type="PackedScene" path="res://src/scenes/cat_card_area.tscn" id="5_cats"]
+[ext_resource type="PackedScene" path="res://src/scenes/hand_area.tscn" id="6_hand"]
+[ext_resource type="PackedScene" path="res://src/scenes/convert_card_area.tscn" id="7_convert"]
+[ext_resource type="PackedScene" path="res://src/scenes/boss/boss.tscn" id="8_boss"]
+[ext_resource type="PackedScene" path="res://src/scenes/board/board.tscn" id="9_board"]
+[ext_resource type="Script" path="res://src/scripts/gameplay/gameplay_placement.gd" id="10_placement"]
+
+[node name="gameplay" type="Control" unique_id=791794535]
+script = ExtResource("10_placement")
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="gameplay_bg" parent="." unique_id=1726969417 instance=ExtResource("1_background")]
+layout_mode = 1
+
+[node name="gameplay_frame" parent="." unique_id=2054333953 instance=ExtResource("2_frame")]
+layout_mode = 1
+
+[node name="board" parent="." instance=ExtResource("9_board")]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 260.0
+offset_top = 60.0
+offset_right = -392.0
+offset_bottom = -106.0
+
+[node name="level_board" parent="." instance=ExtResource("3_level")]
+layout_mode = 0
+offset_left = 17.0
+offset_top = 23.0
+offset_right = 192.0
+offset_bottom = 94.0
+
+[node name="action_buttons" parent="." instance=ExtResource("4_actions")]
+layout_mode = 0
+offset_left = 197.0
+offset_top = 15.0
+offset_right = 670.0
+offset_bottom = 54.0
+
+[node name="cat_card_area" parent="." instance=ExtResource("5_cats")]
+layout_mode = 1
+offset_left = 6.0
+offset_top = -306.0
+offset_right = 256.0
+offset_bottom = -109.0
+
+[node name="hand_area" parent="." instance=ExtResource("6_hand")]
+layout_mode = 1
+offset_top = -94.0
+offset_right = 500.0
+offset_bottom = 0.0
+
+[node name="convert_card_area" parent="." instance=ExtResource("7_convert")]
+layout_mode = 1
+offset_left = -404.0
+offset_top = -93.0
+offset_right = -226.0
+offset_bottom = 0.0
+
+[node name="boss" parent="." instance=ExtResource("8_boss")]
+layout_mode = 1
+offset_left = -230.0
+offset_right = 0.0

@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://df6gcdv8bddne"]
+
+[ext_resource type="Texture2D" uid="uid://b86gvdocvl1cv" path="res://src/assets/boss_hand.png" id="1_hand"]
+[ext_resource type="PackedScene" path="res://src/scenes/boss/reaper_card.tscn" id="2_card"]
+[ext_resource type="PackedScene" path="res://src/scenes/boss/boss_skill.tscn" id="3_skill"]
+
+[node name="boss" type="Control" unique_id=1715308648]
+editor_description = "右側 Boss 區：下方 hand、中間 reaper_card、上方 boss_skill。三組位置可自由調整。卡片的 Card Angle 提供像素旋轉，技能區的預覽按鈕可逐關檢查燈號與換牌。"
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -1152.0
+offset_right = -922.0
+offset_bottom = 648.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="hand" type="Sprite2D" parent="." unique_id=1272442730]
+position = Vector2(47, 309)
+texture = ExtResource("1_hand")
+centered = false
+
+[node name="reaper_card" parent="." unique_id=1897225111 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 141.0
+offset_right = 181.0
+offset_bottom = 298.0
+card_angle = 15.0
+
+[node name="boss_skill" parent="." unique_id=405500113 instance=ExtResource("3_skill")]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 42.0
+offset_right = 216.0
+offset_bottom = 126.0

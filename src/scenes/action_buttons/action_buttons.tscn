@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://cdqu7pjgyi17t"]
+
+[ext_resource type="Script" uid="uid://cps38q5u4dgfx" path="res://src/scripts/action_buttons/action_buttons.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://src/scenes/action_buttons/action_button.tscn" id="2_button"]
+[ext_resource type="Resource" path="res://src/configs/action_buttons/remove.tres" id="4_remove"]
+[ext_resource type="Resource" path="res://src/configs/action_buttons/swap.tres" id="5_swap"]
+[ext_resource type="Resource" path="res://src/configs/action_buttons/discard.tres" id="6_discard"]
+[ext_resource type="Resource" path="res://src/configs/action_buttons/undo.tres" id="7_undo"]
+
+[node name="action_buttons" type="HBoxContainer" unique_id=1342342812]
+editor_description = "關卡面板右側的五顆操作按鈕。文字長度變動時，後方按鈕向右排列。按下按鈕會送出 action_requested(action_id)，供遊戲邏輯接入。"
+texture_filter = 1
+offset_right = 473.0
+offset_bottom = 39.0
+mouse_filter = 2
+theme_override_constants/separation = 5
+script = ExtResource("1_script")
+
+[node name="done" parent="." unique_id=1349553483 instance=ExtResource("2_button")]
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "結算"
+remaining_count = 6
+
+[node name="remove" parent="." unique_id=1960823655 instance=ExtResource("2_button")]
+custom_minimum_size = Vector2(90, 30)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "挖牌"
+definition = ExtResource("4_remove")
+remaining_count = 2
+
+[node name="swap" parent="." unique_id=1336623755 instance=ExtResource("2_button")]
+custom_minimum_size = Vector2(87, 30)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "交換"
+definition = ExtResource("5_swap")
+remaining_count = 2
+
+[node name="discard" parent="." unique_id=817634011 instance=ExtResource("2_button")]
+custom_minimum_size = Vector2(82, 29)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "棄牌"
+definition = ExtResource("6_discard")
+remaining_count = 4
+
+[node name="undo" parent="." unique_id=1748437723 instance=ExtResource("2_button")]
+custom_minimum_size = Vector2(81, 30)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "撤銷"
+definition = ExtResource("7_undo")

@@ -1,0 +1,38 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://src/assets/boss_skill_bg.png" id="1_background"]
+
+[sub_resource type="SystemFont" id="SystemFont_skill"]
+font_names = PackedStringArray("Heiti TC", "Noto Sans CJK TC", "sans-serif")
+antialiasing = 0
+subpixel_positioning = 0
+
+[node name="skill_panel" type="Control"]
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 0
+offset_right = 177.0
+offset_bottom = 38.0
+pivot_offset = Vector2(88.5, 19)
+mouse_filter = 2
+
+[node name="background" type="Sprite2D" parent="."]
+self_modulate = Color(0.70980394, 0.2627451, 0.14509805, 1)
+texture = ExtResource("1_background")
+centered = false
+
+[node name="caption" type="Label" parent="."]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 3.0
+offset_right = 171.0
+offset_bottom = 29.0
+theme_override_colors/font_color = Color(1, 0.9137255, 0.827451, 1)
+theme_override_colors/font_shadow_color = Color(0.36, 0.07, 0.02, 1)
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = SubResource("SystemFont_skill")
+theme_override_font_sizes/font_size = 14
+text = "2 COMBO以下不計分"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2

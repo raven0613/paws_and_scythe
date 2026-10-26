@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://dtcdxiuivwsx0"]
+
+[ext_resource type="Texture2D" uid="uid://cxo3f6mtg7vup" path="res://src/assets/cat_card/cat_card_shadow.png" id="1_xkvg3"]
+[ext_resource type="Texture2D" path="res://src/assets/cat_card/cat_card_match.png" id="2_artwork"]
+
+[node name="cat_card_match" type="Control" unique_id=1423156673]
+texture_filter = 1
+custom_minimum_size = Vector2(73, 92)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 73.0
+offset_bottom = 92.0
+pivot_offset = Vector2(36.5, 46)
+mouse_filter = 2
+
+[node name="shadow" type="Sprite2D" parent="." unique_id=119277068]
+position = Vector2(2, 2)
+texture = ExtResource("1_xkvg3")
+centered = false
+
+[node name="artwork" type="TextureRect" parent="." unique_id=1207726265]
+layout_mode = 0
+offset_right = 73.0
+offset_bottom = 92.0
+mouse_filter = 2
+texture = ExtResource("2_artwork")
+expand_mode = 1
+
+[node name="overlay" type="TextureRect" parent="." unique_id=1675535698]
+layout_mode = 0
+offset_right = 73.0
+offset_bottom = 92.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="stamp" type="TextureRect" parent="." unique_id=1421437669]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2

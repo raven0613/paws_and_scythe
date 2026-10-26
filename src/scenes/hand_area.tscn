@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://c12fhmwi7bx8t"]
+
+[ext_resource type="Texture2D" uid="uid://c2yd20mef4gtp" path="res://src/assets/hand_bg.png" id="1_background"]
+[ext_resource type="PackedScene" uid="uid://bvktcc28n47n1" path="res://src/scenes/playing_card.tscn" id="2_card"]
+[ext_resource type="Script" uid="uid://ceitmtew5mitn" path="res://src/scripts/hand_area/hand_area.gd" id="3_hand_area"]
+
+[node name="hand_area" type="Control" unique_id=832576648]
+editor_description = "左下角手牌區，card_count 預設六張，支援零至十張。增減張數時固定左側位置，向右伸縮。程式設定卡牌 X，cards 群組與各張卡牌的 Y 可在編輯器調整。所有卡牌共用 playing_card.tscn。"
+texture_filter = 1
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -742.0
+offset_right = 500.0
+offset_bottom = -648.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("3_hand_area")
+
+[node name="background" type="NinePatchRect" parent="." unique_id=444478664]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_background")
+patch_margin_left = 16
+patch_margin_right = 16
+
+[node name="cards" type="Control" parent="." unique_id=2036601725]
+editor_description = "可調整此群組的 Y 來移動整排手牌，也可調整個別卡牌的 Y。卡牌 X 由 hand_area_config.gd 的 CARD_START_X 與 CARD_GAP 計算。"
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="card_01" parent="cards" unique_id=1071221222 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 16.0
+offset_top = -6.0
+offset_right = 89.0
+offset_bottom = 86.0
+
+[node name="card_02" parent="cards" unique_id=1748581820 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 95.0
+offset_top = -6.0
+offset_right = 168.0
+offset_bottom = 86.0
+
+[node name="card_03" parent="cards" unique_id=1826569726 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 174.0
+offset_top = -6.0
+offset_right = 247.0
+offset_bottom = 86.0
+
+[node name="card_04" parent="cards" unique_id=934516714 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 253.0
+offset_top = -6.0
+offset_right = 326.0
+offset_bottom = 86.0
+
+[node name="card_05" parent="cards" unique_id=2039987171 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 332.0
+offset_top = -6.0
+offset_right = 405.0
+offset_bottom = 86.0
+
+[node name="card_06" parent="cards" unique_id=126069380 instance=ExtResource("2_card")]
+layout_mode = 0
+offset_left = 411.0
+offset_top = -6.0
+offset_right = 484.0
+offset_bottom = 86.0
+
+[node name="card_07" parent="cards" unique_id=425041080 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+offset_left = 490.0
+offset_right = 563.0
+
+[node name="card_08" parent="cards" unique_id=1423191683 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+offset_left = 569.0
+offset_right = 642.0
+
+[node name="card_09" parent="cards" unique_id=2079939781 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+offset_left = 648.0
+offset_right = 721.0
+
+[node name="card_10" parent="cards" unique_id=525849995 instance=ExtResource("2_card")]
+visible = false
+layout_mode = 0
+offset_left = 727.0
+offset_right = 800.0

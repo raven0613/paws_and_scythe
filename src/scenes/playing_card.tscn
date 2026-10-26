@@ -1,0 +1,168 @@
+[gd_scene format=3 uid="uid://bvktcc28n47n1"]
+
+[ext_resource type="Texture2D" uid="uid://fsoyea62vlwc" path="res://src/assets/card/card_bg.png" id="1_bg"]
+[ext_resource type="Texture2D" uid="uid://sc6x5cpx76kp" path="res://src/assets/card/card_a_big.png" id="2_a_big"]
+[ext_resource type="Texture2D" uid="uid://c6vpahn37f5il" path="res://src/assets/card/card_b_big.png" id="3_b_big"]
+[ext_resource type="Texture2D" uid="uid://cox6qyxxqmsua" path="res://src/assets/card/card_c_big.png" id="4_c_big"]
+[ext_resource type="Texture2D" uid="uid://cyf8dcmb463iq" path="res://src/assets/card/card_d_big.png" id="5_d_big"]
+[ext_resource type="Texture2D" uid="uid://b13mxrpxiqkdn" path="res://src/assets/card/card_a_small.png" id="6_a_small"]
+[ext_resource type="Texture2D" uid="uid://cmbtbhrkn7ub2" path="res://src/assets/card/card_b_small.png" id="7_b_small"]
+[ext_resource type="Texture2D" uid="uid://ph5cok6ewf05" path="res://src/assets/card/card_c_small.png" id="8_c_small"]
+[ext_resource type="Texture2D" uid="uid://dlsgf8c7g7rny" path="res://src/assets/card/card_d_small.png" id="9_d_small"]
+[ext_resource type="Script" path="res://src/scripts/playing_card/playing_card.gd" id="10_script"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_big"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_a_big")
+}],
+"loop": 0,
+"name": &"a",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_b_big")
+}],
+"loop": 0,
+"name": &"b",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_c_big")
+}],
+"loop": 0,
+"name": &"c",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_d_big")
+}],
+"loop": 0,
+"name": &"d",
+"speed": 1.0
+}]
+
+[sub_resource type="SystemFont" id="SystemFont_rank"]
+font_names = PackedStringArray("monospace")
+antialiasing = 0
+subpixel_positioning = 0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_small"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_a_small")
+}],
+"loop": 0,
+"name": &"a",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("7_b_small")
+}],
+"loop": 0,
+"name": &"b",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_c_small")
+}],
+"loop": 0,
+"name": &"c",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_d_small")
+}],
+"loop": 0,
+"name": &"d",
+"speed": 1.0
+}]
+
+[node name="playing_card" type="Control" unique_id=450325403]
+editor_description = "共用撲克牌場景，原尺寸 73 × 92。切換花紋時，將 big 和兩個 small 的 animation 設為相同的 a、b、c 或 d；兩個 rank 的 text 設為相同點數。face 的 modulate 控制數字與花紋顏色。"
+texture_filter = 1
+custom_minimum_size = Vector2(73, 92)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 73.0
+offset_bottom = 92.0
+pivot_offset = Vector2(36.5, 46)
+mouse_filter = 2
+script = ExtResource("10_script")
+
+[node name="shadow" type="Sprite2D" parent="." unique_id=875454058]
+modulate = Color(0, 0, 0, 0.45)
+position = Vector2(2, 2)
+texture = ExtResource("1_bg")
+centered = false
+
+[node name="base" type="Sprite2D" parent="." unique_id=809282942]
+texture = ExtResource("1_bg")
+centered = false
+
+[node name="face" type="Node2D" parent="." unique_id=1903957047]
+modulate = Color(0, 0, 0, 1)
+
+[node name="big" type="AnimatedSprite2D" parent="face" unique_id=1484013803]
+position = Vector2(36.5, 46)
+sprite_frames = SubResource("SpriteFrames_big")
+animation = &"a"
+
+[node name="top_left" type="Node2D" parent="face" unique_id=2132214075]
+position = Vector2(4, 4)
+
+[node name="rank" type="Label" parent="face/top_left" unique_id=1308864418]
+mouse_filter = 2
+offset_right = 16.0
+offset_bottom = 18.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("SystemFont_rank")
+theme_override_font_sizes/font_size = 14
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="small" type="AnimatedSprite2D" parent="face/top_left" unique_id=1869477743]
+position = Vector2(8, 19)
+sprite_frames = SubResource("SpriteFrames_small")
+animation = &"a"
+
+[node name="bottom_right" type="Node2D" parent="face" unique_id=1231586493]
+position = Vector2(69, 88)
+rotation = 3.1415927
+
+[node name="rank" type="Label" parent="face/bottom_right" unique_id=2025144606]
+mouse_filter = 2
+offset_right = 16.0
+offset_bottom = 18.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("SystemFont_rank")
+theme_override_font_sizes/font_size = 14
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="small" type="AnimatedSprite2D" parent="face/bottom_right" unique_id=2005196919]
+position = Vector2(8, 19)
+sprite_frames = SubResource("SpriteFrames_small")
+animation = &"a"
+
+[node name="overlay" type="TextureRect" parent="." unique_id=272752300]
+editor_description = "銀箔等整張卡面效果的圖層；指定 texture 後顯示於牌面上方。"
+layout_mode = 0
+offset_right = 73.0
+offset_bottom = 92.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="stamp" type="Sprite2D" parent="." unique_id=1037961159]
+editor_description = "蠟印章圖層；指定 texture 後，於編輯器微調 position。"
+position = Vector2(52, 69)

@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://c23ty6exren0c"]
+
+[ext_resource type="Script" uid="uid://cdymyxhec02mf" path="res://src/scripts/gameplay/gameplay_frame.gd" id="1_frame"]
+[ext_resource type="Texture2D" uid="uid://bi0ki1uoiygpe" path="res://src/assets/boss_bg.png" id="2_8gm7s"]
+
+[node name="gameplay_frame" type="Control" unique_id=1112567165]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_frame")
+
+[node name="edges" type="Node2D" parent="." unique_id=956140872]
+
+[node name="top" type="Polygon2D" parent="edges" unique_id=424914276]
+color = Color(0.08235294, 0.10980392, 0.15686275, 1)
+polygon = PackedVector2Array(0, 0, 1152, 0, 1152, 34, 0, 34)
+
+[node name="left" type="Polygon2D" parent="edges" unique_id=2075817297]
+color = Color(0.08235294, 0.10980392, 0.15686275, 1)
+polygon = PackedVector2Array(0, 34, 37, 34, 37, 618, 0, 618)
+
+[node name="boss_bg" type="Sprite2D" parent="edges" unique_id=400858326]
+position = Vector2(1018, 324)
+texture = ExtResource("2_8gm7s")
+
+[node name="bottom" type="Polygon2D" parent="edges" unique_id=59661606]
+color = Color(0.08235294, 0.10980392, 0.15686275, 1)
+polygon = PackedVector2Array(0, 618, 1152, 618, 1152, 648, 0, 648)

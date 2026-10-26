@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://src/assets/card/card_bg.png" id="1_base"]
+
+[node name="convert_card" type="Control"]
+editor_description = "共用 Convert 卡，尺寸 73 × 92 px。在 artwork 的 Texture 指定卡面圖片。"
+texture_filter = 1
+custom_minimum_size = Vector2(73, 92)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 73.0
+offset_bottom = 92.0
+pivot_offset = Vector2(36.5, 46)
+mouse_filter = 2
+
+[node name="shadow" type="Sprite2D" parent="."]
+modulate = Color(0, 0, 0, 0.45)
+position = Vector2(2, 2)
+texture = ExtResource("1_base")
+centered = false
+
+[node name="base" type="Sprite2D" parent="."]
+texture = ExtResource("1_base")
+centered = false
+
+[node name="artwork" type="TextureRect" parent="."]
+editor_description = "卡面圖片預留位置，於 Texture 指定圖片後顯示。"
+layout_mode = 0
+offset_right = 73.0
+offset_bottom = 92.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="overlay" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 73.0
+offset_bottom = 92.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="stamp" type="Sprite2D" parent="."]
+position = Vector2(52, 69)

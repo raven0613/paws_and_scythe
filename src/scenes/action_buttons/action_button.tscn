@@ -1,0 +1,122 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/action_buttons/action_button.gd" id="1_script"]
+[ext_resource type="Resource" path="res://src/configs/action_buttons/done.tres" id="2_definition"]
+[ext_resource type="ShaderMaterial" path="res://src/configs/action_buttons/calm_wave_material.tres" id="3_waves"]
+[ext_resource type="Texture2D" path="res://src/assets/icon_time.png" id="4_time"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBox_empty"]
+
+[sub_resource type="SystemFont" id="SystemFont_caption"]
+font_names = PackedStringArray("Heiti TC", "Noto Sans CJK TC", "sans-serif")
+antialiasing = 0
+subpixel_positioning = 0
+
+[sub_resource type="SystemFont" id="SystemFont_counter"]
+font_names = PackedStringArray("monospace")
+font_weight = 700
+antialiasing = 0
+subpixel_positioning = 0
+
+[sub_resource type="Theme" id="Theme_button"]
+default_font = SubResource("SystemFont_caption")
+default_font_size = 12
+Label/colors/font_color = Color(0.69411767, 0.8117647, 0.9764706, 1)
+
+[node name="action_button" type="Button"]
+editor_description = "共用操作按鈕。Definition 指定框線、圖示與可翻譯文字；Remaining Count 更新剩餘次數。框線與底色共用 9-slice，文字加長時自動擴寬。"
+texture_filter = 1
+custom_minimum_size = Vector2(113, 39)
+offset_right = 113.0
+offset_bottom = 39.0
+mouse_default_cursor_shape = 2
+theme = SubResource("Theme_button")
+theme_override_styles/normal = SubResource("StyleBox_empty")
+theme_override_styles/hover = SubResource("StyleBox_empty")
+theme_override_styles/pressed = SubResource("StyleBox_empty")
+theme_override_styles/disabled = SubResource("StyleBox_empty")
+theme_override_styles/focus = SubResource("StyleBox_empty")
+script = ExtResource("1_script")
+definition = ExtResource("2_definition")
+
+[node name="waves" type="NinePatchRect" parent="."]
+material = ExtResource("3_waves")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="frame" type="NinePatchRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="content" type="HBoxContainer" parent="center"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="icon" type="TextureRect" parent="center/content"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="caption" type="Label" parent="center/content"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="counter" type="HBoxContainer" parent="."]
+layout_mode = 0
+mouse_filter = 2
+
+[node name="time_icon" type="TextureRect" parent="counter"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("4_time")
+
+[node name="number" type="Control" parent="counter"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="outer_outline" type="Label" parent="counter/number"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/font = SubResource("SystemFont_counter")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="value" type="Label" parent="counter/number"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_fonts/font = SubResource("SystemFont_counter")
+horizontal_alignment = 1
+vertical_alignment = 1
