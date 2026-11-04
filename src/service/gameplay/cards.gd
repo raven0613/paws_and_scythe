@@ -8,6 +8,9 @@ static func id(rank_value: int, suit_value: int) -> int:
 static func rank(card: int) -> int:
 	return card % Config.RANKS.size() + 1
 
+static func points(card: int) -> int:
+	return Config.RANK_POINTS[rank(card) - 1]
+
 static func suit(card: int) -> int:
 	return card / Config.RANKS.size()
 

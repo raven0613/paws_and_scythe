@@ -73,11 +73,19 @@ func digs_left() -> int:
 func next_swap_cost() -> int:
 	return Config.SWAP_COSTS[swaps_used] if swaps_left() > 0 else 0
 
+func can_swap() -> bool:
+	return status == Status.PLAYING and swaps_left() > 0 and board.size() >= 2 and score >= next_swap_cost()
+
+func can_dig() -> bool:
+	return status == Status.PLAYING and digs_left() > 0 and not board.is_empty() and score >= Config.DIG_COST
+
 func swap(a: Vector2i, b: Vector2i) -> bool:
-	if status != Status.PLAYING or swaps_left() == 0 or a == b or not board.has(a) or not board.has(b):
+	if not can_swap() or a == b or not board.has(a) or not board.has(b):
 		return false
-	history.append({"kind": "swap", "a": a, "b": b})
+	var cost := next_swap_cost()
+	history.append({"kind": "swap", "a": a, "b": b, "cost": cost})
 	_swap(a, b)
+	score -= cost
 	swaps_used += 1
 	return true
 
@@ -87,10 +95,11 @@ func _swap(a: Vector2i, b: Vector2i) -> void:
 	board[b] = card
 
 func dig(cell: Vector2i) -> bool:
-	if status != Status.PLAYING or digs_left() == 0 or not board.has(cell):
+	if not can_dig() or not board.has(cell):
 		return false
-	history.append({"kind": "dig", "cell": cell, "card": board[cell]})
+	history.append({"kind": "dig", "cell": cell, "card": board[cell], "cost": Config.DIG_COST})
 	board.erase(cell)
+	score -= Config.DIG_COST
 	digs_used += 1
 	return true
 
@@ -131,17 +140,13 @@ func undo() -> bool:
 			played.erase(action.card)
 		"swap":
 			_swap(action.a, action.b)
+			score += action.cost
 			swaps_used -= 1
 		"dig":
 			board[action.cell] = action.card
+			score += action.cost
 			digs_used -= 1
 	return true
-
-func pending_cost() -> int:
-	var cost := digs_used * Config.DIG_COST
-	for i in swaps_used:
-		cost += Config.SWAP_COSTS[i]
-	return cost
 
 func reserved_cards() -> Array:
 	var result: Array = []
@@ -151,14 +156,14 @@ func reserved_cards() -> Array:
 	return result
 
 func preview() -> Dictionary:
-	return Scoring.evaluate(board, played, pending_cost())
+	return Scoring.evaluate(board, played)
 
 func settle() -> Dictionary:
 	if not can_settle():
 		return {}
 	last_draw.clear()
 	var result := preview()
-	score += result.net
+	score += result.total
 	turns_left -= 1
 	# 可撤銷的挖牌在確認後進入可洗回的棄牌堆。
 	deck.discard_pile.append_array(reserved_cards())

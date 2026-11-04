@@ -2,6 +2,7 @@
 extends Control
 
 const Config = preload("res://src/configs/boss/reaper_card_config.gd")
+const Fonts = preload("res://src/service/fonts/font_library.gd")
 
 @export var card_title: String = Config.DEFAULT_TITLE:
 	set(value):
@@ -26,6 +27,8 @@ const Config = preload("res://src/configs/boss/reaper_card_config.gd")
 func _ready() -> void:
 	_viewport.size = Config.PIXEL_CANVAS_SIZE
 	_output.texture = _viewport.get_texture()
+	for title in [_card.get_node("top_left/title"), _card.get_node("bottom_right/title")]:
+		title.add_theme_font_override("font", Fonts.get_pixel_font())
 	_update_card()
 
 

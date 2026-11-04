@@ -1,0 +1,7 @@
+{
+  "source": "src/assets/fonts/BMHANNAPro.ttf",
+  "output": "src/assets/fonts/generated/PawsNumerals.ttf",
+  "family": "Paws Numerals",
+  "postscript_name": "PawsNumerals",
+  "unicode_ranges": [[32, 126], [160, 255], [8192, 8303], [8352, 8399], [8592, 8959]]
+}

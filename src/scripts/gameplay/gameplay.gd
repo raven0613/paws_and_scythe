@@ -119,8 +119,6 @@ func _on_card_requested(card: Control) -> void:
 	var cell: Vector2i = game.board.find_key(card.card_id)
 	if _mode == &"remove":
 		if game.dig(cell):
-			if game.digs_left() == 0:
-				_mode = &""
 			_refresh()
 	elif _mode == &"swap":
 		if _swap_first == null:
@@ -130,8 +128,6 @@ func _on_card_requested(card: Control) -> void:
 		else:
 			game.swap(_swap_first, cell)
 			_swap_first = null
-			if game.swaps_left() == 0:
-				_mode = &""
 		_refresh()
 
 func _on_hand_selection_changed() -> void:
@@ -174,6 +170,8 @@ func _on_action_requested(action_id: StringName) -> void:
 				_clear_selection()
 				_refresh()
 		&"remove", &"swap":
+			if (action_id == &"remove" and not game.can_dig()) or (action_id == &"swap" and not game.can_swap()):
+				return
 			var next_mode: StringName = &"" if _mode == action_id else action_id
 			_clear_selection()
 			_mode = next_mode
@@ -203,6 +201,9 @@ func _finish_deal() -> void:
 
 func _update_input() -> void:
 	var active: bool = not _busy and game.status == Run.Status.PLAYING
+	if (_mode == &"remove" and not game.can_dig()) or (_mode == &"swap" and not game.can_swap()):
+		_mode = &""
+		_swap_first = null
 	var selected: Array = $hand_area.get_selected_ids()
 	$board.set_camera_input_enabled(active)
 	$camera_controls.set_controls_enabled(active)
@@ -223,8 +224,8 @@ func _update_input() -> void:
 	actions.get_node("swap").remaining_count = game.swaps_left()
 	actions.get_node("discard").remaining_count = game.discards_left
 	actions.get_node("done").disabled = not active or not game.can_settle()
-	actions.get_node("remove").disabled = not active or game.digs_left() == 0 or game.board.is_empty()
-	actions.get_node("swap").disabled = not active or game.swaps_left() == 0 or game.board.size() < 2
+	actions.get_node("remove").disabled = not active or not game.can_dig()
+	actions.get_node("swap").disabled = not active or not game.can_swap()
 	actions.get_node("discard").disabled = not active or not game.can_discard(selected)
 	actions.get_node("undo").disabled = not active or game.history.is_empty()
 	for action in [&"swap", &"remove"]:

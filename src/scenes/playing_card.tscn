@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://cmbtbhrkn7ub2" path="res://src/assets/card/card_b_small.png" id="7_b_small"]
 [ext_resource type="Texture2D" uid="uid://ph5cok6ewf05" path="res://src/assets/card/card_c_small.png" id="8_c_small"]
 [ext_resource type="Texture2D" uid="uid://dlsgf8c7g7rny" path="res://src/assets/card/card_d_small.png" id="9_d_small"]
-[ext_resource type="Script" path="res://src/scripts/playing_card/playing_card.gd" id="10_script"]
+[ext_resource type="Script" uid="uid://bg3kh20yx7kqi" path="res://src/scripts/playing_card/playing_card.gd" id="10_script"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_big"]
 animations = [{
@@ -45,11 +45,6 @@ animations = [{
 "name": &"d",
 "speed": 1.0
 }]
-
-[sub_resource type="SystemFont" id="SystemFont_rank"]
-font_names = PackedStringArray("monospace")
-antialiasing = 0
-subpixel_positioning = 0
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_small"]
 animations = [{
@@ -120,18 +115,16 @@ animation = &"a"
 position = Vector2(4, 4)
 
 [node name="rank" type="Label" parent="face/top_left" unique_id=1308864418]
-mouse_filter = 2
 offset_right = 16.0
 offset_bottom = 18.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("SystemFont_rank")
 theme_override_font_sizes/font_size = 14
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="small" type="AnimatedSprite2D" parent="face/top_left" unique_id=1869477743]
-position = Vector2(8, 19)
+position = Vector2(8, 21)
 sprite_frames = SubResource("SpriteFrames_small")
 animation = &"a"
 
@@ -140,18 +133,16 @@ position = Vector2(69, 88)
 rotation = 3.1415927
 
 [node name="rank" type="Label" parent="face/bottom_right" unique_id=2025144606]
-mouse_filter = 2
 offset_right = 16.0
 offset_bottom = 18.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("SystemFont_rank")
 theme_override_font_sizes/font_size = 14
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="small" type="AnimatedSprite2D" parent="face/bottom_right" unique_id=2005196919]
-position = Vector2(8, 19)
+position = Vector2(8, 21)
 sprite_frames = SubResource("SpriteFrames_small")
 animation = &"a"
 

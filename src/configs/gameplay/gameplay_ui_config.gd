@@ -6,4 +6,7 @@ const GROUP_COLORS = {
 }
 
 static func number(value: float) -> String:
-	return str(int(value)) if value == floor(value) else "%.1f" % value
+	return str(roundi(value))
+
+static func multiplier(value: float) -> String:
+	return "%.1f" % value

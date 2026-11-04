@@ -24,6 +24,10 @@ const Config = preload("res://src/configs/combo/combo_config.gd")
 	set(value):
 		text_color = value
 		_refresh()
+@export var score_color: Color = Config.SCORE_COLOR:
+	set(value):
+		score_color = value
+		_refresh()
 @export var shadow_color: Color = Config.SHADOW_COLOR:
 	set(value):
 		shadow_color = value
@@ -56,8 +60,9 @@ func _refresh() -> void:
 	$shadow.self_modulate = shadow_color
 	$caption/hand.text = tr(hand_name)
 	$caption/score.text = "%+d" % score
+	$caption/hand.add_theme_color_override("font_color", text_color)
+	$caption/score.add_theme_color_override("font_color", score_color)
 	for label in [$caption/hand, $caption/score]:
-		label.add_theme_color_override("font_color", text_color)
 		label.add_theme_font_size_override("font_size", Config.FONT_SIZE)
 	_fit_text()
 

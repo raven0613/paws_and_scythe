@@ -14,8 +14,9 @@ func _init() -> void:
 		_check(game.last_draw[index].remaining == Config.DECK_SIZE - index - 1, "Draw events record actual remaining deck count")
 	game.place(game.hand[0], Vector2i.ZERO)
 	game.place(game.hand[0], Vector2i.RIGHT)
-	game.swap(Vector2i.ZERO, Vector2i.RIGHT)
-	game.dig(Vector2i.RIGHT)
+	game.score = Config.SWAP_COSTS[0] + Config.DIG_COST
+	_check(game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Funded swap succeeds")
+	_check(game.dig(Vector2i.RIGHT), "Funded dig succeeds")
 	game.settle()
 	_check(game.money == Config.STARTING_MONEY, "Paid board operations consume score, preserving money")
 	_check(game.last_draw.size() == 2, "Settlement only records refill cards")

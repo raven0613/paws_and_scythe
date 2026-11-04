@@ -8,4 +8,6 @@ const PREVIEW_LEVEL: int = 1
 const PREVIEW_CURRENT_SCORE: int = 10
 const PREVIEW_TARGET_SCORE: int = 200
 const LEVEL_TEXT_FORMAT: String = "Lv %d"
-const PROGRESS_TEXT_FORMAT: String = "%s/%s"
+const PROGRESS_TEXT_FORMAT: String = "%s / %s"
+const PROGRESS_FONT_SIZE: int = 20
+const MIN_PROGRESS_FONT_SIZE: int = 10

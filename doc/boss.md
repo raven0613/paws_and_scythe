@@ -6,7 +6,7 @@ Boss 區域入口為 `src/scenes/boss/boss.tscn`，依 `gameplay2` 放在畫面�
 
 `src/scenes/boss/reaper_card.tscn` 是獨立的共用卡片場景，使用原尺寸 125 × 157 px 的 `reaper_bg.png`。`Card Title` 預設為 `JOKER`，逐字直排於左上角，右下角以 180° 倒轉呈現相同名稱；`Artwork` 可指定卡面圖片。
 
-`Card Angle` 控制卡片在透明 SubViewport 內旋轉，完成後以最近鄰取樣顯示整張卡，讓牌框、卡面與文字一起維持像素邊緣。Boss 場景預設角度為 15°。整張卡的位置透過場景節點調整，像素旋轉透過 `Card Angle` 調整。
+`Card Angle` 控制卡片在透明 SubViewport 內旋轉，完成後以最近鄰取樣顯示整張卡，讓牌框、卡面與文字一起維持像素邊緣。兩角的 JOKER 文字透過共用字型庫取得專用像素字型，關閉抗鋸齒及次像素定位，以純字色呈現邊緣。Boss 場景預設角度為 15°。整張卡的位置透過場景節點調整，像素旋轉透過 `Card Angle` 調整。
 
 ## 三燈與技能週期
 

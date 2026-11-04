@@ -61,7 +61,7 @@ func score_count_progress(progress: float) -> void:
 	else:
 		var k := (progress - Feedback.COUNT_MAIN_RATIO) / (1.0 - Feedback.COUNT_MAIN_RATIO)
 		_displayed_score = _count_target - direction * tail * (1.0 - k)
-	_update_display(progress >= 1.0)
+	_update_display()
 
 func finish_score_count(value: float) -> void:
 	if _tween:
@@ -73,11 +73,30 @@ func finish_score_count(value: float) -> void:
 func score_destination() -> Vector2:
 	return $progress_bar.get_global_transform() * ($progress_bar.size / 2)
 
-func _update_display(exact: bool = true) -> void:
+func _update_display() -> void:
 	if not is_node_ready():
 		return
 	$level_label.text = Config.LEVEL_TEXT_FORMAT % level
-	var displayed := _displayed_score if exact else floorf(_displayed_score)
-	$progress_label.text = Config.PROGRESS_TEXT_FORMAT % [Numbers.number(displayed), Numbers.number(target_score)]
+	$progress_label.text = Config.PROGRESS_TEXT_FORMAT % [Numbers.number(_displayed_score), Numbers.number(target_score)]
+	_fit_progress_text()
 	$progress_bar.max_value = target_score
 	$progress_bar.value = _displayed_score
+
+func _fit_progress_text() -> void:
+	var label: Label = $progress_label
+	var font := label.get_theme_font("font")
+	var available: float = $progress_bar.position.x + $progress_bar.size.x - label.position.x
+	# Reserve the final count's width so ordinary count-up frames keep one size.
+	var maximum := maxf(target_score, maxf(absf(_actual_score), absf(_count_target)))
+	var reserved := Config.PROGRESS_TEXT_FORMAT % [Numbers.number(maximum), Numbers.number(target_score)]
+	var font_size := Config.PROGRESS_FONT_SIZE
+	while font_size > Config.MIN_PROGRESS_FONT_SIZE:
+		var width := maxf(
+			font.get_string_size(reserved, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
+			font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		)
+		if width <= available:
+			break
+		font_size -= 1
+	label.add_theme_font_size_override("font_size", font_size)
+	label.size.x = available

@@ -31,8 +31,8 @@ func _init() -> void:
 							game.board[cell] = card
 							var result := Scoring.evaluate(game.board, game.played + [card])
 							game.board.erase(cell)
-							if result.net > best_score:
-								best_score = result.net
+							if result.total > best_score:
+								best_score = result.total
 								best_card = card
 								best_cell = cell
 					if best_card >= 0:

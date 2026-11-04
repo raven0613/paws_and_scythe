@@ -24,9 +24,7 @@ const FrameFill = preload("res://src/scripts/action_buttons/frame_fill.gd")
 @onready var _caption: Label = $center/content/caption
 @onready var _counter: HBoxContainer = $counter
 @onready var _time_icon: TextureRect = $counter/time_icon
-@onready var _number: Control = $counter/number
-@onready var _outer_outline: Label = $counter/number/outer_outline
-@onready var _count_label: Label = $counter/number/value
+@onready var _count_label: Label = $counter/number
 
 var _wave_material: ShaderMaterial
 
@@ -57,13 +55,10 @@ func _apply_definition() -> void:
 	_counter.add_theme_constant_override("separation", Config.COUNTER_ICON_GAP)
 	_counter.visible = definition.show_remaining
 	_time_icon.visible = definition.show_time_icon
-	for label in [_count_label, _outer_outline]:
-		label.add_theme_font_size_override("font_size", definition.count_font_size)
-		label.add_theme_color_override("font_color", definition.count_color)
+	_count_label.add_theme_font_size_override("font_size", definition.count_font_size)
+	_count_label.add_theme_color_override("font_color", definition.count_color)
 	_count_label.add_theme_color_override("font_outline_color", Config.COUNT_OUTLINE_COLOR)
-	_count_label.add_theme_constant_override("outline_size", Config.COUNT_INNER_OUTLINE)
-	_outer_outline.add_theme_color_override("font_outline_color", Config.COUNT_OUTER_COLOR)
-	_outer_outline.add_theme_constant_override("outline_size", Config.COUNT_OUTER_OUTLINE)
+	_count_label.add_theme_constant_override("outline_size", Config.COUNT_OUTLINE_SIZE)
 	tooltip_text = definition.caption
 	_update_counter()
 	_refresh_minimum_size()
@@ -74,8 +69,6 @@ func _update_counter() -> void:
 	if not is_node_ready():
 		return
 	_count_label.text = str(remaining_count)
-	_outer_outline.text = _count_label.text
-	_number.custom_minimum_size = _count_label.get_combined_minimum_size()
 	_position_counter.call_deferred()
 
 

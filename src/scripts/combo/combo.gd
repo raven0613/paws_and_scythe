@@ -28,6 +28,10 @@ var entries: Array[Entry] = []:
 	set(value):
 		text_color = value
 		_rebuild_rows()
+@export var score_color: Color = Config.SCORE_COLOR:
+	set(value):
+		score_color = value
+		_rebuild_rows()
 @export var shadow_color: Color = Config.SHADOW_COLOR:
 	set(value):
 		shadow_color = value
@@ -93,6 +97,7 @@ func _rebuild_rows() -> void:
 		row.frame_index = layout.frame_index
 		row.frame_color = frame_color
 		row.text_color = text_color
+		row.score_color = score_color
 		row.shadow_color = shadow_color
 		row.set_meta("cells", entry.cells)
 		row.tooltip_text = "%s · %s · %d 張\n%s" % [entry.hand_name, "橫向" if entry.direction == Vector2i.RIGHT else "直向", entry.cells.size(), str(entry.cells)]
@@ -118,10 +123,8 @@ func _layout_rows() -> void:
 		bottom += row.size.y + Config.ROW_GAP
 		width = maxf(width, row.size.x + Config.OFFSET_MAX + Config.SHADOW_OFFSET.x)
 	var content_size := Vector2(width, maxf(0.0, bottom - Config.ROW_GAP))
-	var fit := minf(1.0, minf(Config.AVAILABLE_SIZE.x / maxf(width, 1), Config.AVAILABLE_SIZE.y / maxf(content_size.y, 1)))
-	$rows.scale = Vector2.ONE * fit
 	$rows.size = content_size
-	custom_minimum_size = content_size * fit
+	custom_minimum_size = content_size
 	size = custom_minimum_size
 
 

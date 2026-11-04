@@ -17,17 +17,19 @@ func _init() -> void:
 	_check(game.place(original[0], Vector2i.ZERO), "Place first card")
 	_check(not game.place(original[1], Vector2i.ONE), "Reject diagonal placement")
 	_check(game.place(original[1], Vector2i.RIGHT), "Place neighbor")
+	var funds: int = Config.SWAP_COSTS[0] + Config.DIG_COST
+	game.score = funds
 	_check(game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Swap")
-	_check(game.pending_cost() == Config.SWAP_COSTS[0], "First swap cost")
+	_check(game.score == funds - Config.SWAP_COSTS[0], "First swap immediately charges score")
 	_check(game.dig(Vector2i.ZERO), "Dig")
-	_check(game.pending_cost() == Config.SWAP_COSTS[0] + Config.DIG_COST, "Accumulate fees")
+	_check(game.score == 0, "Both fees are immediately paid")
 	var discarded: int = game.hand[0]
 	_check(game.discard([discarded]), "Discard mid-turn")
 	var replacement: int = game.hand[0]
 	_check(game.undo() and game.board[Vector2i.ZERO] == original[1], "Undo dig restores swapped card")
-	_check(game.pending_cost() == Config.SWAP_COSTS[0], "Undo dig refunds fee")
+	_check(game.score == Config.DIG_COST, "Undo dig refunds fee")
 	_check(game.undo() and game.board[Vector2i.ZERO] == original[0], "Undo swap restores content")
-	_check(game.pending_cost() == 0, "Undo swap refunds fee")
+	_check(game.score == funds, "Undo swap refunds fee")
 	_check(game.undo() and game.undo(), "Undo placements")
 	_check(game.hand[0] == original[0] and game.hand[1] == original[1] and game.hand[2] == replacement, "Restore hand order while keeping irreversible discard")
 	_check(game.discards_left == Config.DISCARDS - 1 and not game.undo(), "Discard stays spent and has no undo record")
@@ -37,18 +39,67 @@ func _init() -> void:
 		_check(game.place(game.hand[0], Vector2i(i, 0)), "Up to maximum plays")
 	var preview: Dictionary = game.preview()
 	var report: Dictionary = game.settle()
-	_check(report.net == preview.net, "Preview equals settlement")
+	_check(report.total == preview.total, "Preview equals settlement")
 	_check(game.board.size() == Config.MAX_PLAYS, "Scoring preserves all cards")
 	_check(game.hand.size() == Config.HAND_LIMIT, "Refill after settlement")
 	_check(game.turns_left == Config.SETTLEMENTS - 1 and game.history.is_empty(), "Settlement consumes turn and commits history")
 	_check(game.played.is_empty(), "Fallback eligibility resets")
 	_check_unique(game)
+	_test_payments()
 	_test_limits()
 	_test_levels()
 	_test_capacity()
 	_test_reserved_recycling()
 	print("Run state tests: %d failures" % failures)
 	quit(1 if failures else 0)
+
+func _test_payments() -> void:
+	var game = Run.new()
+	game.start(Config.TEST_SEED)
+	game.place(game.hand[0], Vector2i.ZERO)
+	game.place(game.hand[0], Vector2i.RIGHT)
+	var original: Dictionary = game.board.duplicate()
+	var history: Array = game.history.duplicate(true)
+	_check(not game.can_dig() and not game.can_swap(), "Opening score cannot fund paid actions")
+	_check(not game.dig(Vector2i.ZERO) and not game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Core rejects unpaid actions")
+	_check(game.board == original and game.history == history and game.score == 0, "Rejected actions leave state untouched")
+	_check(game.digs_used == 0 and game.swaps_used == 0, "Rejected actions preserve quotas")
+	game.score = Config.DIG_COST - Config.COMBO_STEP
+	_check(not game.dig(Vector2i.ZERO), "Affordability uses exact score rather than rounded display")
+	game.score = Config.SWAP_COSTS[0] - Config.COMBO_STEP
+	_check(not game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Insufficient swap balance is rejected")
+	game.score = Config.SWAP_COSTS[0]
+	_check(not game.swap(Vector2i.ZERO, Vector2i.ZERO), "Self-swap cannot charge a fee")
+	_check(not game.swap(Vector2i.ZERO, Vector2i.DOWN), "Missing swap target cannot charge a fee")
+	_check(game.score == Config.SWAP_COSTS[0] and game.history == history, "Invalid targets preserve payment and history")
+	_check(game.can_swap() and game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Exact balance funds a swap")
+	_check(game.score == 0 and not game.can_swap() and not game.can_dig(), "Spent balance disables paid actions")
+	_check(game.undo() and game.score == Config.SWAP_COSTS[0] and game.board == original, "Undo refunds exact swap payment")
+	var budget := 0
+	for cost in Config.SWAP_COSTS:
+		budget += cost
+	game.score = budget
+	for cost in Config.SWAP_COSTS:
+		_check(game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Escalating swaps are paid individually")
+		budget -= cost
+		_check(game.score == budget, "Each swap charges its configured price")
+	for index in range(Config.SWAP_COSTS.size() - 1, -1, -1):
+		budget += Config.SWAP_COSTS[index]
+		_check(game.undo() and game.score == budget, "Undo refunds each escalating price in reverse order")
+	game.score = Config.DIG_COST
+	_check(not game.dig(Vector2i.DOWN) and game.score == Config.DIG_COST, "Missing dig target cannot charge a fee")
+	_check(game.can_dig() and game.dig(Vector2i.ZERO) and game.score == 0, "Exact balance funds a dig")
+	_check(game.undo() and game.score == Config.DIG_COST and game.board == original, "Undo dig restores card and balance")
+	game.score = game.target()
+	_check(game.dig(Vector2i.ZERO), "Paid dig before settlement")
+	var paid_balance: float = game.score
+	var preview: Dictionary = game.preview()
+	game.settle()
+	_check(game.score == paid_balance + preview.total, "Settlement only credits new earnings")
+	_check(not game.undo(), "Committed operations cannot refund paid fees")
+	game.start(Config.TEST_SEED)
+	game.place(game.hand[0], Vector2i.ZERO)
+	_check(game.undo() and game.score == 0, "First-turn placement undo remains free")
 
 func _test_limits() -> void:
 	var game = Run.new()
@@ -63,6 +114,9 @@ func _test_limits() -> void:
 	game.start(Config.TEST_SEED)
 	game.place(game.hand[0], Vector2i.ZERO)
 	game.place(game.hand[0], Vector2i.RIGHT)
+	game.score = Config.DIGS * Config.DIG_COST
+	for cost in Config.SWAP_COSTS:
+		game.score += cost
 	for cost in Config.SWAP_COSTS:
 		_check(game.next_swap_cost() == cost, "Escalating swap cost")
 		_check(game.swap(Vector2i.ZERO, Vector2i.RIGHT), "Swap within quota")
@@ -73,7 +127,7 @@ func _test_limits() -> void:
 	_check_unique(game)
 	game.settle()
 	_check(game.swaps_left() == Config.SWAP_COSTS.size() and game.digs_left() == Config.DIGS, "Paid quotas reset")
-	_check(game.score < 0, "Net costs may produce negative score")
+	_check(game.score == 0, "Settlement does not charge already-paid fees again")
 	game.start(Config.TEST_SEED)
 	_check(not game.discard([]), "Empty discard rejected")
 	_check(not game.discard(game.hand.slice(0, Config.MAX_DISCARD + 1)), "Oversized discard rejected")
@@ -114,6 +168,7 @@ func _test_capacity() -> void:
 			game.board[Vector2i(i * 2, 0)] = game.deck.draw_pile.pop_back()
 		_check(game.place(game.hand[0], Vector2i.RIGHT), "Capacity may be exceeded during operations")
 		if rescue:
+			game.score = Config.DIGS * Config.DIG_COST
 			for i in Config.DIGS:
 				game.dig(Vector2i(i * 2, 0))
 		game.settle()
@@ -135,6 +190,7 @@ func _test_reserved_recycling() -> void:
 	while not game.deck.draw_pile.is_empty():
 		game.board[Vector2i(index, 0)] = game.deck.draw_pile.pop_back()
 		index += 1
+	game.score = Config.DIG_COST
 	var dug: int = game.board[Vector2i.ZERO]
 	game.dig(Vector2i.ZERO)
 	game.discard(game.hand.slice(0, Config.MAX_DISCARD))

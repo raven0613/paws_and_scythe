@@ -43,7 +43,7 @@ func _init() -> void:
 			for card in all:
 				unique[card] = true
 			_check(all.size() == Config.DECK_SIZE and unique.size() == Config.DECK_SIZE, "Card conservation under mixed actions")
-			_check(game.pending_cost() >= 0 and game.swaps_left() >= 0 and game.digs_left() >= 0, "Fees and quotas remain valid")
+			_check(game.score >= 0 and game.swaps_left() >= 0 and game.digs_left() >= 0, "Score stays nonnegative and quotas remain valid")
 			_check(game.hand.size() <= game.hand_limit and game.played.size() <= Config.MAX_PLAYS, "Hand and play limits")
 	print("Mixed action invariants: %d seeds, %d failures" % [Config.TEST_SAMPLES, failures])
 	quit(1 if failures else 0)

@@ -1,12 +1,12 @@
 # Combo 牌型清單
 
-`src/scenes/combo/combo.tscn` 已放入 gameplay 的 `(54, 101)`，位於關卡面板下方。每列使用共用的 `combo_row.tscn`，內容為「牌型 +分數」，文字與分數合成後置中。編輯器透過 `Preview Entries` 顯示「同花順 +200」、「葫蘆 +120」、「對子 +50」，資料集中於 `src/configs/combo/preview_*.tres`。執行 combo 或 gameplay 場景時，遊戲資料 `entries` 從空清單開始。遊戲每次操作後使用核心計分器採用的分組更新清單，名稱與基礎分依 `doc/spec.md` 的牌型規則顯示。每列保有方向、張數與參與座標，滑過時顯示詳細提示，對應場上卡牌以整組牌型中心平滑放大，移開後恢復。
+`src/scenes/combo/combo.tscn` 已放入 gameplay 的 `(54, 101)`，位於關卡面板下方。每列使用共用的 `combo_row.tscn`，內容為「牌型 +分數」，文字與分數合成後置中。編輯器透過 `Preview Entries` 顯示「同花順 +200」、「葫蘆 +120」、「對子 +50」，資料集中於 `src/configs/combo/preview_*.tres`。執行 combo 或 gameplay 場景時，遊戲資料 `entries` 從空清單開始。遊戲每次操作後使用核心計分器採用的分組更新清單，名稱與基礎分依 `doc/spec.md` 的階級選取結果顯示，基礎分為該組卡牌點數總和加上牌型達成分數。每列保有方向、張數與參與座標，滑過時顯示詳細提示，對應場上卡牌以整組牌型中心平滑放大，移開後恢復。
 
 ## 外觀與多國語系
 
-三張 `combo_frame_01`～`03` 為可上色素材，框色預設 `#6082B5`，文字為 `#D6E4FF`，陰影為 `#151C28`。框與陰影各使用 NinePatchRect，四側保留 8 px，文字加長時加寬中間區域，文字縮短時恢復到對應框形的原始寬度。文字透過 Godot 的 `tr(hand_name)` 翻譯牌型名稱，語系改變時重新量測文字與更新尺寸。
+三張 `combo_frame_01`～`03` 為可上色素材，框色預設 `#6082B5`，牌型文字為 `#D8E5FA`，分數為 `#FFF0C2`，陰影為 `#151C28`。框與陰影各使用 NinePatchRect，四側保留 8 px，文字加長時加寬中間區域，文字縮短時恢復到對應框形的原始寬度。文字透過 Godot 的 `tr(hand_name)` 翻譯牌型名稱，語系改變時重新量測文字與更新尺寸。
 
-選取 combo 根節點，可在 Inspector 設定 `Frame Color`、`Text Color` 與 `Shadow Color`。之後背景換色時，主題流程可同時設定這些屬性，框色會更新，文字與陰影維持各自指定的顏色。
+選取 combo 根節點，可在 Inspector 設定 `Frame Color`、`Text Color`、`Score Color` 與 `Shadow Color`。之後背景換色時，主題流程可同時設定這些屬性，框色會更新，文字與陰影維持各自指定的顏色。
 
 ## 隨機序列
 
@@ -16,10 +16,10 @@
 
 ## 動畫與完整清單
 
-新增或替換的牌型列從目標位置右側 24 px 向左滑入，位移使用 0.22 秒 ease-out 補間，透明度在 0.07 秒內由 0 升至 1。相同牌型的資料更新沿用目前列，維持既有動畫進度。清單依設定的可用寬高整體縮放，所有目前成立的項目同時可見；每組牌型在仍成立時持續保留，破壞後移除。執行時分數與牌型名稱各有獨立 Label，結算時在分數數字下層集中產生發光粒子，逐顆快速飛向中央分數場景，來源數字持續保留。結算依清單索引逐列播放，詳見 [結算分數演出](settlement.md)。
+新增或替換的牌型列從目標位置右側 24 px 向左滑入，位移使用 0.22 秒 ease-out 補間，透明度在 0.07 秒內由 0 升至 1。相同牌型的資料更新沿用目前列，維持既有動畫進度。清單以固定字級與原始比例向下排列，文字加長時由框形水平延展容納；每次盤面變化後依核心採用的分組更新完整清單，保留仍被採用的牌型列。結算時保留各列短暫放大再縮回的回饋。執行時分數與牌型名稱各有獨立 Label，結算時在分數數字下層集中產生發光粒子，逐顆快速飛向中央分數場景，來源數字持續保留。結算依清單索引逐列播放，詳見 [結算分數演出](settlement.md)。
 
 ## 資料與設定
 
 每個 `combo_entry.gd` Resource 包含 `hand_name` 與 `score`，執行時另附 `cells`、`direction` 與 `kind`。將同型別的 Resource 陣列指定給 `combo.entries` 可以取代整份清單；呼叫 `combo.add_result(hand_name, score)` 可新增一列，`combo.clear_results()` 可清空清單。修改既有 Resource 的名稱或分數會即時更新顯示，保持目前框形及偏移。
 
-顏色、字級、9-slice 邊界、文字留白、列距、偏移範圍、預抽長度、進場補間與可用區域設定集中於 `src/configs/combo/combo_config.gd`。清單位置由 gameplay 中的 combo 場景實例設定。`tests/combo/combo_sequence_test.gd` 驗證框形不連續重複、偏移範圍、索引穩定性，以及序列延伸與重新抽樣。
+顏色、字級、9-slice 邊界、文字留白、列距、偏移範圍、預抽長度、進場補間設定集中於 `src/configs/combo/combo_config.gd`。清單位置由 gameplay 中的 combo 場景實例設定。`tests/combo/combo_sequence_test.gd` 驗證框形不連續重複、偏移範圍、索引穩定性，以及序列延伸與重新抽樣。

@@ -1,12 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/scripts/boss/reaper_card.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://src/assets/reaper_card/reaper_bg.png" id="2_background"]
-
-[sub_resource type="SystemFont" id="SystemFont_title"]
-font_names = PackedStringArray("monospace")
-antialiasing = 0
-subpixel_positioning = 0
 
 [node name="reaper_card" type="Control"]
 editor_description = "死神卡片。Card Title 同步更新兩角直排名稱；Artwork 放卡面圖；Card Angle 在低解析度透明畫布內旋轉，保留像素邊緣。"
@@ -57,8 +52,7 @@ position = Vector2(5, 6)
 offset_right = 12.0
 offset_bottom = 62.0
 theme_override_colors/font_color = Color(0.06, 0.06, 0.07, 1)
-theme_override_fonts/font = SubResource("SystemFont_title")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 theme_override_constants/line_spacing = -3
 text = "J\nO\nK\nE\nR"
 horizontal_alignment = 1
@@ -71,8 +65,7 @@ rotation = 3.1415927
 offset_right = 12.0
 offset_bottom = 62.0
 theme_override_colors/font_color = Color(0.06, 0.06, 0.07, 1)
-theme_override_fonts/font = SubResource("SystemFont_title")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 theme_override_constants/line_spacing = -3
 text = "J\nO\nK\nE\nR"
 horizontal_alignment = 1

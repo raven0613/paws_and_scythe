@@ -1,12 +1,13 @@
 extends RefCounted
 
 const Config = preload("res://src/configs/gameplay/game_rules.gd")
+const Cards = preload("res://src/service/gameplay/cards.gd")
 const Patterns = preload("res://src/service/gameplay/poker_patterns.gd")
 
-static func evaluate(board: Dictionary, new_cards: Array, cost: int = 0) -> Dictionary:
+static func evaluate(board: Dictionary, new_cards: Array) -> Dictionary:
 	var groups: Array = []
 	var cells: Array = board.keys()
-	cells.sort_custom(func(a: Vector2i, b: Vector2i): return a.y < b.y or (a.y == b.y and a.x < b.x))
+	cells.sort_custom(_cell_before)
 	for direction in [Vector2i.RIGHT, Vector2i.DOWN]:
 		for start in cells:
 			if board.has(start - direction):
@@ -16,7 +17,7 @@ static func evaluate(board: Dictionary, new_cards: Array, cost: int = 0) -> Dict
 			while board.has(cell):
 				line.append(cell)
 				cell += direction
-			groups.append_array(_best_line(board, line, direction))
+			groups.append_array(_select_line(board, line, direction))
 	var base := 0.0
 	var used := {}
 	for group in groups:
@@ -26,41 +27,47 @@ static func evaluate(board: Dictionary, new_cards: Array, cost: int = 0) -> Dict
 	var high := 0
 	for card in board.values():
 		if new_cards.has(card) and not used.has(card):
-			high += Config.SCORES.high
-	var multiplier: float = 1 + maxi(0, groups.size() - 1) * Config.COMBO_STEP
+			high += Cards.points(card)
+	var multiplier := combo_multiplier(groups.size())
 	return {
 		"groups": groups, "base": base, "combo": groups.size(), "multiplier": multiplier,
-		"high": high, "cost": cost, "gross": base * multiplier,
-		"net": base * multiplier + high - cost,
+		"high": high, "total": (base + high) * multiplier,
 	}
 
-# 每個方向內為不重疊區間最佳化；同分依組數、參與張數、固定候選順序決定。
-static func _best_line(board: Dictionary, cells: Array, direction: Vector2i) -> Array:
-	var best: Array = []
-	best.resize(cells.size() + 1)
-	best[cells.size()] = {"score": 0.0, "count": 0, "used": 0, "groups": []}
-	for start in range(cells.size() - 1, -1, -1):
-		var winner: Dictionary = best[start + 1]
+static func combo_multiplier(count: int) -> float:
+	return 1 + maxi(0, count - 1) * Config.COMBO_STEP
+
+# 依階級、長度、位置依序占用區段，剩餘區段繼續採用可成立的牌型。
+static func _select_line(board: Dictionary, cells: Array, direction: Vector2i) -> Array:
+	var candidates: Array = []
+	for start in cells.size():
 		var cards: Array = [board[cells[start]]]
 		for end in range(start + 1, cells.size()):
 			cards.append(board[cells[end]])
 			for pattern in Patterns.candidates(cards):
-				var tail: Dictionary = best[end + 1]
-				var group: Dictionary = pattern.duplicate()
-				group.cells = cells.slice(start, end + 1)
-				group.direction = direction
-				var candidate := {
-					"score": pattern.score + tail.score,
-					"count": 1 + tail.count, "used": cards.size() + tail.used,
-					"groups": [group] + tail.groups,
-				}
-				if _better(candidate, winner):
-					winner = candidate
-		best[start] = winner
-	return best[0].groups
+				pattern.cells = cells.slice(start, end + 1)
+				pattern.direction = direction
+				candidates.append(pattern)
+	candidates.sort_custom(_priority_before)
+	var groups: Array = []
+	var used := {}
+	for group in candidates:
+		if group.cells.any(func(cell): return used.has(cell)):
+			continue
+		groups.append(group)
+		for cell in group.cells:
+			used[cell] = true
+	groups.sort_custom(func(a, b): return _cell_before(a.cells[0], b.cells[0]))
+	return groups
 
-static func _better(a: Dictionary, b: Dictionary) -> bool:
-	for key in ["score", "count", "used"]:
-		if a[key] != b[key]:
-			return a[key] > b[key]
-	return false
+static func _priority_before(a: Dictionary, b: Dictionary) -> bool:
+	var a_rank := Config.HAND_ORDER.find(a.kind)
+	var b_rank := Config.HAND_ORDER.find(b.kind)
+	if a_rank != b_rank:
+		return a_rank < b_rank
+	if a.cells.size() != b.cells.size():
+		return a.cells.size() > b.cells.size()
+	return _cell_before(a.cells[0], b.cells[0])
+
+static func _cell_before(a: Vector2i, b: Vector2i) -> bool:
+	return a.y < b.y or (a.y == b.y and a.x < b.x)

@@ -1,31 +1,29 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://cbkbfmnd018fh"]
 
-[ext_resource type="Script" path="res://src/scripts/score/score_counter.gd" id="1_counter"]
+[ext_resource type="Script" uid="uid://b4ewrjsmobsqw" path="res://src/scripts/score/score_counter.gd" id="1_counter"]
+[ext_resource type="PackedScene" path="res://src/scenes/score/combo_counter.tscn" id="2_combo"]
+[ext_resource type="Script" path="res://src/scripts/score/settlement_score.gd" id="3_layout"]
 
-[node name="settlement_score" type="Control"]
+[node name="settlement_score" type="Control" unique_id=1613915679]
+script = ExtResource("3_layout")
 visible = false
-layout_mode = 0
+layout_mode = 3
+anchors_preset = 0
 offset_right = 300.0
 offset_bottom = 134.0
 mouse_filter = 2
 
-[node name="caption" type="Label" parent="."]
-layout_mode = 0
+[node name="number" type="Control" parent="." unique_id=1423043973]
+anchors_preset = 0
 offset_right = 300.0
-offset_bottom = 25.0
-mouse_filter = 2
-horizontal_alignment = 1
-text = "本次得分"
-
-[node name="number" type="Control" parent="."]
-layout_mode = 0
-offset_top = 26.0
-offset_right = 300.0
-offset_bottom = 92.0
+offset_bottom = 80.0
 mouse_filter = 2
 script = ExtResource("1_counter")
 
-[node name="controls" type="HBoxContainer" parent="."]
+[node name="combo_counter" parent="." instance=ExtResource("2_combo")]
+
+[node name="controls" type="HBoxContainer" parent="." unique_id=769422398]
+visible = false
 layout_mode = 0
 offset_top = 102.0
 offset_right = 300.0
@@ -33,10 +31,12 @@ offset_bottom = 134.0
 mouse_filter = 2
 alignment = 1
 
-[node name="fast" type="CheckButton" parent="controls"]
+[node name="fast" type="CheckButton" parent="controls" unique_id=1102736376]
+visible = false
 layout_mode = 2
 text = "加速"
 
-[node name="skip" type="Button" parent="controls"]
+[node name="skip" type="Button" parent="controls" unique_id=1756860970]
+visible = false
 layout_mode = 2
 text = "跳過動畫"

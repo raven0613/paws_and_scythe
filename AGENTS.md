@@ -22,6 +22,8 @@
 - `src/configs`：遊戲所有數值設定相關。
 - `src/service`：遊戲邏輯。
 - `src/assets/`：圖片等資源。
+- `src/assets/fonts`：字體資源。
+- `/licenses`：憑證檔案。
 
 # 每個檔案必須
 
