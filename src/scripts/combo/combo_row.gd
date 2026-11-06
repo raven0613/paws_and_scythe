@@ -1,17 +1,23 @@
 @tool
 extends Control
 
+const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
+const Motion = preload("res://src/service/score/number_motion.gd")
 const Feedback = preload("res://src/configs/score/score_feedback_config.gd")
 const Config = preload("res://src/configs/combo/combo_config.gd")
+var _count = Motion.new()
+var description_text := ""
 
 @export var hand_name: String = "":
 	set(value):
 		hand_name = value
 		_refresh()
-@export var score: int = 0:
+@export var score: float = 0.0:
+	get:
+		return _count.current
 	set(value):
-		score = value
-		_refresh()
+		_count.reset(value)
+		_refresh_score()
 @export_enum("01", "02", "03") var frame_index: int = 0:
 	set(value):
 		frame_index = value
@@ -39,6 +45,11 @@ func _ready() -> void:
 	$caption/hand.minimum_size_changed.connect(_fit_text)
 	$caption/score.minimum_size_changed.connect(_fit_text)
 	_refresh()
+	if not Engine.is_editor_hint():
+		HoverInfo.bind_source(self, _hover_content)
+
+func _hover_content() -> Array:
+	return [Config.DETAILS_TITLE_FORMAT % [tr(hand_name), get_meta("cells", []).size()], description_text]
 
 
 func _notification(what: int) -> void:
@@ -59,7 +70,7 @@ func _refresh() -> void:
 	$frame.self_modulate = frame_color
 	$shadow.self_modulate = shadow_color
 	$caption/hand.text = tr(hand_name)
-	$caption/score.text = "%+d" % score
+	$caption/score.text = "+" + Numbers.number(score)
 	$caption/hand.add_theme_color_override("font_color", text_color)
 	$caption/score.add_theme_color_override("font_color", score_color)
 	for label in [$caption/hand, $caption/score]:
@@ -114,3 +125,28 @@ func prepare_settlement() -> void:
 
 func score_origin() -> Vector2:
 	return $caption/score.get_global_rect().get_center()
+
+func _refresh_score() -> void:
+	if is_node_ready():
+		$caption/score.text = "+" + Numbers.number(score)
+
+func begin_count(target: float) -> void:
+	_count.begin(target)
+	_refresh_score()
+	$caption/score.scale = Vector2.ONE
+	$caption/score.pivot_offset = $caption/score.size / 2
+
+func count_progress(progress: float) -> void:
+	_count.advance(progress)
+	_refresh_score()
+	$caption/score.pivot_offset = $caption/score.size / 2
+	$caption/score.scale = Motion.scale_at(progress)
+
+func finish_count() -> void:
+	_count.finish()
+	_refresh_score()
+	$caption/score.scale = Vector2.ONE
+
+func reset_feedback() -> void:
+	scale = Vector2.ONE
+	$caption/score.scale = Vector2.ONE

@@ -24,6 +24,7 @@ func _ready() -> void:
 	focus_exited.connect(_refresh)
 	_refresh()
 	if not Engine.is_editor_hint():
+		HoverInfo.bind_source(self, _hover_content)
 		modulate.a = 0.0
 		scale = Config.HIDDEN_SCALE
 		pivot_offset = size / 2
@@ -64,4 +65,6 @@ func _refresh() -> void:
 	$initial_hint.text = Config.INITIAL_HINT
 	$initial_hint.add_theme_color_override("font_color", Config.FRAME_COLOR)
 	$initial_hint.add_theme_font_size_override("font_size", Config.HINT_FONT_SIZE)
-	tooltip_text = Config.INITIAL_TOOLTIP if state == State.INITIAL else Config.AVAILABLE_TOOLTIP
+
+func _hover_content() -> Array:
+	return [Config.INITIAL_TOOLTIP if state == State.INITIAL else Config.AVAILABLE_TOOLTIP, ""]

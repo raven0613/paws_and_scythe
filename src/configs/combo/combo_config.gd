@@ -1,6 +1,8 @@
 @tool
 extends RefCounted
 
+const DETAILS_TITLE_FORMAT = "%s · %d 張"
+
 const FRAME_PATHS: PackedStringArray = [
 	"res://src/assets/combo_frame_01.png",
 	"res://src/assets/combo_frame_02.png",
@@ -23,3 +25,5 @@ const TEST_SEED_COUNT = 32
 const ENTER_OFFSET = 24.0
 const ENTER_DURATION = 0.22
 const FADE_DURATION = 0.07
+
+const EXCLUDED_COLOR = Color("777f92")

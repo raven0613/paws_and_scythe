@@ -4,9 +4,9 @@ extends Control
 const Config = preload("res://src/configs/score/score_feedback_config.gd")
 const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Scoring = preload("res://src/service/gameplay/scoring.gd")
+const Motion = preload("res://src/service/score/number_motion.gd")
 
-var _from := 1.0
-var _target := 1.0
+var _count = Motion.new()
 
 func _ready() -> void:
 	z_index = Config.NUMBER_LAYER
@@ -20,28 +20,24 @@ func _ready() -> void:
 	$heading.add_theme_constant_override("separation", Config.COMBO_TEXT_GAP)
 	if Engine.is_editor_hint():
 		begin_group(Config.COMBO_VISIBLE_FROM)
-		count_progress(1.0)
+		group_progress(1.0)
 	else:
 		reset()
 
 func reset() -> void:
 	hide()
-	_from = Scoring.combo_multiplier(0)
-	_target = _from
+	_count.reset(Scoring.combo_multiplier(0))
 	$heading/count.text = Numbers.number(0)
-	count_progress(1.0)
+	finish_count()
 
 func begin_group(count: int) -> void:
-	_from = _target
-	_target = Scoring.combo_multiplier(count)
+	begin_count(Scoring.combo_multiplier(count))
 	$heading/count.text = Numbers.number(count)
 	visible = count >= Config.COMBO_VISIBLE_FROM
-	count_progress(0.0)
+	group_progress(0.0)
 
-func count_progress(progress: float) -> void:
-	var amount := lerpf(_from, _target, 1.0 - pow(1.0 - progress, 2))
-	$multiplier.text = Config.MULTIPLIER_FORMAT % Numbers.multiplier(amount)
-	_update_pivots()
+func group_progress(progress: float) -> void:
+	count_progress(progress)
 	var pop := _pop_amount(progress)
 	$heading/count.scale = Vector2.ONE * lerpf(1.0, Config.COMBO_NUMBER_POP_SCALE, pop)
 	$heading/word.scale = Vector2.ONE * lerpf(1.0, Config.COMBO_WORD_POP_SCALE, pop)
@@ -62,3 +58,24 @@ func _update_pivots() -> void:
 func left_pop_margin() -> float:
 	var peak := maxf(Config.COMBO_NUMBER_POP_SCALE, maxf(Config.COMBO_WORD_POP_SCALE, Config.MULTIPLIER_POP_SCALE))
 	return size.x * maxf(0.0, peak - 1.0) / 2
+
+func begin_count(amount: float) -> void:
+	_count.begin(amount)
+	_refresh_multiplier()
+	$multiplier.scale = Vector2.ONE
+	show()
+
+func count_progress(progress: float) -> void:
+	_count.advance(progress)
+	_refresh_multiplier()
+	multiplier_feedback(progress)
+
+func finish_count() -> void:
+	_count.finish()
+	_refresh_multiplier()
+	for label in [$heading/count, $heading/word, $multiplier]:
+		label.scale = Vector2.ONE
+
+func _refresh_multiplier() -> void:
+	$multiplier.text = Config.MULTIPLIER_FORMAT % Numbers.multiplier(_count.current)
+	_update_pivots()

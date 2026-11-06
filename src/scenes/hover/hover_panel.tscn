@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/hover/hover_panel.gd" id="1_details"]
+
+[node name="hover_panel" type="Panel"]
+visible = false
+top_level = true
+mouse_filter = 2
+script = ExtResource("1_details")
+
+[node name="title" type="Label" parent="."]
+layout_mode = 0
+mouse_filter = 2
+autowrap_mode = 2
+
+[node name="description" type="Label" parent="."]
+layout_mode = 0
+mouse_filter = 2
+autowrap_mode = 2

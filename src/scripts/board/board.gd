@@ -83,6 +83,11 @@ func allows_camera_at(point: Vector2) -> bool:
 func set_camera_input_enabled(enabled: bool) -> void:
 	_camera.input_enabled = enabled
 
+func set_motion_paused(paused: bool) -> void:
+	_camera.motion_paused = paused
+	if paused:
+		reset_focus()
+
 func has_card_at(point: Vector2) -> bool:
 	for card in _cards.values():
 		if ViewArea.contains_point(card, point):

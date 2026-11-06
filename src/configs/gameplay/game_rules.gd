@@ -2,6 +2,7 @@ extends RefCounted
 
 const SUITS: Array[StringName] = [&"a", &"b", &"c", &"d"]
 const SUIT_NAMES = ["黑桃", "紅心", "方塊", "梅花"]
+const RED_SUITS = [1, 2]
 const SUIT_COLORS = [Color("203047"), Color("b7384c"), Color("b7384c"), Color("203047")]
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 const RANK_POINTS = [14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
@@ -29,11 +30,11 @@ const HAND_NAMES = {
 	"straight": "順子", "flush": "同花", "full_house": "葫蘆", "four": "四條", "straight_flush": "同花順",
 }
 const HAND_ORDER = ["straight_flush", "four", "full_house", "flush", "straight", "three", "two_pair", "pair"]
-# 每關重新構築、無能力成長；以緩升曲線要求更早成形及更有效的橫直交叉。
+# 以每三關增加一張貓牌、Lv 16 起五張的構築進度設計。
 const LEVEL_TARGETS = [
-	300, 375, 450, 525, 600, 700, 800,
-	900, 1000, 1125, 1250, 1375, 1500, 1650,
-	1800, 1950, 2100, 2275, 2450, 2650, 2850,
+	300, 650, 1000, 1600, 2200, 3000, 4000,
+	5000, 6500, 8000, 9500, 11000, 12500, 14000,
+	16000, 18000, 20000, 22000, 24000, 27000, 30000,
 ]
 const TEST_SEED = 72603
 const TEST_SAMPLES = 64

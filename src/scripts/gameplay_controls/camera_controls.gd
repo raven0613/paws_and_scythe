@@ -19,6 +19,8 @@ func _ready() -> void:
 	for button in get_children():
 		button.mouse_entered.connect(_refresh)
 		button.mouse_exited.connect(_refresh)
+		if not Engine.is_editor_hint():
+			HoverInfo.bind_source(button, func(): return [Config.HOVER_CAPTIONS[button.name], ""])
 	_refresh()
 
 func _on_auto_toggled(enabled: bool) -> void:

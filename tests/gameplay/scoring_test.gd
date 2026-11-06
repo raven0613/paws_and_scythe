@@ -8,6 +8,7 @@ var failures := 0
 func _init() -> void:
 	_test_hand_priority()
 	_test_card_points()
+	_test_contiguous_sets()
 	_check(Scoring.combo_multiplier(0) == Scoring.combo_multiplier(1), "Zero and one combo share the base multiplier")
 	var pair := _line([7, 7])
 	var result := Scoring.evaluate(pair, pair.values())
@@ -24,7 +25,7 @@ func _init() -> void:
 	_test_cyclic_straights()
 	_check(_score([6, 2, 4, 3, 5]).base == _expected("straight", [6, 2, 4, 3, 5]), "Poker ranks may be arranged in any order")
 	_check(_score([4, 4, 8, 8]).base == _expected("two_pair", [4, 4, 8, 8]), "Two pair")
-	_check(_score([4, 8, 4, 8, 4]).base == _expected("full_house", [4, 8, 4, 8, 4]), "Full house")
+	_check(_score([4, 4, 4, 8, 8]).base == _expected("full_house", [4, 4, 4, 8, 8]), "Full house")
 	_check(_score([4, 4, 4, 4]).base == _expected("four", [4, 4, 4, 4]), "Four of a kind")
 	var extended := _score([1, 2, 3, 4, 5, 6, 6, 6])
 	var expected := _expected("straight", [1, 2, 3, 4, 5, 6]) + _expected("pair", [6, 6])
@@ -95,10 +96,10 @@ func _test_hand_priority() -> void:
 	_check_groups(Scoring.evaluate(board, []), [["pair", 0, 2], ["full_house", 3, 8]], "Full house takes priority over flush and leaves a separate pair")
 	result = Scoring.evaluate(board, board.values())
 	_check(result.high == _rank_points([2]), "Only the unused new card receives fallback after selecting the full house and pair")
-	board = _line([2, 2, 13, 13, 2, 13])
+	board = _line([2, 2, 2, 13, 13, 13])
 	_check_groups(Scoring.evaluate(board, []), [["full_house", 0, 5]], "Position wins equal-rank equal-length ties even when the later hand has more card points")
 	result = Scoring.evaluate(board, board.values())
-	_check(result.base == _expected("full_house", [2, 2, 13, 13, 2]) and result.high == _rank_points([13]), "Only selected cards contribute to the hand; the unused new king receives fallback")
+	_check(result.base == _expected("full_house", [2, 2, 2, 13, 13]) and result.high == _rank_points([13]), "Only selected cards contribute to the hand; the unused new king receives fallback")
 	board = _line([2, 3, 4, 5, 6, 2])
 	_check_groups(Scoring.evaluate(board, []), [["straight", 0, 5]], "Equal-rank equal-length overlaps choose the leftmost group")
 	var vertical := {}
@@ -121,6 +122,29 @@ func _check_groups(result: Dictionary, expected: Array, message: String) -> void
 
 func _score(ranks: Array) -> Dictionary:
 	return Scoring.evaluate(_line(ranks), [])
+
+func _test_contiguous_sets() -> void:
+	for ranks in [[4, 4, 9, 9], [9, 9, 4, 4]]:
+		_check_groups(_score(ranks), [["two_pair", 0, ranks.size()]], "Two adjacent pairs qualify in either rank order")
+	for ranks in [[4, 4, 4, 9, 9], [9, 9, 4, 4, 4]]:
+		_check_groups(_score(ranks), [["full_house", 0, ranks.size()]], "Full house has adjacent triple and pair")
+	var cases := [
+		[[4, 9, 9, 4], [["pair", 1, 3]]],
+		[[4, 9, 4, 9], []],
+		[[4, 9, 4, 9, 4], []],
+		[[4, 4, 9, 9, 4], [["two_pair", 0, 4]]],
+		[[4, 9, 9, 4, 4], [["two_pair", 1, 5]]],
+		[[4, 9, 9, 9, 4], [["three", 1, 4]]],
+	]
+	for fixture in cases:
+		var board := _line(fixture[0])
+		var horizontal := Scoring.evaluate(board, [])
+		_check_groups(horizontal, fixture[1], "Separated equal ranks fall back to contiguous groups")
+		var vertical := {}
+		for cell in board:
+			vertical[Vector2i(0, cell.x)] = board[cell]
+		var result := Scoring.evaluate(vertical, [])
+		_check(result.base == horizontal.base and result.combo == horizontal.combo, "Vertical grouping follows the same contiguous rule")
 
 func _check(ok: bool, message: String) -> void:
 	if not ok:

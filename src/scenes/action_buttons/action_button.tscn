@@ -41,7 +41,6 @@ texture_filter = 1
 custom_minimum_size = Vector2(113, 39)
 offset_right = 113.0
 offset_bottom = 39.0
-tooltip_text = "結算"
 mouse_default_cursor_shape = 2
 theme_override_styles/normal = SubResource("StyleBox_empty")
 theme_override_styles/pressed = SubResource("StyleBox_empty")

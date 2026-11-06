@@ -3,13 +3,18 @@ extends RefCounted
 const Config = preload("res://src/configs/gameplay/game_rules.gd")
 const Cards = preload("res://src/service/gameplay/cards.gd")
 
-# 回傳連續格子的合法牌型與基礎分，分組器依牌型階級選取。
-static func candidates(cards: Array) -> Array:
+# 回傳連續格子的合法牌型與分數，分組器依牌型階級選取。
+static func candidates(cards: Array, extended_min: int = Config.EXTENDED_MIN) -> Array:
 	var counts := {}
 	var same_suit := true
 	var card_points := 0
+	var rank_runs := 0
+	var previous_rank := -1
 	for card in cards:
 		var rank_value := Cards.rank(card)
+		if rank_value != previous_rank:
+			rank_runs += 1
+		previous_rank = rank_value
 		card_points += Cards.points(card)
 		counts[rank_value] = counts.get(rank_value, 0) + 1
 		same_suit = same_suit and Cards.suit(card) == Cards.suit(cards[0])
@@ -18,11 +23,15 @@ static func candidates(cards: Array) -> Array:
 	var kinds: Array = []
 	match frequencies:
 		[2]: kinds.append("pair")
-		[2, 2]: kinds.append("two_pair")
+		[2, 2]:
+			if rank_runs == 2:
+				kinds.append("two_pair")
 		[3]: kinds.append("three")
-		[2, 3]: kinds.append("full_house")
+		[2, 3]:
+			if rank_runs == 2:
+				kinds.append("full_house")
 		[4]: kinds.append("four")
-	if cards.size() >= Config.EXTENDED_MIN:
+	if cards.size() >= extended_min:
 		var straight := _is_straight(counts, cards.size())
 		if straight:
 			kinds.append("straight")

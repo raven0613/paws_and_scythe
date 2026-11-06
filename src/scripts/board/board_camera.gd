@@ -5,6 +5,11 @@ const Config = preload("res://src/configs/board/board_config.gd")
 const Layout = preload("res://src/service/board/board_layout.gd")
 const CameraInput = preload("res://src/scripts/board/board_camera_input.gd")
 var auto_follow := true
+var motion_paused := false:
+	set(value):
+		motion_paused = value
+		if value:
+			stop_motion()
 var input_enabled := true:
 	set(value):
 		input_enabled = value
@@ -37,6 +42,8 @@ func _on_resized() -> void:
 		fit_view.call_deferred()
 
 func fit_view() -> void:
+	if motion_paused:
+		return
 	var occupied: Array[Vector2i] = _board.get_occupied_cells()
 	var bounds := Layout.get_fit_bounds(occupied)
 	var safe: Rect2 = _board.get_fit_rect()

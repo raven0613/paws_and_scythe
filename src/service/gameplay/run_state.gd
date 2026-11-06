@@ -4,8 +4,12 @@ const Config = preload("res://src/configs/gameplay/game_rules.gd")
 const Deck = preload("res://src/service/gameplay/deck.gd")
 const Scoring = preload("res://src/service/gameplay/scoring.gd")
 const BoardRules = preload("res://src/service/board/board_rules.gd")
+const CatLoadout = preload("res://src/service/cat_cards/cat_loadout.gd")
+const CatRules = preload("res://src/service/cat_cards/rule_modifiers.gd")
+const CatResolver = preload("res://src/service/cat_cards/cat_resolver.gd")
 enum Status { PLAYING, LEVEL_CLEARED, WON, LOST }
 
+var cats = CatLoadout.new()
 var deck = Deck.new()
 var money := Config.STARTING_MONEY
 var last_draw: Array[Dictionary] = []
@@ -23,7 +27,9 @@ var hand_limit := Config.HAND_LIMIT
 var status := Status.PLAYING
 var loss_reason := ""
 
-func start(seed_value: int = -1) -> void:
+func start(seed_value: int = -1, selected_cats: Array = []) -> void:
+	var valid := cats.select(selected_cats)
+	assert(valid, "Invalid cat selection")
 	if seed_value < 0:
 		deck.rng.randomize()
 	else:
@@ -33,6 +39,7 @@ func start(seed_value: int = -1) -> void:
 	_begin_level()
 
 func _begin_level() -> void:
+	cats.begin_level()
 	board.clear()
 	deck.reset()
 	last_draw.clear()
@@ -155,14 +162,27 @@ func reserved_cards() -> Array:
 			result.append(action.card)
 	return result
 
-func preview() -> Dictionary:
-	return Scoring.evaluate(board, played)
+func board_limit() -> int:
+	return CatRules.board_limit(cats.ids)
 
-func settle() -> Dictionary:
+func cat_state() -> Dictionary:
+	return {
+		"hand_count": hand.size(), "settlements": cats.settlements,
+		"swaps": swaps_used, "digs": digs_used,
+		"discards_used": Config.DISCARDS - discards_left, "discards_left": discards_left,
+		"operations": cats.operations + swaps_used + digs_used,
+	}
+
+func preview() -> Dictionary:
+	var raw := Scoring.evaluate(board, played, CatRules.extended_min(cats.ids))
+	return CatResolver.resolve(raw, board, cats.ids, cat_state())
+
+func settle(snapshot: Dictionary = {}) -> Dictionary:
 	if not can_settle():
 		return {}
 	last_draw.clear()
-	var result := preview()
+	var result := preview() if snapshot.is_empty() else snapshot
+	cats.commit(swaps_used + digs_used)
 	score += result.total
 	turns_left -= 1
 	# 可撤銷的挖牌在確認後進入可洗回的棄牌堆。
@@ -170,7 +190,7 @@ func settle() -> Dictionary:
 	_clear_turn()
 	if score >= target():
 		status = Status.WON if level == Config.LEVEL_TARGETS.size() else Status.LEVEL_CLEARED
-	elif board.size() >= Config.BOARD_LIMIT:
+	elif board.size() >= board_limit():
 		_lose("場上牌數已達上限")
 	elif turns_left == 0:
 		_lose("結算次數已用完")

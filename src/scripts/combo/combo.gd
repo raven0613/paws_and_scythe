@@ -54,7 +54,7 @@ func reroll_layout() -> void:
 	_rebuild_rows()
 
 
-func add_result(hand_name: String, score: int) -> void:
+func add_result(hand_name: String, score: float) -> void:
 	var entry := Entry.new()
 	entry.hand_name = hand_name
 	entry.score = score
@@ -94,13 +94,14 @@ func _rebuild_rows() -> void:
 		var changed_group: bool = fresh or row.get_meta("cells", []) != entry.cells or row.hand_name != entry.hand_name
 		row.hand_name = entry.hand_name
 		row.score = entry.score
+		row.modulate = Color.WHITE
 		row.frame_index = layout.frame_index
 		row.frame_color = frame_color
 		row.text_color = text_color
 		row.score_color = score_color
 		row.shadow_color = shadow_color
 		row.set_meta("cells", entry.cells)
-		row.tooltip_text = "%s · %s · %d 張\n%s" % [entry.hand_name, "橫向" if entry.direction == Vector2i.RIGHT else "直向", entry.cells.size(), str(entry.cells)]
+		row.description_text = entry.breakdown
 		if fresh:
 			row.position.x = layout.offset_x
 			$rows.add_child(row)
@@ -134,4 +135,4 @@ func get_row(index: int) -> Control:
 
 func reset_feedback() -> void:
 	for row in $rows.get_children():
-		row.scale = Vector2.ONE
+		row.reset_feedback()

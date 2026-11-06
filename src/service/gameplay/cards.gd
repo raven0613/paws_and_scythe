@@ -16,3 +16,6 @@ static func suit(card: int) -> int:
 
 static func caption(card: int) -> String:
 	return Config.SUIT_NAMES[suit(card)] + Config.RANKS[rank(card) - 1]
+
+static func is_red(card: int) -> bool:
+	return Config.RED_SUITS.has(suit(card))

@@ -3,7 +3,10 @@
 [ext_resource type="Texture2D" uid="uid://cxo3f6mtg7vup" path="res://src/assets/cat_card/cat_card_shadow.png" id="1_xkvg3"]
 [ext_resource type="Texture2D" path="res://src/assets/cat_card/cat_card_match.png" id="2_artwork"]
 
+[ext_resource type="Script" path="res://src/scripts/cat_cards/cat_card_view.gd" id="3_view"]
+
 [node name="cat_card_match" type="Control" unique_id=1423156673]
+script = ExtResource("3_view")
 texture_filter = 1
 custom_minimum_size = Vector2(73, 92)
 layout_mode = 3

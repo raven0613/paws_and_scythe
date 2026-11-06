@@ -19,14 +19,12 @@ script = ExtResource("1_script")
 [node name="done" parent="." unique_id=1349553483 instance=ExtResource("2_button")]
 layout_mode = 2
 size_flags_vertical = 4
-tooltip_text = "結算"
 remaining_count = 6
 
 [node name="remove" parent="." unique_id=1960823655 instance=ExtResource("2_button")]
 custom_minimum_size = Vector2(90, 30)
 layout_mode = 2
 size_flags_vertical = 4
-tooltip_text = "挖牌"
 definition = ExtResource("4_remove")
 remaining_count = 2
 
@@ -34,7 +32,6 @@ remaining_count = 2
 custom_minimum_size = Vector2(87, 30)
 layout_mode = 2
 size_flags_vertical = 4
-tooltip_text = "交換"
 definition = ExtResource("5_swap")
 remaining_count = 2
 
@@ -42,7 +39,6 @@ remaining_count = 2
 custom_minimum_size = Vector2(82, 29)
 layout_mode = 2
 size_flags_vertical = 4
-tooltip_text = "棄牌"
 definition = ExtResource("6_discard")
 remaining_count = 4
 
@@ -50,5 +46,4 @@ remaining_count = 4
 custom_minimum_size = Vector2(81, 30)
 layout_mode = 2
 size_flags_vertical = 4
-tooltip_text = "撤銷"
 definition = ExtResource("7_undo")

@@ -17,6 +17,7 @@ const Cards = preload("res://src/service/gameplay/cards.gd")
 			_marks.queue_redraw()
 
 var card_id := -1
+var description_text := ""
 var selected := false
 var mark_colors: Array = []
 var target_selected := false
@@ -31,6 +32,11 @@ func _ready() -> void:
 	mouse_exited.connect(_marks.queue_redraw)
 	focus_entered.connect(_marks.queue_redraw)
 	focus_exited.connect(_marks.queue_redraw)
+	if not Engine.is_editor_hint():
+		HoverInfo.bind_source(self, _hover_content)
+
+func _hover_content() -> Array:
+	return [Cards.caption(card_id), description_text] if card_id >= 0 else ["", ""]
 
 func set_card(value: int) -> void:
 	card_id = value
@@ -40,7 +46,7 @@ func set_card(value: int) -> void:
 	for corner in [$face/top_left, $face/bottom_right]:
 		corner.get_node("rank").text = Rules.RANKS[Cards.rank(value) - 1]
 		corner.get_node("small").animation = Rules.SUITS[suit]
-	tooltip_text = Cards.caption(value)
+	description_text = ""
 
 func set_marks(colors: Array, target: bool = false) -> void:
 	mark_colors = colors

@@ -19,7 +19,6 @@ texture_normal = ExtResource("2_auto")
 stretch_mode = 3
 toggle_mode = true
 button_pressed = true
-tooltip_text = "自動追蹤牌陣"
 mouse_default_cursor_shape = 2
 
 [node name="reset" type="TextureButton" parent="."]
@@ -29,7 +28,6 @@ offset_right = 26.0
 offset_bottom = 52.0
 texture_normal = ExtResource("3_reset")
 stretch_mode = 3
-tooltip_text = "框住全部場上卡牌"
 mouse_default_cursor_shape = 2
 
 [node name="zoom_in" type="TextureButton" parent="."]
@@ -39,7 +37,6 @@ offset_right = 29.0
 offset_bottom = 80.0
 texture_normal = ExtResource("4_in")
 stretch_mode = 3
-tooltip_text = "拉近"
 mouse_default_cursor_shape = 2
 
 [node name="zoom_out" type="TextureButton" parent="."]
@@ -49,5 +46,4 @@ offset_right = 32.0
 offset_bottom = 108.0
 texture_normal = ExtResource("5_out")
 stretch_mode = 3
-tooltip_text = "拉遠"
 mouse_default_cursor_shape = 2

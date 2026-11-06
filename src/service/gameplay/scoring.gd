@@ -4,7 +4,7 @@ const Config = preload("res://src/configs/gameplay/game_rules.gd")
 const Cards = preload("res://src/service/gameplay/cards.gd")
 const Patterns = preload("res://src/service/gameplay/poker_patterns.gd")
 
-static func evaluate(board: Dictionary, new_cards: Array) -> Dictionary:
+static func evaluate(board: Dictionary, new_cards: Array, extended_min: int = Config.EXTENDED_MIN) -> Dictionary:
 	var groups: Array = []
 	var cells: Array = board.keys()
 	cells.sort_custom(_cell_before)
@@ -17,7 +17,7 @@ static func evaluate(board: Dictionary, new_cards: Array) -> Dictionary:
 			while board.has(cell):
 				line.append(cell)
 				cell += direction
-			groups.append_array(_select_line(board, line, direction))
+			groups.append_array(_select_line(board, line, direction, extended_min))
 	var base := 0.0
 	var used := {}
 	for group in groups:
@@ -38,13 +38,13 @@ static func combo_multiplier(count: int) -> float:
 	return 1 + maxi(0, count - 1) * Config.COMBO_STEP
 
 # 依階級、長度、位置依序占用區段，剩餘區段繼續採用可成立的牌型。
-static func _select_line(board: Dictionary, cells: Array, direction: Vector2i) -> Array:
+static func _select_line(board: Dictionary, cells: Array, direction: Vector2i, extended_min: int) -> Array:
 	var candidates: Array = []
 	for start in cells.size():
 		var cards: Array = [board[cells[start]]]
 		for end in range(start + 1, cells.size()):
 			cards.append(board[cells[end]])
-			for pattern in Patterns.candidates(cards):
+			for pattern in Patterns.candidates(cards, extended_min):
 				pattern.cells = cells.slice(start, end + 1)
 				pattern.direction = direction
 				candidates.append(pattern)

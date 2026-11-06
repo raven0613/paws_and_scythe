@@ -15,10 +15,12 @@ run/main_scene="res://src/nodes/gameplay.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+HoverInfo="*res://src/scripts/hover/hover_info.gd"
+
 [display]
 
-window/size/viewport_width=1152
-window/size/viewport_height=648
 window/size/mode=4
 window/size/window_width_override=1920
 window/size/window_height_override=1080
@@ -35,8 +37,8 @@ theme/custom="res://src/configs/fonts/game_theme.tres"
 
 [rendering]
 
-textures/vram_compression/import_etc2_astc=true
 textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

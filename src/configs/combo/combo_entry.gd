@@ -6,7 +6,7 @@ extends Resource
 		hand_name = value
 		emit_changed()
 
-@export var score: int = 0:
+@export var score: float = 0.0:
 	set(value):
 		score = value
 		emit_changed()
@@ -14,3 +14,5 @@ extends Resource
 var cells: Array = []
 var direction := Vector2i.RIGHT
 var kind := ""
+
+var breakdown := ""

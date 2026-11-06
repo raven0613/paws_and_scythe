@@ -7,27 +7,34 @@ const Cards = preload("res://src/service/gameplay/cards.gd")
 const Entry = preload("res://src/configs/combo/combo_entry.gd")
 const CardScene = preload("res://src/scenes/playing_card.tscn")
 const Dealer = preload("res://src/scripts/hand_area/hand_dealer.gd")
+const CatPicker = preload("res://src/scenes/cat_cards/cat_picker.tscn")
+const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Presenter = preload("res://src/scripts/gameplay/settlement_presenter.gd")
+const CardAnimator = preload("res://src/scripts/playing_card/card_action_animator.gd")
 
 var game = Run.new()
 var _views: Dictionary = {}
 var _reserve := Node2D.new()
 var _presenter := Presenter.new()
 var _dealer := Dealer.new()
+var _card_animator := CardAnimator.new()
 var _mode: StringName = &""
 var _swap_first: Variant = null
 var _busy := false
 var _preview: Dictionary = {}
+var _picker: Control
+var _settlement_snapshot: Dictionary = {}
 
 func _ready() -> void:
 	_reserve.name = "card_reserve"
 	_reserve.visible = false
 	add_child(_reserve)
 	add_child(_dealer)
+	add_child(_card_animator)
 	_dealer.completed.connect(_finish_deal)
 	_dealer.card_emitted.connect($resources_display.set_deck_count)
 	add_child(_presenter)
-	_presenter.setup($settlement_score, $combo, $level_board, self)
+	_presenter.setup($settlement_score, $combo, $level_board, $cat_card_area, self)
 	_presenter.completed.connect(_complete_settlement)
 	$hand_area.clear_preview()
 	$hand_area.selection_changed.connect(_on_hand_selection_changed)
@@ -43,13 +50,27 @@ func _ready() -> void:
 	]
 	$board.configure_view($gameplay_frame, camera_overlays)
 	$gameplay_hud.continue_requested.connect(_next_level)
-	$gameplay_hud.restart_requested.connect(_start_run)
-	_start_run()
+	$gameplay_hud.restart_requested.connect(_open_picker)
+	$cat_card_area.order_changed.connect(_on_cat_order_changed)
+	_picker = CatPicker.instantiate()
+	add_child(_picker)
+	_picker.confirmed.connect(_start_run)
+	_open_picker()
 
-func _start_run() -> void:
+func _open_picker() -> void:
+	_busy = true
+	$gameplay_hud.hide_outcome()
+	_update_input()
+	_picker.open(game.cats.ids)
+
+func _on_cat_order_changed(ids: Array) -> void:
+	if not _busy and game.cats.reorder(ids):
+		_refresh()
+
+func _start_run(selected_cats: Array) -> void:
 	_busy = true
 	_clear_selection()
-	game.start()
+	game.start(-1, selected_cats)
 	$level_board.reset_score(game.score)
 	$gameplay_hud.hide_outcome()
 	$combo.clear_results()
@@ -95,15 +116,19 @@ func _refresh() -> void:
 	$hand_area.show_cards(hand_views)
 	_preview = game.preview()
 	var entries: Array[Entry] = []
-	for group in _preview.groups:
+	for index in _preview.groups.size():
+		var group: Dictionary = _preview.groups[index]
 		var entry := Entry.new()
 		entry.hand_name = Rules.HAND_NAMES[group.kind]
-		entry.score = int(group.score)
+		entry.score = group.original_score
+		entry.breakdown = CatText.breakdown(_preview, index, game.board)
 		entry.cells = group.cells
 		entry.direction = group.direction
 		entry.kind = group.kind
 		entries.append(entry)
 	$combo.entries = entries
+	$cat_card_area.show_loadout(game.cats.ids, game.cat_state())
+	$resources_display.set_board_count(game.board.size(), game.board_limit())
 	$level_board.level = game.level
 	$level_board.current_score = game.score
 	$level_board.target_score = game.target()
@@ -119,16 +144,35 @@ func _on_card_requested(card: Control) -> void:
 	var cell: Vector2i = game.board.find_key(card.card_id)
 	if _mode == &"remove":
 		if game.dig(cell):
-			_refresh()
+			_begin_card_action()
+			await _card_animator.play_dig(card)
+			_finish_card_action()
 	elif _mode == &"swap":
 		if _swap_first == null:
 			_swap_first = cell
 		elif _swap_first == cell:
 			_swap_first = null
 		else:
-			game.swap(_swap_first, cell)
+			var first: Control = _views[game.board[_swap_first]]
+			var swapped: bool = game.swap(_swap_first, cell)
 			_swap_first = null
+			if swapped:
+				_begin_card_action()
+				await _card_animator.play_swap(first, card)
+				_finish_card_action()
+				return
 		_refresh()
+
+func _begin_card_action() -> void:
+	_busy = true
+	$board.set_motion_paused(true)
+	_update_input()
+
+func _finish_card_action() -> void:
+	$board.set_motion_paused(false)
+	_busy = false
+	_refresh()
+	$board.reset_view()
 
 func _on_hand_selection_changed() -> void:
 	_mode = &""
@@ -159,12 +203,20 @@ func _on_action_requested(action_id: StringName) -> void:
 				_busy = true
 				_clear_selection()
 				_update_input()
-				_presenter.play(_preview, game.score)
+				_settlement_snapshot = _preview
+				_presenter.play(_settlement_snapshot, game.score)
 		&"discard":
-			if game.discard($hand_area.get_selected_ids()):
-				_busy = true
+			var selected: Array = $hand_area.get_selected_ids()
+			if game.discard(selected):
+				var outgoing: Array[Control] = []
+				for id in selected:
+					outgoing.append(_views[id])
+				_begin_card_action()
+				await _card_animator.play_discard(outgoing)
+				$board.set_motion_paused(false)
 				_clear_selection()
 				_refresh_and_deal()
+				$board.reset_view()
 		&"undo":
 			if game.undo():
 				_clear_selection()
@@ -179,7 +231,8 @@ func _on_action_requested(action_id: StringName) -> void:
 			_refresh_marks()
 
 func _complete_settlement() -> void:
-	game.settle()
+	game.settle(_settlement_snapshot)
+	_settlement_snapshot = {}
 	$combo.reroll_layout()
 	_refresh_and_deal()
 
@@ -201,6 +254,7 @@ func _finish_deal() -> void:
 
 func _update_input() -> void:
 	var active: bool = not _busy and game.status == Run.Status.PLAYING
+	$cat_card_area.set_interaction_enabled(active)
 	if (_mode == &"remove" and not game.can_dig()) or (_mode == &"swap" and not game.can_swap()):
 		_mode = &""
 		_swap_first = null
@@ -213,11 +267,11 @@ func _update_input() -> void:
 	for cell in game.board:
 		var card: Control = _views[game.board[cell]]
 		card.selection_enabled = active and _mode in [&"swap", &"remove"]
-		card.tooltip_text = Cards.caption(card.card_id)
+		card.description_text = ""
 		if _mode == &"remove":
-			card.tooltip_text += "\n挖牌 −%d 分 · 剩餘 %d 次" % [Rules.DIG_COST, game.digs_left()]
+			card.description_text = "挖牌 −%d 分 · 剩餘 %d 次" % [Rules.DIG_COST, game.digs_left()]
 		elif _mode == &"swap":
-			card.tooltip_text += "\n交換 −%d 分 · 剩餘 %d 次" % [game.next_swap_cost(), game.swaps_left()]
+			card.description_text = "交換 −%d 分 · 剩餘 %d 次" % [game.next_swap_cost(), game.swaps_left()]
 	var actions := $action_buttons
 	actions.get_node("done").remaining_count = game.turns_left
 	actions.get_node("remove").remaining_count = game.digs_left()

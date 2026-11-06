@@ -60,12 +60,13 @@ offset_right = 670.0
 offset_bottom = 54.0
 
 [node name="combo" parent="." unique_id=1602632391 instance=ExtResource("11_combo")]
-custom_minimum_size = Vector2(127, 104)
+custom_minimum_size = Vector2(128, 94)
 anchors_preset = 0
 offset_left = 54.0
 offset_top = 101.0
-offset_right = 181.0
-offset_bottom = 205.0
+offset_right = 182.0
+offset_bottom = 195.0
+text_color = Color(0.8392157, 0.89411765, 1, 1)
 
 [node name="cat_card_area" parent="." unique_id=15474241 instance=ExtResource("5_cats")]
 layout_mode = 1
@@ -112,9 +113,9 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -406.0
+offset_left = -446.0
 offset_top = 8.0
-offset_right = -266.0
+offset_right = -242.0
 offset_bottom = 36.0
 grow_horizontal = 0
 

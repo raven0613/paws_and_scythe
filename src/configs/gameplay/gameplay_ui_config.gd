@@ -9,4 +9,7 @@ static func number(value: float) -> String:
 	return str(roundi(value))
 
 static func multiplier(value: float) -> String:
-	return "%.1f" % value
+	return ("%.2f" % value).trim_suffix("0") if is_equal_approx(value * 10, round(value * 10)) else "%.2f" % value
+
+static func precise(value: float) -> String:
+	return ("%.2f" % value).trim_suffix("0").trim_suffix("0").trim_suffix(".")

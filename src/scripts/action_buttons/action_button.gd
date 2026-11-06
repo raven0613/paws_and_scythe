@@ -36,6 +36,8 @@ func _ready() -> void:
 	_counter.minimum_size_changed.connect(_position_counter)
 	resized.connect(_layout_visuals)
 	_apply_definition()
+	if not Engine.is_editor_hint():
+		HoverInfo.bind_source(self, func(): return [definition.caption, ""])
 
 
 func _apply_definition() -> void:
@@ -59,7 +61,6 @@ func _apply_definition() -> void:
 	_count_label.add_theme_color_override("font_color", definition.count_color)
 	_count_label.add_theme_color_override("font_outline_color", Config.COUNT_OUTLINE_COLOR)
 	_count_label.add_theme_constant_override("outline_size", Config.COUNT_OUTLINE_SIZE)
-	tooltip_text = definition.caption
 	_update_counter()
 	_refresh_minimum_size()
 	queue_redraw()

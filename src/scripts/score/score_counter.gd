@@ -3,12 +3,14 @@ extends Control
 
 signal layout_changed
 
+const Motion = preload("res://src/service/score/number_motion.gd")
 const Config = preload("res://src/configs/score/score_feedback_config.gd")
 const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Fonts = preload("res://src/service/fonts/font_library.gd")
-var value := 0.0
-var _from := 0.0
-var _target := 0.0
+var _count = Motion.new()
+var value: float:
+	get:
+		return _count.current
 var _font: Font
 var _digit_width := 0.0
 var _sign_width := 0.0
@@ -41,36 +43,24 @@ func _refresh() -> void:
 		layout_changed.emit()
 
 func set_value(amount: float) -> void:
-	value = amount
+	_count.reset(amount)
 	scale = Vector2.ONE
 	_refresh()
 
 func begin_count(target: float) -> void:
-	_from = value
-	_target = target
+	_count.begin(target)
 	scale = Vector2.ONE
 	_refresh()
 
 func count_progress(progress: float) -> void:
-	var distance := absf(_target - _from)
-	var tail := minf(Config.COUNT_TAIL, distance)
-	var direction := signf(_target - _from)
-	if progress < Config.COUNT_MAIN_RATIO:
-		var k := progress / Config.COUNT_MAIN_RATIO
-		value = _from + direction * (distance - tail) * k
-	else:
-		var k := (progress - Config.COUNT_MAIN_RATIO) / (1.0 - Config.COUNT_MAIN_RATIO)
-		value = _target - direction * tail * (1.0 - k)
-	var pop := 0.0
-	if progress >= Config.NUMBER_POP_START and progress < Config.NUMBER_POP_PEAK:
-		pop = sin((progress - Config.NUMBER_POP_START) / (Config.NUMBER_POP_PEAK - Config.NUMBER_POP_START) * PI / 2)
-	elif progress >= Config.NUMBER_POP_PEAK:
-		pop = sin((1.0 - progress) / (1.0 - Config.NUMBER_POP_PEAK) * PI / 2)
-	scale = Vector2.ONE * lerpf(1.0, Config.NUMBER_POP_SCALE, pop)
-	if progress >= 1.0:
-		set_value(_target)
-	else:
-		_refresh()
+	_count.advance(progress)
+	scale = Motion.scale_at(progress)
+	_refresh()
+
+func finish_count() -> void:
+	_count.finish()
+	scale = Vector2.ONE
+	_refresh()
 
 func layout_right() -> float:
 	var half_width := (_reserved_width / 2 + Config.NUMBER_OUTLINE_SIZE) * maxf(1.0, Config.NUMBER_POP_SCALE)
