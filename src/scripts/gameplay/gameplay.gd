@@ -191,8 +191,10 @@ func _place_selected_card(cell: Vector2i) -> void:
 	if _busy or selected.size() != 1 or _mode != &"":
 		return
 	if game.place(selected[0], cell):
+		_begin_card_action()
+		await _card_animator.play_place(_views[selected[0]], $board.card_destination(cell))
 		_clear_selection()
-		_refresh()
+		_finish_card_action()
 
 func _on_action_requested(action_id: StringName) -> void:
 	if _busy or game.status != Run.Status.PLAYING:

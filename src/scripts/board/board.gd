@@ -33,6 +33,9 @@ func get_occupied_cells() -> Array[Vector2i]:
 func can_place(cell: Vector2i) -> bool:
 	return Rules.can_place(get_occupied_cells(), cell)
 
+func card_destination(cell: Vector2i) -> Transform2D:
+	return $content/cards.get_global_transform_with_canvas() * Transform2D(0.0, Layout.cell_position(cell))
+
 func show_cards(cards: Dictionary) -> void:
 	reset_focus()
 	var previous_cells := get_occupied_cells()

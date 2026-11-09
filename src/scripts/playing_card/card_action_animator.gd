@@ -6,6 +6,19 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.randomize()
 
+func play_place(card: Control, destination: Transform2D) -> void:
+	var pose := _capture(card)
+	# 在手牌座標系內完成飛行，保留選取抬高的位置及其餘手牌槽位。
+	var target: Transform2D = card.get_parent().get_global_transform_with_canvas().affine_inverse() * destination
+	var target_position := target * card.pivot_offset - card.pivot_offset
+	var timeline := create_tween()
+	timeline.tween_method(_place_progress.bind(card, pose, target_position, target.get_scale(), target.get_rotation()), 0.0, 1.0, Config.PLACE_FLIGHT_DURATION)
+	timeline.tween_property(card, "scale", target.get_scale() * Config.PLACE_PRESS_SCALE, Config.PLACE_PRESS_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	timeline.tween_property(card, "scale", target.get_scale(), Config.PLACE_RELEASE_DURATION).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await timeline.finished
+	# 控制器在同一幀將原卡牌移交盤面，沿用盤面的正常局部尺寸。
+	_restore(card, pose)
+
 func play_swap(first: Control, second: Control) -> void:
 	var first_pose := _capture(first)
 	var second_pose := _capture(second)
@@ -57,6 +70,13 @@ func _restore(card: Control, pose: Dictionary) -> void:
 	card.scale = pose.scale
 	card.modulate = pose.modulate
 	card.z_index = pose.z_index
+
+func _place_progress(progress: float, card: Control, pose: Dictionary, target: Vector2, target_scale: Vector2, target_rotation: float) -> void:
+	var travel := 1.0 - pow(1.0 - progress, 3.0)
+	var arc := Vector2.UP * card.size.y * Config.PLACE_ARC_HEIGHT * sin(PI * travel)
+	card.position = pose.position.lerp(target, travel) + arc
+	card.scale = pose.scale.lerp(target_scale, travel)
+	card.rotation = lerp_angle(pose.rotation, target_rotation, travel)
 
 func _swap_progress(progress: float, first: Control, second: Control, from: Vector2, to: Vector2) -> void:
 	var travel := smoothstep(0.0, 1.0, progress)
