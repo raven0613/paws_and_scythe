@@ -26,7 +26,7 @@ var _marks: Node2D
 func _ready() -> void:
 	_marks = Node2D.new()
 	_marks.name = "highlights"
-	add_child(_marks)
+	$visual.add_child(_marks)
 	_marks.draw.connect(_draw_marks)
 	mouse_entered.connect(_marks.queue_redraw)
 	mouse_exited.connect(_marks.queue_redraw)
@@ -41,9 +41,9 @@ func _hover_content() -> Array:
 func set_card(value: int) -> void:
 	card_id = value
 	var suit := Cards.suit(value)
-	$face.modulate = Rules.SUIT_COLORS[suit]
-	$face/big.animation = Rules.SUITS[suit]
-	for corner in [$face/top_left, $face/bottom_right]:
+	$visual/face.modulate = Rules.SUIT_COLORS[suit]
+	$visual/face/big.animation = Rules.SUITS[suit]
+	for corner in [$visual/face/top_left, $visual/face/bottom_right]:
 		corner.get_node("rank").text = Rules.RANKS[Cards.rank(value) - 1]
 		corner.get_node("small").animation = Rules.SUITS[suit]
 	description_text = ""
@@ -72,3 +72,6 @@ func _draw_marks() -> void:
 		_marks.draw_rect(Rect2(Vector2.ZERO, size), color)
 	elif selection_enabled and (has_focus() or Rect2(Vector2.ZERO, size).has_point(get_local_mouse_position())):
 		_marks.draw_rect(Rect2(Vector2.ZERO, size), Config.HOVER_COLOR)
+
+func group_visual() -> Node2D:
+	return $visual

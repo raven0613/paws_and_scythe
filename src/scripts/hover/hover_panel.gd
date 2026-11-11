@@ -20,7 +20,13 @@ func present(title: String, description: String, source_rect: Rect2) -> void:
 	$title.text = title
 	$description.text = description
 	var bounds := get_viewport_rect().grow(-Config.SCREEN_MARGIN)
-	var panel_width := minf(Config.WIDTH, bounds.size.x)
+	var natural_width := 0.0
+	for label: Label in [$title, $description]:
+		var font := label.get_theme_font("font")
+		var font_size := label.get_theme_font_size("font_size")
+		for line in label.text.split("\n"):
+			natural_width = maxf(natural_width, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
+	var panel_width := minf(ceilf(natural_width) + Config.PADDING * 2, minf(Config.MAX_WIDTH, bounds.size.x))
 	var text_width := panel_width - Config.PADDING * 2
 	# 先設定換行寬度，再量測文字高度，進入當幀即完成排版。
 	var bottom: float = Config.PADDING

@@ -2,45 +2,41 @@ extends SceneTree
 
 const Config = preload("res://src/configs/combo/combo_config.gd")
 const Sequence = preload("res://src/service/combo/combo_sequence.gd")
-
 var failures := 0
-
 
 func _init() -> void:
 	for seed_offset in Config.TEST_SEED_COUNT:
 		var sequence = Sequence.new()
 		sequence.reset(Config.EDITOR_SEED + seed_offset)
-		var snapshot: Array[Dictionary] = []
-		var previous_frame := -1
-		var previous_offset := Config.OFFSET_MIN - 1
-		for index in Config.INITIAL_SEQUENCE_LENGTH * 3:
-			var layout: Dictionary = sequence.get_layout(index)
-			_check(layout.frame_index >= 0 and layout.frame_index < Config.FRAME_PATHS.size(), "Every frame must reference an existing shape.")
-			_check(layout.frame_index != previous_frame, "Adjacent shapes must differ, including sequence extensions.")
-			_check(layout.offset_x >= Config.OFFSET_MIN and layout.offset_x <= Config.OFFSET_MAX, "Offsets must stay within config bounds.")
-			if Config.OFFSET_MIN < Config.OFFSET_MAX:
-				_check(layout.offset_x != previous_offset, "Adjacent rows must not align exactly.")
-			snapshot.append(layout)
-			previous_frame = layout.frame_index
-			previous_offset = layout.offset_x
-		for index in range(snapshot.size() - 1, -1, -1):
-			_check(sequence.get_layout(index) == snapshot[index], "Re-reading indices must preserve existing layouts.")
+		var original: Array = sequence.resolve([], [-1, -1, -1])
+		_check_neighbors(original)
+		var snapshot: Array = original.duplicate(true)
+		var inserted: Array = sequence.resolve(original, [0, -1, -1, 1, 2])
+		_check(inserted[0] == original[0] and inserted[3] == original[1] and inserted[4] == original[2], "Insertion preserves existing appearances and offsets.")
+		_check_neighbors(inserted)
+		_check(inserted[1].frame_index != original[1].frame_index, "The first of several arriving rows also avoids the next existing visible shape.")
+		_check(sequence.resolve(inserted, [0, 1, 2, 3, 4]) == inserted, "Settlement-style refresh preserves all appearances.")
+		_check(sequence.resolve(inserted, [4, 0]) == [original[2], original[0]], "Removal and reordering retain each appearance.")
+		_check(original == snapshot, "Allocation keeps the source layouts intact.")
 		sequence.reset(Config.EDITOR_SEED + seed_offset)
-		for index in snapshot.size():
-			_check(sequence.get_layout(index) == snapshot[index], "A reset must reproduce a sequence when given the same seed.")
-	var direct = Sequence.new()
-	var incremental = Sequence.new()
-	direct.reset(Config.EDITOR_SEED)
-	incremental.reset(Config.EDITOR_SEED)
-	var target := Config.INITIAL_SEQUENCE_LENGTH * 2
-	var expected: Dictionary = direct.get_layout(target)
-	for index in target:
-		incremental.get_layout(index)
-	_check(incremental.get_layout(target) == expected, "Growth must preserve the sequence regardless of access order.")
+		_check(sequence.resolve([], [-1, -1, -1]) == original, "Seeded generation is reproducible.")
+		for left in Config.FRAME_PATHS.size():
+			for right in Config.FRAME_PATHS.size():
+				var neighbors := [{"frame_index": left, "offset_x": Config.OFFSET_MIN}, {"frame_index": right, "offset_x": Config.OFFSET_MAX}]
+				var middle: Array = sequence.resolve(neighbors, [0, -1, 1])
+				_check(middle[1].frame_index != left and middle[1].frame_index != right, "A new middle row avoids both neighboring shapes.")
+				_check(middle[0] == neighbors[0] and middle[2] == neighbors[1], "Existing neighbors stay unchanged, including equal shapes.")
 	if failures == 0:
-		print("Combo sequence passed: distinct neighbors, bounded offsets, stable indices and deterministic extension/reset.")
+		print("Combo appearance passed: stable identity, neighbor exclusion, removal and deterministic generation.")
 	quit(int(failures > 0))
 
+func _check_neighbors(layouts: Array) -> void:
+	for index in layouts.size():
+		var layout: Dictionary = layouts[index]
+		_check(layout.frame_index >= 0 and layout.frame_index < Config.FRAME_PATHS.size(), "Shape comes from config.")
+		_check(layout.offset_x >= Config.OFFSET_MIN and layout.offset_x <= Config.OFFSET_MAX, "Offset stays within config bounds.")
+		if index > 0:
+			_check(layout.frame_index != layouts[index - 1].frame_index, "New adjacent rows use different shapes.")
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:

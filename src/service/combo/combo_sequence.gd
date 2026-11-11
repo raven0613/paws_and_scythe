@@ -2,36 +2,33 @@
 extends RefCounted
 
 const Config = preload("res://src/configs/combo/combo_config.gd")
-
 var _rng := RandomNumberGenerator.new()
-var _frames: Array[int] = []
-var _offsets: Array[int] = []
-
 
 func reset(seed_value: int) -> void:
 	_rng.seed = seed_value
-	_frames.clear()
-	_offsets.clear()
-	_ensure_length(Config.INITIAL_SEQUENCE_LENGTH)
 
+# 先保留延續列的外觀，再替新列選擇與兩側不同的造型。
+func resolve(previous: Array, source_indices: Array) -> Array[Dictionary]:
+	var layouts: Array[Dictionary] = []
+	for source in source_indices:
+		layouts.append(previous[source].duplicate() if source >= 0 else {})
+	for index in layouts.size():
+		if not layouts[index].is_empty():
+			continue
+		var neighbors: Array = []
+		if index > 0:
+			neighbors.append(layouts[index - 1])
+		for right in range(index + 1, layouts.size()):
+			if not layouts[right].is_empty():
+				neighbors.append(layouts[right])
+				break
+		layouts[index] = {
+			"frame_index": _choose(range(Config.FRAME_PATHS.size()), neighbors, "frame_index"),
+			"offset_x": _choose(range(Config.OFFSET_MIN, Config.OFFSET_MAX + 1), neighbors, "offset_x"),
+		}
+	return layouts
 
-func get_layout(index: int) -> Dictionary:
-	_ensure_length(index + 1)
-	return {"frame_index": _frames[index], "offset_x": _offsets[index]}
-
-
-func _ensure_length(length: int) -> void:
-	while _frames.size() < length:
-		var previous_frame: int = -1 if _frames.is_empty() else _frames.back()
-		var previous_offset: int = Config.OFFSET_MIN - 1 if _offsets.is_empty() else _offsets.back()
-		_frames.append(_pick_except(0, Config.FRAME_PATHS.size() - 1, previous_frame))
-		_offsets.append(_pick_except(Config.OFFSET_MIN, Config.OFFSET_MAX, previous_offset))
-
-
-func _pick_except(minimum: int, maximum: int, previous: int) -> int:
-	if minimum == maximum:
-		return minimum
-	if previous < minimum or previous > maximum:
-		return _rng.randi_range(minimum, maximum)
-	var result := _rng.randi_range(minimum, maximum - 1)
-	return result + 1 if result >= previous else result
+func _choose(options: Array, neighbors: Array, key: String) -> int:
+	for neighbor in neighbors:
+		options.erase(neighbor[key])
+	return options[_rng.randi_range(0, options.size() - 1)]

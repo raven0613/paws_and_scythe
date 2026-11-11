@@ -10,7 +10,9 @@ const Dealer = preload("res://src/scripts/hand_area/hand_dealer.gd")
 const CatPicker = preload("res://src/scenes/cat_cards/cat_picker.tscn")
 const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Presenter = preload("res://src/scripts/gameplay/settlement_presenter.gd")
+const GroupPresenter = preload("res://src/scripts/gameplay/group_feedback_presenter.gd")
 const CardAnimator = preload("res://src/scripts/playing_card/card_action_animator.gd")
+const ActionConfig = preload("res://src/configs/playing_card/action_animation_config.gd")
 
 var game = Run.new()
 var _views: Dictionary = {}
@@ -18,6 +20,8 @@ var _reserve := Node2D.new()
 var _presenter := Presenter.new()
 var _dealer := Dealer.new()
 var _card_animator := CardAnimator.new()
+var _group_presenter := GroupPresenter.new()
+var _feedback_active := false
 var _mode: StringName = &""
 var _swap_first: Variant = null
 var _busy := false
@@ -31,6 +35,10 @@ func _ready() -> void:
 	add_child(_reserve)
 	add_child(_dealer)
 	add_child(_card_animator)
+	add_child(_group_presenter)
+	_group_presenter.setup($combo)
+	_group_presenter.started.connect(_begin_group_feedback)
+	_group_presenter.completed.connect(_finish_group_feedback)
 	_dealer.completed.connect(_finish_deal)
 	_dealer.card_emitted.connect($resources_display.set_deck_count)
 	add_child(_presenter)
@@ -64,22 +72,23 @@ func _open_picker() -> void:
 	_picker.open(game.cats.ids)
 
 func _on_cat_order_changed(ids: Array) -> void:
-	if not _busy and game.cats.reorder(ids):
+	if not _busy and not _feedback_active and game.cats.reorder(ids):
 		_refresh()
 
 func _start_run(selected_cats: Array) -> void:
 	_busy = true
 	_clear_selection()
 	game.start(-1, selected_cats)
+	_card_animator.clear_paths()
 	$level_board.reset_score(game.score)
 	$gameplay_hud.hide_outcome()
 	$combo.clear_results()
-	$combo.reroll_layout()
 	_refresh_and_deal()
 	$board.reset_view()
 
 func _next_level() -> void:
 	if game.advance():
+		_card_animator.clear_paths()
 		_busy = true
 		$level_board.reset_score(game.score)
 		_clear_selection()
@@ -97,7 +106,7 @@ func _view(card_id: int) -> Control:
 		_views[card_id] = card
 	return _views[card_id]
 
-func _refresh() -> void:
+func _refresh(animate_groups := false) -> void:
 	$board.reset_focus()
 	var active: Array = game.hand + game.board.values()
 	for card_id in _views:
@@ -126,20 +135,25 @@ func _refresh() -> void:
 		entry.direction = group.direction
 		entry.kind = group.kind
 		entries.append(entry)
-	$combo.entries = entries
 	$cat_card_area.show_loadout(game.cats.ids, game.cat_state())
 	$resources_display.set_board_count(game.board.size(), game.board_limit())
 	$level_board.level = game.level
 	$level_board.current_score = game.score
 	$level_board.target_score = game.target()
-	_update_input()
 	_refresh_marks()
+	if animate_groups:
+		_group_presenter.play(entries, board_views)
+	else:
+		$combo.entries = entries
+	_update_input()
 
 func _on_card_requested(card: Control) -> void:
 	if _busy or game.status != Run.Status.PLAYING:
 		return
 	if game.hand.has(card.card_id):
 		$hand_area.select_card(card)
+		return
+	if _feedback_active:
 		return
 	var cell: Vector2i = game.board.find_key(card.card_id)
 	if _mode == &"remove":
@@ -171,7 +185,7 @@ func _begin_card_action() -> void:
 func _finish_card_action() -> void:
 	$board.set_motion_paused(false)
 	_busy = false
-	_refresh()
+	_refresh(true)
 	$board.reset_view()
 
 func _on_hand_selection_changed() -> void:
@@ -188,7 +202,7 @@ func _clear_selection() -> void:
 
 func _place_selected_card(cell: Vector2i) -> void:
 	var selected: Array = $hand_area.get_selected_ids()
-	if _busy or selected.size() != 1 or _mode != &"":
+	if _busy or _feedback_active or selected.size() != 1 or _mode != &"":
 		return
 	if game.place(selected[0], cell):
 		_begin_card_action()
@@ -197,7 +211,7 @@ func _place_selected_card(cell: Vector2i) -> void:
 		_finish_card_action()
 
 func _on_action_requested(action_id: StringName) -> void:
-	if _busy or game.status != Run.Status.PLAYING:
+	if _feedback_active or _busy or game.status != Run.Status.PLAYING:
 		return
 	match action_id:
 		&"done":
@@ -220,9 +234,7 @@ func _on_action_requested(action_id: StringName) -> void:
 				_refresh_and_deal()
 				$board.reset_view()
 		&"undo":
-			if game.undo():
-				_clear_selection()
-				_refresh()
+			await _undo_action()
 		&"remove", &"swap":
 			if (action_id == &"remove" and not game.can_dig()) or (action_id == &"swap" and not game.can_swap()):
 				return
@@ -232,10 +244,32 @@ func _on_action_requested(action_id: StringName) -> void:
 			_update_input()
 			_refresh_marks()
 
+func _undo_action() -> void:
+	if game.history.is_empty():
+		return
+	var action: Dictionary = game.history.back()
+	if not game.undo():
+		return
+	_clear_selection()
+	_begin_card_action()
+	match action.kind:
+		"place":
+			var index: int = game.hand.find(action.card)
+			var spacing_duration := minf(ActionConfig.UNDO_HAND_SHIFT_DURATION, ActionConfig.UNDO_PLACE_DURATION)
+			$hand_area.open_slot(index, spacing_duration)
+			await _card_animator.play_place(_views[action.card], $hand_area.card_destination(index), true)
+		"swap":
+			await _card_animator.play_swap(_views[game.board[action.a]], _views[game.board[action.b]], true)
+		"dig":
+			var card: Control = _views[action.card]
+			$board.prepare_return(card, action.cell)
+			await _card_animator.play_undo_dig(card)
+	_finish_card_action()
+
 func _complete_settlement() -> void:
 	game.settle(_settlement_snapshot)
+	_card_animator.clear_paths()
 	_settlement_snapshot = {}
-	$combo.reroll_layout()
 	_refresh_and_deal()
 
 func _refresh_and_deal() -> void:
@@ -255,15 +289,17 @@ func _finish_deal() -> void:
 	$gameplay_hud.show_outcome(game)
 
 func _update_input() -> void:
-	var active: bool = not _busy and game.status == Run.Status.PLAYING
+	var browsing: bool = not _busy and game.status == Run.Status.PLAYING
+	var active: bool = browsing and not _feedback_active
+	$combo.set_idle_enabled(active)
 	$cat_card_area.set_interaction_enabled(active)
 	if (_mode == &"remove" and not game.can_dig()) or (_mode == &"swap" and not game.can_swap()):
 		_mode = &""
 		_swap_first = null
 	var selected: Array = $hand_area.get_selected_ids()
-	$board.set_camera_input_enabled(active)
-	$camera_controls.set_controls_enabled(active)
-	$hand_area.set_selection_enabled(active)
+	$board.set_camera_input_enabled(browsing)
+	$camera_controls.set_controls_enabled(browsing)
+	$hand_area.set_selection_enabled(browsing)
 	var can_place: bool = active and _mode == &"" and selected.size() == 1 and game.played.size() < Rules.MAX_PLAYS
 	$board.set_input_enabled(can_place, game.status == Run.Status.PLAYING)
 	for cell in game.board:
@@ -288,10 +324,12 @@ func _update_input() -> void:
 		actions.get_node(NodePath(action)).modulate = Color("ffe28a") if _mode == action else Color.WHITE
 
 func _on_group_hovered(cells: Array) -> void:
-	if not _busy:
+	if not _busy and not _feedback_active:
 		$board.focus_group(cells)
 
 func _refresh_marks() -> void:
+	if _feedback_active:
+		return
 	$board.focus_group([])
 	var marks := {}
 	for group in _preview.get("groups", []):
@@ -307,3 +345,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not _busy:
 		_clear_selection()
 		get_viewport().set_input_as_handled()
+
+func _begin_group_feedback() -> void:
+	_feedback_active = true
+	$board.reset_focus()
+	_update_input()
+
+func _finish_group_feedback() -> void:
+	_feedback_active = false
+	_update_input()
+	_refresh_marks()
+	_on_group_hovered($combo.hovered_cells())

@@ -1,0 +1,10 @@
+extends RefCounted
+
+const LIFT_HEIGHT = 8.0
+const LIFT_DURATION = 0.12
+const CARD_INTERVAL = 0.075
+const REBOUND_DISTANCE = 2.0
+const REBOUND_DURATION = 0.1
+const HOLD_DURATION = 0.1
+const RETURN_DURATION = 0.15
+const LAYER = 15

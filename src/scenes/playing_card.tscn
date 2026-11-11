@@ -82,7 +82,7 @@ animations = [{
 }]
 
 [node name="playing_card" type="Control" unique_id=450325403]
-editor_description = "共用撲克牌場景，原尺寸 73 × 92。切換花紋時，將 big 和兩個 small 的 animation 設為相同的 a、b、c 或 d；兩個 rank 的 text 設為相同點數。face 的 modulate 控制數字與花紋顏色。"
+editor_description = "共用撲克牌場景，原尺寸 73 × 92。切換花紋時，將 big 和兩個 small 的 animation 設為相同的 a、b、c 或 d；兩個 rank 的 text 設為相同點數。visual/face 的 modulate 控制數字與花紋顏色；visual 承接整張卡片的上彈與歸位。"
 texture_filter = 1
 custom_minimum_size = Vector2(73, 92)
 layout_mode = 3
@@ -93,28 +93,30 @@ pivot_offset = Vector2(36.5, 46)
 mouse_filter = 2
 script = ExtResource("10_script")
 
-[node name="shadow" type="Sprite2D" parent="." unique_id=875454058]
+[node name="visual" type="Node2D" parent="."]
+
+[node name="shadow" type="Sprite2D" parent="visual" unique_id=875454058]
 modulate = Color(0, 0, 0, 0.45)
 position = Vector2(2, 2)
 texture = ExtResource("1_bg")
 centered = false
 
-[node name="base" type="Sprite2D" parent="." unique_id=809282942]
+[node name="base" type="Sprite2D" parent="visual" unique_id=809282942]
 texture = ExtResource("1_bg")
 centered = false
 
-[node name="face" type="Node2D" parent="." unique_id=1903957047]
+[node name="face" type="Node2D" parent="visual" unique_id=1903957047]
 modulate = Color(0, 0, 0, 1)
 
-[node name="big" type="AnimatedSprite2D" parent="face" unique_id=1484013803]
+[node name="big" type="AnimatedSprite2D" parent="visual/face" unique_id=1484013803]
 position = Vector2(36.5, 46)
 sprite_frames = SubResource("SpriteFrames_big")
 animation = &"a"
 
-[node name="top_left" type="Node2D" parent="face" unique_id=2132214075]
+[node name="top_left" type="Node2D" parent="visual/face" unique_id=2132214075]
 position = Vector2(4, 4)
 
-[node name="rank" type="Label" parent="face/top_left" unique_id=1308864418]
+[node name="rank" type="Label" parent="visual/face/top_left" unique_id=1308864418]
 offset_right = 16.0
 offset_bottom = 18.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -123,16 +125,16 @@ text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="small" type="AnimatedSprite2D" parent="face/top_left" unique_id=1869477743]
+[node name="small" type="AnimatedSprite2D" parent="visual/face/top_left" unique_id=1869477743]
 position = Vector2(8, 21)
 sprite_frames = SubResource("SpriteFrames_small")
 animation = &"a"
 
-[node name="bottom_right" type="Node2D" parent="face" unique_id=1231586493]
+[node name="bottom_right" type="Node2D" parent="visual/face" unique_id=1231586493]
 position = Vector2(69, 88)
 rotation = 3.1415927
 
-[node name="rank" type="Label" parent="face/bottom_right" unique_id=2025144606]
+[node name="rank" type="Label" parent="visual/face/bottom_right" unique_id=2025144606]
 offset_right = 16.0
 offset_bottom = 18.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -141,12 +143,12 @@ text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="small" type="AnimatedSprite2D" parent="face/bottom_right" unique_id=2005196919]
+[node name="small" type="AnimatedSprite2D" parent="visual/face/bottom_right" unique_id=2005196919]
 position = Vector2(8, 21)
 sprite_frames = SubResource("SpriteFrames_small")
 animation = &"a"
 
-[node name="overlay" type="TextureRect" parent="." unique_id=272752300]
+[node name="overlay" type="TextureRect" parent="visual" unique_id=272752300]
 editor_description = "銀箔等整張卡面效果的圖層；指定 texture 後顯示於牌面上方。"
 layout_mode = 0
 offset_right = 73.0
@@ -154,6 +156,6 @@ offset_bottom = 92.0
 mouse_filter = 2
 expand_mode = 1
 
-[node name="stamp" type="Sprite2D" parent="." unique_id=1037961159]
+[node name="stamp" type="Sprite2D" parent="visual" unique_id=1037961159]
 editor_description = "蠟印章圖層；指定 texture 後，於編輯器微調 position。"
 position = Vector2(52, 69)

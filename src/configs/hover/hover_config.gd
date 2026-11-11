@@ -1,12 +1,12 @@
 extends RefCounted
 
-const WIDTH = 320.0
+const MAX_WIDTH = 320.0
 const GAP = 12.0
 const SCREEN_MARGIN = 8.0
 const PADDING = 12.0
 const SPACING = 6
-const TITLE_SIZE = 16
-const BODY_SIZE = 14
+const TITLE_SIZE = 12
+const BODY_SIZE = 12
 const BACKGROUND = Color("17243bf5")
 const BORDER = Color("6082b5")
 const TITLE_COLOR = Color("ffe6a0")

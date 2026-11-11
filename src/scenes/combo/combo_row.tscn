@@ -12,29 +12,39 @@ offset_bottom = 32.0
 mouse_filter = 2
 script = ExtResource("1_script")
 
-[node name="shadow" type="NinePatchRect" parent="."]
+[node name="spacing" type="Control" parent="."]
+layout_mode = 0
+mouse_filter = 2
+
+[node name="idle" type="Node2D" parent="spacing"]
+
+[node name="visual" type="Control" parent="spacing/idle"]
+layout_mode = 0
+mouse_filter = 2
+
+[node name="shadow" type="NinePatchRect" parent="spacing/idle/visual"]
 layout_mode = 0
 mouse_filter = 2
 texture = ExtResource("2_frame")
 
-[node name="frame" type="NinePatchRect" parent="."]
+[node name="frame" type="NinePatchRect" parent="spacing/idle/visual"]
 layout_mode = 0
 mouse_filter = 2
 texture = ExtResource("2_frame")
 
-[node name="caption" type="HBoxContainer" parent="."]
+[node name="caption" type="HBoxContainer" parent="spacing/idle/visual"]
 layout_mode = 0
 mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 4
 
-[node name="hand" type="Label" parent="caption"]
+[node name="hand" type="Label" parent="spacing/idle/visual/caption"]
 layout_mode = 2
 mouse_filter = 2
 auto_translate_mode = 2
 vertical_alignment = 1
 
-[node name="score" type="Label" parent="caption"]
+[node name="score" type="Label" parent="spacing/idle/visual/caption"]
 layout_mode = 2
 mouse_filter = 2
 vertical_alignment = 1

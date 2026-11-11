@@ -7,7 +7,7 @@
 [ext_resource type="Resource" path="res://src/configs/combo/preview_pair.tres" id="5_pair"]
 
 [node name="combo" type="Control"]
-editor_description = "Preview Entries 僅供編輯器排版，執行場景從空清單開始。遊戲更新 entries 時依索引沿用框形，結算後呼叫 reroll_layout 重新抽序列。可在 Inspector 調整框色，並用按鈕預覽重新抽樣。"
+editor_description = "Preview Entries 僅供編輯器排版，執行場景從空清單開始。每列保留建立時的框形與水平偏移，新列避開兩側造型。可在 Inspector 調整框色。"
 texture_filter = 1
 layout_mode = 0
 offset_right = 130.0

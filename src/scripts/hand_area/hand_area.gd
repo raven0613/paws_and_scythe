@@ -43,6 +43,19 @@ func show_cards(cards: Array) -> void:
 func get_selected_ids() -> Array:
 	return _selected.duplicate()
 
+func card_destination(index: int) -> Transform2D:
+	return _cards.get_global_transform_with_canvas() * Transform2D(0.0, _slot_position(index))
+
+func open_slot(index: int, duration: float) -> void:
+	if index == _cards.get_child_count():
+		return
+	var timeline := create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	for slot in range(index, _cards.get_child_count()):
+		timeline.tween_property(_cards.get_child(slot), "position", _slot_position(slot + 1), duration)
+
+func _slot_position(index: int) -> Vector2:
+	return Vector2(Config.CARD_START_X + (CardTexture.get_width() + Config.CARD_GAP) * index, _slot_y[index])
+
 func clear_selection() -> void:
 	_selected.clear()
 	_update_layout()
@@ -67,7 +80,7 @@ func _update_layout() -> void:
 	for index in range(_cards.get_child_count()):
 		var card := _cards.get_child(index) as Control
 		card.visible = index < card_count
-		card.position.x = Config.CARD_START_X + (card_width + Config.CARD_GAP) * index
+		card.position.x = _slot_position(index).x
 		if not Engine.is_editor_hint():
 			card.selected = _selected.has(card.card_id)
 			card.position.y = _slot_y[index] - (Config.SELECTED_OFFSET if card.selected else 0.0)
