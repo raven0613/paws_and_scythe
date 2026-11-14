@@ -6,10 +6,12 @@ const Config = preload("res://src/configs/score/score_feedback_config.gd")
 const ComboConfig = preload("res://src/configs/combo/combo_config.gd")
 const CatActivation = preload("res://src/configs/cat_cards/cat_activation_config.gd")
 const ActivationTiming = preload("res://src/service/cat_cards/activation/activation_timing.gd")
+const AwardSchedule = preload("res://src/service/score/award_schedule.gd")
 const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Celebration = preload("res://src/service/score/celebration_math.gd")
 const OdometerConfig = preload("res://src/configs/score/odometer_config.gd")
 const Particles = preload("res://src/scripts/score/score_particles.gd")
+const TOTAL_WAVE = -1
 var _score: Control
 var _combo: Control
 var _level: Control
@@ -21,7 +23,7 @@ var _level_target := 0.0
 var _running := false
 var _speed := 1.0
 var _last_central := -1
-var _event_index := -1
+var _award_landed := -1
 
 func setup(score: Control, combo: Control, level: Control, cats: Control, canvas: Control) -> void:
 	_score = score
@@ -51,40 +53,54 @@ func play(result: Dictionary, current_score: float) -> void:
 		row.score = result.groups[index].original_score
 	_timeline = create_tween().set_speed_scale(_speed)
 	_last_central = Celebration.last_central_event(result.events)
-	for index in result.events.size():
-		_event_index = index
-		_append_event(result.events[index])
+	var start := 0
+	while start < result.events.size():
+		var end := _segment_end(result.events, start)
+		_append_segment(result.events, start, end)
+		start = end
 	_append_central_feedback(true)
 	_timeline.tween_callback(_fly_total)
-	_timeline.tween_method(_particles.progress, 0.0, 1.0, Config.FINAL_FLIGHT_DURATION)
-	_timeline.tween_callback(_particles.clear)
+	_timeline.tween_method(_particles.progress.bind(TOTAL_WAVE), 0.0, 1.0, Config.FINAL_FLIGHT_DURATION)
 	_timeline.tween_callback(_level.begin_score_count.bind(_level_target))
 	_timeline.tween_method(_level.score_count_progress, 0.0, 1.0, Config.LEVEL_COUNT_DURATION)
 	_timeline.tween_callback(finish)
 
-func _append_event(event: Dictionary) -> void:
-	if event.kind == "combo_apply" and event.before == event.after:
+# 同一次發動的逐組效果合成一段同時演出，連續的入帳事件合成依序入帳段，其餘事件各自一段。
+static func _segment_end(events: Array, start: int) -> int:
+	var first: Dictionary = events[start]
+	var end := start + 1
+	while end < events.size() and _same_segment(first, events[end]):
+		end += 1
+	return end
+
+static func _same_segment(first: Dictionary, event: Dictionary) -> bool:
+	if first.kind == "group_award":
+		return event.kind == "group_award"
+	return _is_group_effect(first) and _is_group_effect(event) and event.activation == first.activation
+
+static func _is_group_effect(event: Dictionary) -> bool:
+	return event.kind == "effect" and event.target == "group"
+
+func _append_segment(events: Array, start: int, end: int) -> void:
+	var first: Dictionary = events[start]
+	if first.kind == "combo_apply" and first.before == first.after:
 		return
-	match event.kind:
+	# 本段包含最後一次中央跑分時，由結算完成表演收尾；其餘段落保留途中回饋與閱讀頓點。
+	var final := _last_central >= start and _last_central < end
+	match first.kind:
 		"selection":
-			_append_selection(event)
+			_append_selection(first)
 		"high":
-			_append_count(_score.get_node("number"), event.after, Config.COUNT_DURATION)
-		"group_start":
-			_append_group_start(event)
+			_append_count(_score.get_node("number"), first.after, Config.COUNT_DURATION, final)
 		"effect", "repeat":
-			_append_effect(event)
+			_append_effect(events.slice(start, end), final)
 		"group_award":
-			var row: Control = _combo.get_row(event.group)
-			_timeline.tween_callback(_fly_row.bind(row))
-			_timeline.tween_method(_particles.progress, 0.0, 1.0, Config.FLIGHT_DURATION)
-			_timeline.tween_callback(_particles.clear)
-			_append_count(_score.get_node("number"), event.after, Config.COUNT_DURATION)
+			var after_rows: bool = start > 0 and (_is_group_effect(events[start - 1]) or events[start - 1].kind == "repeat")
+			_append_awards(events.slice(start, end), final, after_rows)
 		"combo_apply":
-			_append_count(_score.get_node("number"), event.after, Config.COUNT_DURATION,
+			_append_count(_score.get_node("number"), first.after, Config.COUNT_DURATION, final,
 				_score.get_node("combo_counter").multiplier_feedback)
-	# 最後一次中央跑分直接銜接結算收尾，其餘段落保留閱讀頓點。
-	if _event_index != _last_central:
+	if not final:
 		_timeline.tween_interval(Config.STEP_HOLD)
 
 func _append_selection(event: Dictionary) -> void:
@@ -104,40 +120,81 @@ func _append_selection(event: Dictionary) -> void:
 	for index in event.excluded:
 		_timeline.tween_callback(_combo.get_row(index).finish_count)
 
-func _append_group_start(event: Dictionary) -> void:
-	var row: Control = _combo.get_row(event.group)
-	_timeline.tween_callback(row.prepare_settlement)
-	_timeline.tween_callback(row.set.bind("score", event.after))
-	_timeline.tween_callback(_score.get_node("combo_counter").begin_group.bind(event.combo_count))
-	_timeline.tween_property(row, "scale", Vector2.ONE * Config.ROW_POP_SCALE, Config.ROW_POP_UP).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_timeline.parallel().tween_property(row, "scale", Vector2.ONE, Config.ROW_POP_DOWN).from(Vector2.ONE * Config.ROW_POP_SCALE).set_delay(Config.ROW_POP_UP).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	if event.combo_count >= Config.COMBO_VISIBLE_FROM:
-		_timeline.parallel().tween_method(_score.get_node("combo_counter").group_progress, 0.0, 1.0, Config.COMBO_POP_UP + Config.COMBO_POP_DOWN)
-	_timeline.tween_callback(_score.get_node("combo_counter").finish_count)
-
-func _append_effect(event: Dictionary) -> void:
-	_append_activation(_cats.get_card(event.source), event)
+# 來源貓牌發動一次，標籤到位後本段所有目標同時跑數字。
+func _append_effect(events: Array, final: bool) -> void:
+	var first: Dictionary = events[0]
+	_append_activation(_cats.get_card(first.source), first)
 	var duration := CatActivation.COUNT_DURATION
-	match event.target:
+	match first.target:
 		"group":
-			_append_count(_combo.get_row(event.group), event.after, duration)
+			_append_rows(events, duration)
 		"multiplier":
-			_append_count(_score.get_node("combo_counter"), event.after, duration)
+			_append_count(_score.get_node("combo_counter"), first.after, duration, final)
 		"subtotal", "total":
-			_append_count(_score.get_node("number"), event.after, duration)
+			_append_count(_score.get_node("number"), first.after, duration, final)
+
+func _append_rows(events: Array, duration: float) -> void:
+	for event in events:
+		_timeline.tween_callback(_combo.get_row(event.group).begin_count.bind(event.after, duration))
+	for index in events.size():
+		var row: Control = _combo.get_row(events[index].group)
+		(_timeline.parallel() if index > 0 else _timeline).tween_method(row.count_progress, 0.0, 1.0, duration)
+	for event in events:
+		_timeline.tween_callback(_combo.get_row(event.group).finish_count)
 
 # 貓牌發動與數字標籤同時開始，標籤到位時目標開始跑數字；卡片依自身時鐘完成停留與收回。
 func _append_activation(source: Control, event: Dictionary) -> void:
 	_timeline.tween_callback(source.begin_feedback.bind(CatText.badge(event)))
 	_timeline.tween_interval(ActivationTiming.arrival())
 
-func _append_count(counter: Control, target: float, duration: float, feedback := Callable()) -> void:
+# 各條依時間表放大並發射粒子，抵達時中央接續累加並推進 Combo；整段結束後回饋一次。
+func _append_awards(events: Array, final: bool, after_rows: bool) -> void:
+	var number: Control = _score.get_node("number")
+	var counter: Control = _score.get_node("combo_counter")
+	var schedule := AwardSchedule.build(events.size())
+	if after_rows:
+		_timeline.tween_interval(Config.AWARD_PHASE_HOLD)
+	_timeline.tween_callback(func(): _award_landed = -1)
+	_timeline.tween_method(_award_progress.bind(events, schedule), 0.0, AwardSchedule.duration(schedule), AwardSchedule.duration(schedule))
+	for index in events.size():
+		_append_launch(_combo.get_row(events[index].group), events[index].group, schedule[index].launch)
+	_timeline.tween_callback(number.finish_count)
+	_timeline.tween_callback(counter.finish_count)
+	if not final:
+		_append_central_feedback(false)
+
+func _append_launch(row: Control, key: int, launch: float) -> void:
+	_timeline.parallel().tween_callback(_fly_row.bind(row, key)).set_delay(launch)
+	_timeline.parallel().tween_method(_particles.progress.bind(key), 0.0, 1.0, Config.AWARD_FLIGHT_DURATION).set_delay(launch)
+	_timeline.parallel().tween_property(row, "scale", Vector2.ONE * Config.AWARD_ROW_POP_SCALE, Config.ROW_POP_UP).set_delay(launch).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_timeline.parallel().tween_property(row, "scale", Vector2.ONE, Config.ROW_POP_DOWN).from(Vector2.ONE * Config.AWARD_ROW_POP_SCALE).set_delay(launch + Config.ROW_POP_UP).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+# 依入帳時間軸驅動中央與 Combo：每條抵達時前一段以卡點停在精確值，再接續跑向新的累計值。
+func _award_progress(time: float, events: Array, schedule: Array) -> void:
+	var number: Control = _score.get_node("number")
+	var counter: Control = _score.get_node("combo_counter")
+	var landed := AwardSchedule.landed(schedule, time)
+	while _award_landed < landed:
+		if _award_landed >= 0:
+			number.count_progress(1.0)
+			counter.group_progress(1.0)
+		_award_landed += 1
+		var entry: Dictionary = schedule[_award_landed]
+		number.begin_count(events[_award_landed].after, entry.seconds)
+		counter.begin_group(events[_award_landed].combo_count, entry.combo_seconds)
+	if _award_landed < 0:
+		return
+	var current: Dictionary = schedule[_award_landed]
+	number.count_progress(AwardSchedule.progress(current, time, current.seconds))
+	counter.group_progress(AwardSchedule.progress(current, time, current.combo_seconds))
+
+func _append_count(counter: Control, target: float, duration: float, final: bool, feedback := Callable()) -> void:
 	_timeline.tween_callback(counter.begin_count.bind(target, duration))
 	_timeline.tween_method(counter.count_progress, 0.0, 1.0, duration)
 	if feedback.is_valid():
 		_timeline.parallel().tween_method(feedback, 0.0, 1.0, duration)
 	_timeline.tween_callback(counter.finish_count)
-	if counter == _score.get_node("number") and _event_index != _last_central:
+	if counter == _score.get_node("number") and not final:
 		_append_central_feedback(false)
 
 func _append_central_feedback(final: bool) -> void:
@@ -146,11 +203,11 @@ func _append_central_feedback(final: bool) -> void:
 	if final:
 		_timeline.tween_interval(Config.STEP_HOLD)
 
-func _fly_row(row: Control) -> void:
-	_particles.begin(row.score_origin(), _score.get_node("number").particle_origin())
+func _fly_row(row: Control, key: int) -> void:
+	_particles.begin(key, row.score_origin(), _score.get_node("number").particle_origin())
 
 func _fly_total() -> void:
-	_particles.begin(_score.get_node("number").particle_origin(), _level.score_destination())
+	_particles.begin(TOTAL_WAVE, _score.get_node("number").particle_origin(), _level.score_destination())
 
 func _set_fast(fast: bool) -> void:
 	_speed = Config.FAST_SPEED if fast else 1.0

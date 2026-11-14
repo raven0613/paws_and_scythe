@@ -39,9 +39,12 @@ static func scale(time: float) -> float:
 
 static func rotation(time: float) -> float:
 	var flight := Timing.ease_out(clampf(time / Config.BADGE_FLIGHT_DURATION, 0.0, 1.0))
+	return lerpf(Config.BADGE_LAUNCH_ROTATION, Config.BADGE_ROTATION, flight) + swing(time)
+
+# 到位時的來回旋轉，逐漸衰減；尾巴依此擺動。
+static func swing(time: float) -> float:
 	var landing := _landing(time)
-	var swing := Config.BADGE_LANDING_ANGLE * _decay(landing) * sin(landing * Config.BADGE_LANDING_SWINGS * TAU)
-	return lerpf(Config.BADGE_LAUNCH_ROTATION, Config.BADGE_ROTATION, flight) + swing
+	return Config.BADGE_LANDING_ANGLE * _decay(landing) * sin(landing * Config.BADGE_LANDING_SWINGS * TAU)
 
 # 到位後的進度，到位前為 0、結束後為 1。
 static func _landing(time: float) -> float:

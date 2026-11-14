@@ -24,7 +24,9 @@ func _init() -> void:
 		var raw := Scoring.evaluate(board, board.values(), Modifiers.extended_min(selected))
 		var result := Resolver.resolve(raw, board, selected, {"hand_count": rng.randi_range(0, Rules.HAND_LIMIT), "settlements": sample % Rules.SETTLEMENTS, "operations": sample, "discards_used": sample % Rules.DISCARDS, "discards_left": Rules.DISCARDS - sample % Rules.DISCARDS})
 		_replay(result)
+		_check_order(result, selected)
 		_check(result.combo == result.groups.filter(func(g): return g.scoring).size(), "Combo counts eligible scoring groups")
+	_test_shared_activation()
 	_test_highest_tie()
 	_test_copy_award()
 	_test_copy_champion()
@@ -34,11 +36,12 @@ func _init() -> void:
 func _replay(result: Dictionary) -> void:
 	var totals := {"subtotal": 0.0, "multiplier": result.original_multiplier, "total": 0.0}
 	var group_values := {}
+	for i in result.groups.size():
+		group_values[i] = result.groups[i].original_score
 	var awards := {}
 	var award_counts := {}
 	for event in result.events:
 		match event.kind:
-			"group_start": group_values[event.group] = event.after
 			"repeat":
 				_check(is_equal_approx(group_values[event.group], event.before), "Repeat preserves the accumulated group score")
 				_check(event.op == "add", "Repeat adds its independently calculated score")
@@ -71,6 +74,53 @@ func _replay(result: Dictionary) -> void:
 		_check(is_equal_approx(awards.get(i, 0.0), result.groups[i].total_score), "Preview group total includes all passes")
 		_check(award_counts.get(i, 0) == (1 if result.groups[i].scoring else 0), "Each scoring group awards its complete score exactly once")
 
+# 所有組先完成貓牌加成與額外計分，再依 Combo 清單順序入帳並推進組數。
+func _check_order(result: Dictionary, ids: Array) -> void:
+	var events: Array = result.events
+	var row_work: Array = range(events.size()).filter(func(i): return events[i].kind == "repeat" or (events[i].kind == "effect" and events[i].target == "group"))
+	var award_slots: Array = range(events.size()).filter(func(i): return events[i].kind == "group_award")
+	if not row_work.is_empty() and not award_slots.is_empty():
+		_check(row_work.max() < award_slots.min(), "Every group finishes its cats before any award")
+	if not award_slots.is_empty():
+		_check(award_slots.max() - award_slots.min() == award_slots.size() - 1, "Awards form one consecutive sequence")
+	var previous_group := -1
+	for slot in award_slots:
+		var event: Dictionary = events[slot]
+		_check(event.group > previous_group, "Awards follow combo list order")
+		previous_group = event.group
+		_check(event.combo_count == award_slots.find(slot) + 1, "Each award advances the combo count by one")
+		_check(is_equal_approx(event.multiplier, Scoring.combo_multiplier(event.combo_count)), "Award carries the base multiplier of its combo count")
+	var effects: Array = events.filter(func(e): return e.kind == "effect" and e.target == "group")
+	var last_activation := -1
+	var last_position := -1
+	var sources := {}
+	for event in effects:
+		_check(event.activation >= last_activation, "Activations play in order")
+		_check(ids.find(event.source) >= last_position, "Group cats activate in equipped order")
+		last_activation = event.activation
+		last_position = ids.find(event.source)
+		sources[event.source] = sources.get(event.source, []) + [event.activation]
+	for id in sources:
+		var activations: Array = sources[id]
+		var distinct := {}
+		for activation in activations:
+			distinct[activation] = true
+		var expected := activations.size() if Catalog.CARDS[id].get("each_group", false) else 1
+		_check(distinct.size() == expected, "Shared cats activate once and each-group cats once per group")
+
+func _test_shared_activation() -> void:
+	var board := {Vector2i(0, 0): Cards.id(8, 0), Vector2i(1, 0): Cards.id(8, 1),
+		Vector2i(0, 2): Cards.id(5, 0), Vector2i(1, 2): Cards.id(5, 1), Vector2i(2, 2): Cards.id(5, 2)}
+	var ids := ["compact", "consecutive"]
+	var result := Resolver.resolve(Scoring.evaluate(board, []), board, ids, {})
+	_replay(result)
+	_check_order(result, ids)
+	var compact: Array = result.events.filter(func(e): return e.source == "compact")
+	_check(compact.size() == 2 and compact[0].activation == compact[1].activation, "One shared activation scales every matching group together")
+	var consecutive: Array = result.events.filter(func(e): return e.source == "consecutive")
+	_check(consecutive.size() == 2 and consecutive[0].activation != consecutive[1].activation, "Each-group cat activates separately for every matching group")
+	_check(consecutive.all(func(e): return e.activation > compact[0].activation), "Later equipped cat activates after the earlier one")
+
 func _verify_calculation(event: Dictionary, original: float) -> void:
 	_check(event.has("calculation"), "Repeat retains its independent calculation details")
 	if not event.has("calculation"):
@@ -97,8 +147,8 @@ func _test_copy_award() -> void:
 		_check(awards.size() == 1, "Copy combines both passes into one award")
 		var combo_effects: Array = result.events.filter(func(e): return e.source == "combo")
 		_check(combo_effects.size() == (1 if ids.has("combo") else 0), "Settlement effects trigger once across copied passes")
-		var starts: Array = result.events.filter(func(e): return e.kind == "group_start")
-		_check(starts.size() == 1, "Extra scoring keeps the existing group without restarting it")
+		var repeat_index: int = result.events.find(result.events.filter(func(e): return e.kind == "repeat")[0])
+		_check(result.events.slice(repeat_index + 1).all(func(e): return e.kind != "effect" or e.target != "group"), "Extra scoring keeps the existing group without restarting it")
 		for id in single_ids:
 			_check(result.events.filter(func(e): return e.source == id).size() == single.events.filter(func(e): return e.source == id).size(), "Copy presents other cats once")
 

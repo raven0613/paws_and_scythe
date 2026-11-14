@@ -83,24 +83,39 @@ func _test_badge() -> void:
 func _test_tail() -> void:
 	var rest := Tail.rest()
 	var flight := Tail.offsets(Config.BADGE_FLIGHT_DURATION / 2)
-	_check(flight[0].length() > rest[0].length(), "Tails stretch apart while the badge moves fast")
-	var landing := Tail.offsets(Timing.arrival())
-	_check(landing[0].x > 0.0 and landing[0].y > 0.0, "Tails trail to the lower right after the upper left bounce")
-	var start := _relative(landing[0])
-	var swung := false
-	var compressed := false
+	_check(flight[0].length() > rest[0].length(), "Tails stretch apart while the badge flies away from them")
+	var rebound := Tail.offsets(Config.BADGE_FLIGHT_DURATION + Config.BADGE_REBOUND_DURATION)
+	_check(rebound[0].length() < rest[0].length(), "Tails squeeze together while the badge rebounds toward them")
+	var sided := true
+	for step in int(Timing.finish() / SAMPLE):
+		var offsets := Tail.offsets(step * SAMPLE)
+		for index in offsets.size():
+			sided = sided and absf(_relative(_segment(offsets, index))) < PI / 2
+	_check(sided, "Tails stay on the lower left side of the badge")
+	var above := [false, false]
+	var below := [false, false]
+	var crossings := [INF, INF]
+	var previous := [0.0, 0.0]
 	for step in int(Config.BADGE_LANDING_DURATION * 2 / SAMPLE):
-		var offsets := Tail.offsets(Timing.arrival() + step * SAMPLE)
-		swung = swung or signf(_relative(offsets[0])) != signf(start)
-		compressed = compressed or offsets[0].length() < rest[0].length()
-	_check(swung, "Tails swing past their rest direction before settling")
-	_check(compressed, "Tails squeeze together as the badge stops")
-	var turning := Tail.offsets(Timing.arrival())
-	_check(absf(_relative(turning[1] - turning[0]) - _relative(turning[0])) > TOLERANCE, "Second tail lags behind the first while turning")
-	var final := Tail.offsets(Timing.finish())
+		var time := Timing.arrival() + step * SAMPLE
+		var offsets := Tail.offsets(time)
+		for index in offsets.size():
+			var angle := _relative(_segment(offsets, index))
+			above[index] = above[index] or angle > TOLERANCE
+			below[index] = below[index] or angle < -TOLERANCE
+			if step > 0 and previous[index] < 0.0 and angle >= 0.0:
+				crossings[index] = minf(crossings[index], time)
+			previous[index] = angle
+	for index in rest.size():
+		_check(above[index] and below[index], "Tails wave to both sides of the diagonal on landing")
+	_check(crossings[0] < crossings[1], "Second tail lags behind the first, forming a wave")
+	var final: PackedVector2Array = Tail.simulate().back()
 	for index in rest.size():
 		_check(final[index].distance_to(rest[index]) < HALF_PIXEL, "Tails come to rest behind the badge")
 		_check(rest[index].x < 0.0 and rest[index].y > 0.0, "Tails rest to the lower left")
+
+func _segment(offsets: PackedVector2Array, index: int) -> Vector2:
+	return offsets[index] - (offsets[index - 1] if index > 0 else Vector2.ZERO)
 
 func _relative(offset: Vector2) -> float:
 	return wrapf(offset.angle() - Config.TAIL_REST_ANGLE, -PI, PI)

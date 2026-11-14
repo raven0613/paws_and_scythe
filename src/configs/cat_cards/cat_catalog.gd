@@ -7,6 +7,7 @@ const ART_PATHS = [
 	"res://src/assets/cat_card/cat_card_xray.png",
 ]
 # 階段與操作由結算器解讀；條件與計量由 effect_rules 負責。
+# 逐組貓牌發動一次並讓所有符合的組同時套用；each_group 為 true 時對每個符合的組各自發動一次。
 const CARDS = {
 	"peace": {
 		"name": "安穩貓",
@@ -348,6 +349,7 @@ const CARDS = {
 		"value": 30.0,
 		"condition": "has_groups",
 		"measure": "consecutive",
+		"each_group": true,
 		"text": "每組得分牌型內，相同數字連續排列時，第二張開始每多一張，該組分數 +{value}。",
 	},
 }

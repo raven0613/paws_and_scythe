@@ -16,7 +16,7 @@ func _ready() -> void:
 	$heading/word.text = Config.COMBO_TEXT
 	$heading.add_theme_constant_override("separation", Config.COMBO_TEXT_GAP)
 	if Engine.is_editor_hint():
-		begin_group(Config.COMBO_VISIBLE_FROM)
+		begin_group(Config.COMBO_VISIBLE_FROM, Config.COMBO_POP_UP + Config.COMBO_POP_DOWN)
 		group_progress(1.0)
 	else:
 		reset()
@@ -27,8 +27,8 @@ func reset() -> void:
 	$heading/count.set_value(0)
 	finish_count()
 
-func begin_group(count: int) -> void:
-	var seconds := Config.COMBO_POP_UP + Config.COMBO_POP_DOWN
+# 組數與基本倍率在 seconds 內滾動並放大縮回，放大峰值位置依 COMBO_POP_UP 與 COMBO_POP_DOWN 的比例。
+func begin_group(count: int, seconds: float) -> void:
 	begin_count(Scoring.combo_multiplier(count), seconds)
 	$heading/count.begin_count(count, seconds)
 	visible = count >= Config.COMBO_VISIBLE_FROM

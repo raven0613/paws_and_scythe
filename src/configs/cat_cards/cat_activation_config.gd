@@ -4,8 +4,8 @@ extends RefCounted
 # 標籤到位時目標開始跑數字，跑完 COUNT_DURATION 後卡片停留 RELEASE_HOLD，再補間收回，標籤同時縮小消失。
 # 沒有數字的發動只播放卡片動作，目標在標籤到位的同一時間開始跑。
 const LAYER = 30
-const COUNT_DURATION = 0.38
-const RELEASE_HOLD = 0.15
+const COUNT_DURATION = 0.25
+const RELEASE_HOLD = 0.01
 
 # 卡片姿態：OFFSET 為放大後卡片中心相對原本貓牌中心的位移（像素，y 向下），放大時移過去、收回時移回原位。
 # SHADOW_OFFSET 為發動時影子相對卡面的位置（卡片原尺寸的像素），隨放大由場景設定的右下位置移過去，收回時移回。
@@ -21,7 +21,7 @@ const CARD_PERSPECTIVE = 125.0
 const CARD_TILT_MARGIN = 16.0
 const CARD_POP_DURATION = 0.07
 const CARD_POP_OVERSHOOT = 1.7
-const CARD_RETURN_DURATION = 0.2
+const CARD_RETURN_DURATION = 0.1
 const CARD_RETURN_EASE = -2.0
 
 # 卡片抖動：位移與角度同時抖動並在 SHAKE_DURATION 內衰減；頻率以每秒弧度計，依序為 x、y、角度。
@@ -47,7 +47,7 @@ const BADGE_SETTLE_DURATION = 0.09
 # 收回時以 EXIT_OVERSHOOT 先微微脹大再縮小消失。
 const BADGE_LAUNCH_ROTATION = -2.4
 const BADGE_ROTATION = 0.52
-const BADGE_LANDING_DURATION = 0.3
+const BADGE_LANDING_DURATION = 0.25
 const BADGE_LANDING_PEAK = 0.15
 const BADGE_LANDING_SCALE = 1.45
 const BADGE_LANDING_ANGLE = 0.35
@@ -66,19 +66,24 @@ const BADGE_TEXT_OUTLINE = Color("14253c")
 const BADGE_TEXT_OUTLINE_SIZE = 6
 
 # 尾巴方塊：由前往後兩節，每節接在前一節後方，方塊大小與顏色逐節遞減變淺；ROTATIONS 為各節相對主體多轉的角度，與主體一起轉動。
-# 第一節的方向跟隨主體移動的反方向，速度低於 FOLLOW_SPEED 時逐漸轉回 REST_ANGLE（弧度，y 向下，約左下方）並隨主體轉動；
-# 第二節跟隨第一節的方向。間距為 REST_DISTANCE 加上主體速度乘 STRETCH（秒），移動越快拉得越長。
-# 方向與間距各自以彈簧追隨：STIFFNESS 越大跟得越緊，DAMPING 越小甩得越過頭；第二節追隨第一節，落後逐節累積形成甩鞭。
+# 整條尾巴以 REST_ANGLE（弧度，y 向下，約左下方）的斜線為中心：主體橫向移動時，第一節被推向移動的反側，
+# 推彎角度為橫向速度乘 BEND（弧度／每秒像素），上限 BEND_LIMIT；到位時跟隨主體的來回旋轉擺動，幅度放大 SWING_GAIN 倍。
+# 第二節跟隨第一節的方向，落後累積成波浪。間距為 REST_DISTANCE 加上主體遠離尾巴的速度乘 STRETCH（秒），
+# 主體朝尾巴移動時間距擠短，最短為 MIN_DISTANCE。
+# 方向與間距各自以彈簧追隨：STIFFNESS 越大跟得越緊，DAMPING 越小擺得越過頭、越 Q 彈。
 # 軌跡以 STEP 固定步長預先計算到到位後 SETTLE_DURATION 秒。
 const TAIL_SIZES = [22.0, 17.0]
 const TAIL_COLORS = [Color("ffb359"), Color("ffdd83")]
 const TAIL_ROTATIONS = [0.32, -0.73]
 const TAIL_REST_ANGLE = 2.5
 const TAIL_REST_DISTANCE = [8.0, 8.0]
+const TAIL_MIN_DISTANCE = 3.0
 const TAIL_STRETCH = 0.02
-const TAIL_FOLLOW_SPEED = 120.0
-const TAIL_ANGLE_STIFFNESS = [260.0, 420.0]
-const TAIL_ANGLE_DAMPING = [17.0, 22.0]
+const TAIL_BEND = 0.001
+const TAIL_BEND_LIMIT = 0.7
+const TAIL_SWING_GAIN = 1.4
+const TAIL_ANGLE_STIFFNESS = [900.0, 700.0]
+const TAIL_ANGLE_DAMPING = [22.0, 20.0]
 const TAIL_DISTANCE_STIFFNESS = [420.0, 300.0]
 const TAIL_DISTANCE_DAMPING = [14.0, 11.0]
 const TAIL_STEP = 1.0 / 240.0
