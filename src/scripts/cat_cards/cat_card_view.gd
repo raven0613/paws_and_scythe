@@ -56,10 +56,12 @@ func set_playback_speed(value: float) -> void:
 	_speed = value
 
 # 發動後依自身時鐘播放卡片與標籤動作，到收回完成自動復原；text 為空時只播放卡片動作。
-func begin_feedback(text: String) -> void:
+# fills 為標籤主體與尾巴的填色色標，依主體、第一節、第二節排列。
+func begin_feedback(text: String, fills: Array[PackedColorArray]) -> void:
 	_clock = 0.0
 	z_index = Activation.LAYER
 	_badge.text = text
+	_badge.paint(fills)
 	_badge.visible = not text.is_empty()
 	set_process(true)
 	_apply()

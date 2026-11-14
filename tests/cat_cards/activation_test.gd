@@ -6,6 +6,7 @@ const Timing = preload("res://src/service/cat_cards/activation/activation_timing
 const Card = preload("res://src/service/cat_cards/activation/card_motion.gd")
 const Badge = preload("res://src/service/cat_cards/activation/badge_motion.gd")
 const Tail = preload("res://src/service/cat_cards/activation/badge_tail.gd")
+const Palette = preload("res://src/service/cat_cards/activation/badge_palette.gd")
 const TOLERANCE = 0.01
 const SAMPLE = 0.005
 const HALF_PIXEL = 0.5
@@ -16,6 +17,7 @@ func _init() -> void:
 	_test_card()
 	_test_badge()
 	_test_tail()
+	_test_palette()
 	print("Cat activation: %d failures" % failures)
 	quit(1 if failures else 0)
 
@@ -113,6 +115,24 @@ func _test_tail() -> void:
 	for index in rest.size():
 		_check(final[index].distance_to(rest[index]) < HALF_PIXEL, "Tails come to rest behind the badge")
 		_check(rest[index].x < 0.0 and rest[index].y > 0.0, "Tails rest to the lower left")
+
+func _test_palette() -> void:
+	var rainbow := Palette.fills({"target": Config.BADGE_RAINBOW_TARGET})
+	_check(rainbow.size() == Config.TAIL_SIZES.size() + 1, "Rainbow fills the body and every tail")
+	_check(rainbow[0] == PackedColorArray(Config.BADGE_RAINBOW_COLORS), "Rainbow body uses the full rainbow colors")
+	var lighter := true
+	for index in range(1, rainbow.size()):
+		_check(rainbow[index].size() == Config.BADGE_RAINBOW_COLORS.size(), "Each tail carries the whole rainbow")
+		for stop in rainbow[index].size():
+			lighter = lighter and rainbow[index][stop].get_luminance() > rainbow[index - 1][stop].get_luminance()
+	_check(lighter, "Rainbow tails get lighter toward the end")
+	for target in Feedback.TARGET_NAMES:
+		if target == Config.BADGE_RAINBOW_TARGET:
+			continue
+		var plain := Palette.fills({"target": target})
+		_check(plain[0] == PackedColorArray([Config.BADGE_COLOR]), "Other effects keep the original body color")
+		for index in Config.TAIL_COLORS.size():
+			_check(plain[index + 1] == PackedColorArray([Config.TAIL_COLORS[index]]), "Other effects keep the original tail colors")
 
 func _segment(offsets: PackedVector2Array, index: int) -> Vector2:
 	return offsets[index] - (offsets[index - 1] if index > 0 else Vector2.ZERO)

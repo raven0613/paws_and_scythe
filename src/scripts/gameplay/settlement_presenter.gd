@@ -6,6 +6,7 @@ const Config = preload("res://src/configs/score/score_feedback_config.gd")
 const ComboConfig = preload("res://src/configs/combo/combo_config.gd")
 const CatActivation = preload("res://src/configs/cat_cards/cat_activation_config.gd")
 const ActivationTiming = preload("res://src/service/cat_cards/activation/activation_timing.gd")
+const BadgePalette = preload("res://src/service/cat_cards/activation/badge_palette.gd")
 const AwardSchedule = preload("res://src/service/score/award_schedule.gd")
 const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Celebration = preload("res://src/service/score/celebration_math.gd")
@@ -144,7 +145,7 @@ func _append_rows(events: Array, duration: float) -> void:
 
 # 貓牌發動與數字標籤同時開始，標籤到位時目標開始跑數字；卡片依自身時鐘完成停留與收回。
 func _append_activation(source: Control, event: Dictionary) -> void:
-	_timeline.tween_callback(source.begin_feedback.bind(CatText.badge(event)))
+	_timeline.tween_callback(source.begin_feedback.bind(CatText.badge(event), BadgePalette.fills(event)))
 	_timeline.tween_interval(ActivationTiming.arrival())
 
 # 各條依時間表放大並發射粒子，抵達時中央接續累加並推進 Combo；整段結束後回饋一次。

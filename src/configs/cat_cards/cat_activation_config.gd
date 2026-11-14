@@ -65,6 +65,14 @@ const BADGE_TEXT_COLOR = Color.WHITE
 const BADGE_TEXT_OUTLINE = Color("14253c")
 const BADGE_TEXT_OUTLINE_SIZE = 6
 
+# 彩虹標籤：目標為 RAINBOW_TARGET（總分倍率）時，三個方塊改用由左上到右下的斜向彩虹漸層，漸層隨方塊一起旋轉。
+# RAINBOW_COLORS 為柔和偏鮮豔的色標；RAINBOW_LIGHTEN 依主體、第一節、第二節排列，為往白色混合的比例，逐節變淺。
+# GRADIENT_RESOLUTION 為漸層貼圖邊長（像素）。
+const BADGE_RAINBOW_TARGET = "total"
+const BADGE_RAINBOW_COLORS = [Color("f07167"), Color("f39a4f"), Color("f2c75c"), Color("8fcf7a"), Color("5fb3e0"), Color("a184de")]
+const BADGE_RAINBOW_LIGHTEN = [0.0, 0.28, 0.5]
+const BADGE_GRADIENT_RESOLUTION = 64
+
 # 尾巴方塊：由前往後兩節，每節接在前一節後方，方塊大小與顏色逐節遞減變淺；ROTATIONS 為各節相對主體多轉的角度，與主體一起轉動。
 # 整條尾巴以 REST_ANGLE（弧度，y 向下，約左下方）的斜線為中心：主體橫向移動時，第一節被推向移動的反側，
 # 推彎角度為橫向速度乘 BEND（弧度／每秒像素），上限 BEND_LIMIT；到位時跟隨主體的來回旋轉擺動，幅度放大 SWING_GAIN 倍。
