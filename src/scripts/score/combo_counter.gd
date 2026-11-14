@@ -2,11 +2,7 @@
 extends Control
 
 const Config = preload("res://src/configs/score/score_feedback_config.gd")
-const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Scoring = preload("res://src/service/gameplay/scoring.gd")
-const Motion = preload("res://src/service/score/number_motion.gd")
-
-var _count = Motion.new()
 
 func _ready() -> void:
 	z_index = Config.NUMBER_LAYER
@@ -16,6 +12,7 @@ func _ready() -> void:
 	$heading/count.add_theme_font_size_override("font_size", Config.COMBO_FONT_SIZE)
 	$heading/word.add_theme_font_size_override("font_size", Config.COMBO_FONT_SIZE)
 	$multiplier.add_theme_font_size_override("font_size", Config.MULTIPLIER_FONT_SIZE)
+	$multiplier.prefix = Config.MULTIPLIER_FORMAT % ""
 	$heading/word.text = Config.COMBO_TEXT
 	$heading.add_theme_constant_override("separation", Config.COMBO_TEXT_GAP)
 	if Engine.is_editor_hint():
@@ -26,18 +23,20 @@ func _ready() -> void:
 
 func reset() -> void:
 	hide()
-	_count.reset(Scoring.combo_multiplier(0))
-	$heading/count.text = Numbers.number(0)
+	$multiplier.set_value(Scoring.combo_multiplier(0))
+	$heading/count.set_value(0)
 	finish_count()
 
 func begin_group(count: int) -> void:
-	begin_count(Scoring.combo_multiplier(count))
-	$heading/count.text = Numbers.number(count)
+	var seconds := Config.COMBO_POP_UP + Config.COMBO_POP_DOWN
+	begin_count(Scoring.combo_multiplier(count), seconds)
+	$heading/count.begin_count(count, seconds)
 	visible = count >= Config.COMBO_VISIBLE_FROM
 	group_progress(0.0)
 
 func group_progress(progress: float) -> void:
 	count_progress(progress)
+	$heading/count.count_progress(progress)
 	var pop := _pop_amount(progress)
 	$heading/count.scale = Vector2.ONE * lerpf(1.0, Config.COMBO_NUMBER_POP_SCALE, pop)
 	$heading/word.scale = Vector2.ONE * lerpf(1.0, Config.COMBO_WORD_POP_SCALE, pop)
@@ -59,23 +58,17 @@ func left_pop_margin() -> float:
 	var peak := maxf(Config.COMBO_NUMBER_POP_SCALE, maxf(Config.COMBO_WORD_POP_SCALE, Config.MULTIPLIER_POP_SCALE))
 	return size.x * maxf(0.0, peak - 1.0) / 2
 
-func begin_count(amount: float) -> void:
-	_count.begin(amount)
-	_refresh_multiplier()
+func begin_count(amount: float, seconds: float) -> void:
+	$multiplier.begin_count(amount, seconds)
 	$multiplier.scale = Vector2.ONE
 	show()
 
 func count_progress(progress: float) -> void:
-	_count.advance(progress)
-	_refresh_multiplier()
+	$multiplier.count_progress(progress)
 	multiplier_feedback(progress)
 
 func finish_count() -> void:
-	_count.finish()
-	_refresh_multiplier()
+	$multiplier.finish_count()
+	$heading/count.finish_count()
 	for label in [$heading/count, $heading/word, $multiplier]:
 		label.scale = Vector2.ONE
-
-func _refresh_multiplier() -> void:
-	$multiplier.text = Config.MULTIPLIER_FORMAT % Numbers.multiplier(_count.current)
-	_update_pivots()

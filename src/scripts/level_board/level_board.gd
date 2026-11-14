@@ -4,7 +4,6 @@ extends Control
 const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Config = preload("res://src/configs/level_board/level_board_config.gd")
 const Feedback = preload("res://src/configs/score/score_feedback_config.gd")
-const Motion = preload("res://src/service/score/number_motion.gd")
 
 var _actual_score := float(Config.PREVIEW_CURRENT_SCORE)
 
@@ -22,7 +21,7 @@ var _actual_score := float(Config.PREVIEW_CURRENT_SCORE)
 		if not is_node_ready():
 			return
 		if Engine.is_editor_hint():
-			_count.reset(value)
+			$progress_label.set_value(value)
 			_update_display()
 		else:
 			var interrupted: bool = _count.active
@@ -37,12 +36,12 @@ var _actual_score := float(Config.PREVIEW_CURRENT_SCORE)
 		target_score = maxi(value, Config.MIN_TARGET_SCORE)
 		_update_display()
 
-var _count = Motion.new()
+@onready var _count = $progress_label.motion
 var _tween: Tween
 
 func _ready() -> void:
 	$progress_label.z_index = Feedback.NUMBER_LAYER
-	_count.reset(current_score)
+	$progress_label.set_value(current_score)
 	_update_display()
 
 func reset_score(value: float) -> void:
@@ -51,17 +50,20 @@ func reset_score(value: float) -> void:
 func begin_score_count(target: float) -> void:
 	if _tween:
 		_tween.kill()
-	_count.begin(target)
+	$progress_label.begin_count(target, Feedback.LEVEL_COUNT_DURATION)
 	_update_display()
 
 func score_count_progress(progress: float) -> void:
-	_count.advance(progress)
-	_update_display()
+	$progress_label.count_progress(progress)
+	$progress_bar.value = _count.current
 
 func finish_score_count(value: float) -> void:
 	if _tween:
 		_tween.kill()
-	_count.reset(value)
+	if _count.target == value:
+		$progress_label.finish_count()
+	else:
+		$progress_label.set_value(value)
 	_actual_score = value
 	_update_display()
 
@@ -72,26 +74,18 @@ func _update_display() -> void:
 	if not is_node_ready():
 		return
 	$level_label.text = Config.LEVEL_TEXT_FORMAT % level
-	$progress_label.text = Config.PROGRESS_TEXT_FORMAT % [Numbers.number(_count.current), Numbers.number(target_score)]
+	$progress_label.suffix = Config.PROGRESS_TEXT_FORMAT % ["", Numbers.number(target_score)]
 	_fit_progress_text()
 	$progress_bar.max_value = target_score
 	$progress_bar.value = _count.current
 
 func _fit_progress_text() -> void:
-	var label: Label = $progress_label
-	var font := label.get_theme_font("font")
+	var label: Control = $progress_label
 	var available: float = $progress_bar.position.x + $progress_bar.size.x - label.position.x
-	# Reserve the final count's width so ordinary count-up frames keep one size.
 	var maximum := maxf(target_score, maxf(absf(_actual_score), absf(_count.target)))
-	var reserved := Config.PROGRESS_TEXT_FORMAT % [Numbers.number(maximum), Numbers.number(target_score)]
 	var font_size := Config.PROGRESS_FONT_SIZE
-	while font_size > Config.MIN_PROGRESS_FONT_SIZE:
-		var width := maxf(
-			font.get_string_size(reserved, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x,
-			font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		)
-		if width <= available:
-			break
-		font_size -= 1
 	label.add_theme_font_size_override("font_size", font_size)
+	while font_size > Config.MIN_PROGRESS_FONT_SIZE and label.measure_value(maximum) > available:
+		font_size -= 1
+		label.add_theme_font_size_override("font_size", font_size)
 	label.size.x = available

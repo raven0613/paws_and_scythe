@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bhf1pcp7u1t57"]
-
 [ext_resource type="Texture2D" uid="uid://8yk53ouljhqe" path="res://src/assets/level_board.png" id="1_background"]
 [ext_resource type="Script" uid="uid://bmlb6iqc1iklx" path="res://src/scripts/level_board/level_board.gd" id="2_board"]
+[ext_resource type="Script" path="res://src/scripts/score/odometer/odometer_label.gd" id="3_odometer"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_track"]
 bg_color = Color(0.44313726, 0.5568628, 0.73333335, 1)
@@ -55,7 +55,7 @@ theme_override_font_sizes/font_size = 14
 text = "Lv 1"
 vertical_alignment = 2
 
-[node name="progress_label" type="Label" parent="." unique_id=803116735]
+[node name="progress_label" type="Control" parent="." unique_id=803116735]
 z_index = 11
 layout_mode = 0
 offset_left = 63.146534
@@ -64,9 +64,8 @@ offset_right = 150.14651
 offset_bottom = 41.440056
 rotation = 0.05310457
 theme_override_colors/font_color = Color(0.8392157, 0.89411765, 1, 1)
-text = "10 / 200"
+script = ExtResource("3_odometer")
 horizontal_alignment = 2
-vertical_alignment = 1
 
 [node name="progress_bar" type="ProgressBar" parent="." unique_id=425520828]
 layout_mode = 0

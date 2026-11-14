@@ -1,11 +1,11 @@
 @tool
 extends Control
 
-const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Motion = preload("res://src/service/score/number_motion.gd")
 const Feedback = preload("res://src/configs/score/score_feedback_config.gd")
 const Config = preload("res://src/configs/combo/combo_config.gd")
-var _count = Motion.new()
+@onready var _count = $spacing/idle/visual/caption/score.motion
+var _initial_score := 0.0
 var description_text := ""
 
 @export var hand_name: String = "":
@@ -14,9 +14,9 @@ var description_text := ""
 		_refresh()
 @export var score: float = 0.0:
 	get:
-		return _count.current
+		return _count.current if is_node_ready() else _initial_score
 	set(value):
-		_count.reset(value)
+		_initial_score = value
 		_refresh_score()
 @export_enum("01", "02", "03") var frame_index: int = 0:
 	set(value):
@@ -44,6 +44,7 @@ func _ready() -> void:
 	$spacing/idle/visual/caption.z_index = Feedback.NUMBER_LAYER
 	$spacing/idle/visual/caption/hand.minimum_size_changed.connect(_fit_text)
 	$spacing/idle/visual/caption/score.minimum_size_changed.connect(_fit_text)
+	_refresh_score()
 	_refresh()
 	if not Engine.is_editor_hint():
 		HoverInfo.bind_source(self, _hover_content)
@@ -70,7 +71,6 @@ func _refresh() -> void:
 	$spacing/idle/visual/frame.self_modulate = frame_color
 	$spacing/idle/visual/shadow.self_modulate = shadow_color
 	$spacing/idle/visual/caption/hand.text = tr(hand_name)
-	$spacing/idle/visual/caption/score.text = "+" + Numbers.number(score)
 	$spacing/idle/visual/caption/hand.add_theme_color_override("font_color", text_color)
 	$spacing/idle/visual/caption/score.add_theme_color_override("font_color", score_color)
 	for label in [$spacing/idle/visual/caption/hand, $spacing/idle/visual/caption/score]:
@@ -105,23 +105,20 @@ func score_origin() -> Vector2:
 
 func _refresh_score() -> void:
 	if is_node_ready():
-		$spacing/idle/visual/caption/score.text = "+" + Numbers.number(score)
+		$spacing/idle/visual/caption/score.set_value(_initial_score)
 
-func begin_count(target: float) -> void:
-	_count.begin(target)
-	_refresh_score()
+func begin_count(target: float, seconds: float) -> void:
+	$spacing/idle/visual/caption/score.begin_count(target, seconds)
 	$spacing/idle/visual/caption/score.scale = Vector2.ONE
 	$spacing/idle/visual/caption/score.pivot_offset = $spacing/idle/visual/caption/score.size / 2
 
 func count_progress(progress: float) -> void:
-	_count.advance(progress)
-	_refresh_score()
+	$spacing/idle/visual/caption/score.count_progress(progress)
 	$spacing/idle/visual/caption/score.pivot_offset = $spacing/idle/visual/caption/score.size / 2
 	$spacing/idle/visual/caption/score.scale = Motion.scale_at(progress)
 
 func finish_count() -> void:
-	_count.finish()
-	_refresh_score()
+	$spacing/idle/visual/caption/score.finish_count()
 	$spacing/idle/visual/caption/score.scale = Vector2.ONE
 
 func reset_feedback() -> void:

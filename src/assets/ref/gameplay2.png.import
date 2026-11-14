@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnj1cr21r6ms4"
-path="res://.godot/imported/gameplay2.png-8383abf4571168122d4f2ddb659a9344.ctex"
+path="res://.godot/imported/gameplay2.png-56ebaa7fcee7693bdb44d1a9c3212fb1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://src/assets/gameplay2.png"
-dest_files=["res://.godot/imported/gameplay2.png-8383abf4571168122d4f2ddb659a9344.ctex"]
+source_file="res://src/assets/ref/gameplay2.png"
+dest_files=["res://.godot/imported/gameplay2.png-56ebaa7fcee7693bdb44d1a9c3212fb1.ctex"]
 
 [params]
 

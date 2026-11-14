@@ -1,7 +1,7 @@
 [gd_scene format=3]
-
 [ext_resource type="Script" path="res://src/scripts/combo/combo_row.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://src/assets/combo_frame_01.png" id="2_frame"]
+[ext_resource type="Script" path="res://src/scripts/score/odometer/odometer_label.gd" id="3_odometer"]
 
 [node name="combo_row" type="Control"]
 editor_description = "一列牌型與分數。框形使用 NinePatchRect，文字變長時自動加寬；Frame Color、Text Color、Score Color、Shadow Color 可分別換色。"
@@ -44,7 +44,8 @@ mouse_filter = 2
 auto_translate_mode = 2
 vertical_alignment = 1
 
-[node name="score" type="Label" parent="spacing/idle/visual/caption"]
+[node name="score" type="Control" parent="spacing/idle/visual/caption"]
 layout_mode = 2
 mouse_filter = 2
-vertical_alignment = 1
+script = ExtResource("3_odometer")
+prefix = "+"

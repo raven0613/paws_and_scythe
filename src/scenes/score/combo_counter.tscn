@@ -1,6 +1,6 @@
 [gd_scene format=3]
-
 [ext_resource type="Script" path="res://src/scripts/score/combo_counter.gd" id="1_counter"]
+[ext_resource type="Script" path="res://src/scripts/score/odometer/odometer_label.gd" id="2_odometer"]
 
 [node name="combo_counter" type="Control"]
 layout_mode = 0
@@ -15,17 +15,20 @@ offset_right = 170.0
 offset_bottom = 32.0
 mouse_filter = 2
 
-[node name="count" type="Label" parent="heading"]
+[node name="count" type="Control" parent="heading"]
 layout_mode = 2
 mouse_filter = 2
+script = ExtResource("2_odometer")
 
 [node name="word" type="Label" parent="heading"]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="multiplier" type="Label" parent="."]
+[node name="multiplier" type="Control" parent="."]
 layout_mode = 0
 offset_top = 32.0
 offset_right = 170.0
 offset_bottom = 80.0
 mouse_filter = 2
+script = ExtResource("2_odometer")
+multiplier = true

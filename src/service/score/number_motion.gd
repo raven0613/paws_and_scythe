@@ -34,11 +34,22 @@ func finish() -> void:
 
 static func value(from: float, target: float, progress: float) -> float:
 	var distance := absf(target - from)
-	var tail := minf(Config.COUNT_TAIL, distance * (1.0 - Config.COUNT_MAIN_RATIO))
+	var tail := _tail(distance)
 	var direction := signf(target - from)
 	if progress < Config.COUNT_MAIN_RATIO:
 		return from + direction * (distance - tail) * progress / Config.COUNT_MAIN_RATIO
 	return target - direction * tail * (1 - progress) / (1 - Config.COUNT_MAIN_RATIO)
+
+# 前段與尾段各自等速；回傳該進度所在段落每單位進度推進的數值量。
+static func rate(from: float, target: float, progress: float) -> float:
+	var distance := absf(target - from)
+	var tail := _tail(distance)
+	if progress < Config.COUNT_MAIN_RATIO:
+		return (distance - tail) / Config.COUNT_MAIN_RATIO
+	return tail / (1 - Config.COUNT_MAIN_RATIO)
+
+static func _tail(distance: float) -> float:
+	return minf(Config.COUNT_TAIL, distance * (1.0 - Config.COUNT_MAIN_RATIO))
 
 static func scale_at(progress: float) -> Vector2:
 	var pop := 0.0

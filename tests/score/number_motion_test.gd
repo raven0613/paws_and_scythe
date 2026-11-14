@@ -40,6 +40,10 @@ func _init() -> void:
 	motion.advance(1.0)
 	motion.advance(Config.COUNT_MAIN_RATIO)
 	_check(motion.current == bonus, "A completed segment stays on its result")
+	var main_travel := Motion.value(0.0, base, Config.COUNT_MAIN_RATIO) - Motion.value(0.0, base, 0.0)
+	_check(is_equal_approx(Motion.rate(0.0, base, 0.0) * Config.COUNT_MAIN_RATIO, main_travel), "Main rate matches the main segment")
+	var tail_travel := base - Motion.value(0.0, base, Config.COUNT_MAIN_RATIO)
+	_check(is_equal_approx(Motion.rate(0.0, base, 1.0) * (1.0 - Config.COUNT_MAIN_RATIO), tail_travel), "Tail rate matches the tail segment")
 	print("Number motion: %d failures" % failures)
 	quit(1 if failures else 0)
 
