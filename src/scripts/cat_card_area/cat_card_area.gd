@@ -45,6 +45,10 @@ func reset_feedback() -> void:
 	for i in _ids.size():
 		_cards.get_child(i).reset_feedback()
 
+func set_playback_speed(speed: float) -> void:
+	for card in _cards.get_children():
+		card.set_playback_speed(speed)
+
 func _positions() -> Array:
 	var positions: Array = Array(Layout.get_positions(card_count, Feedback.CARD_SIZE))
 	if not Engine.is_editor_hint():

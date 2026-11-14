@@ -1,17 +1,8 @@
 extends RefCounted
 
 const CARD_SIZE = Vector2(73, 92)
-const EFFECT_RECT = Rect2(-12, 18, 97, 30)
-const EFFECT_FONT_SIZE = 19
 const ACTIVE_COLOR = Color("ffe6a0")
-const TEXT_OUTLINE = Color("14253c")
-const OUTLINE_SIZE = 3
-const SOURCE_SCALE = 1.18
-const SOURCE_TILT = 0.045
-const POP_PEAK = 0.3
-const EFFECT_DURATION = 0.38
 const REORDER_DURATION = 0.18
-const SOURCE_LAYER = 30
 const CHOICE_SIZE = Vector2(312, 78)
 const CHOICE_COLUMNS = 3
 const PICKER_SIZE = Vector2(1010, 580)
@@ -26,6 +17,5 @@ const START_TEXT = "開始遊戲"
 const REPLAY_TEXT = "額外計分"
 const CURRENT_AMOUNT_TEXT = "目前為 +%s"
 const CURRENT_AMOUNT_MEASURES = ["settlements", "operations", "discards_used", "discards_left"]
-const SELECTION_TEXT = "最高分獨占"
 const SELECTION_FLOW = "%s / 最高分牌型保留得分與 Combo"
 const EXCLUSION_TEXT = "%s：此組得分與 Combo 為零"

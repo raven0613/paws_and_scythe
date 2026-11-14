@@ -5,11 +5,11 @@ const Config = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
 const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Cards = preload("res://src/service/gameplay/cards.gd")
 
+# 發動標籤只顯示加分與倍率；最高分獨占與額外計分沒有標籤。
+static func badge(event: Dictionary) -> String:
+	return effect(event) if event.kind == "effect" else ""
+
 static func effect(event: Dictionary) -> String:
-	if event.kind == "selection":
-		return Config.SELECTION_TEXT
-	if event.kind == "repeat":
-		return Config.REPLAY_TEXT
 	var sign_text := "+" if event.op == "add" else "x"
 	return sign_text + Numbers.precise(event.amount)
 

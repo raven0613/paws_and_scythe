@@ -4,7 +4,8 @@ signal completed
 
 const Config = preload("res://src/configs/score/score_feedback_config.gd")
 const ComboConfig = preload("res://src/configs/combo/combo_config.gd")
-const CatFeedback = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
+const CatActivation = preload("res://src/configs/cat_cards/cat_activation_config.gd")
+const ActivationTiming = preload("res://src/service/cat_cards/activation/activation_timing.gd")
 const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Celebration = preload("res://src/service/score/celebration_math.gd")
 const OdometerConfig = preload("res://src/configs/score/odometer_config.gd")
@@ -41,6 +42,7 @@ func play(result: Dictionary, current_score: float) -> void:
 	_score.get_node("number").prepare(result.total, _level.target_score)
 	_score.get_node("number").set_playback_speed(_speed)
 	get_tree().call_group(OdometerConfig.GROUP_NAME, "set_playback_speed", _speed)
+	_cats.set_playback_speed(_speed)
 	_score.get_node("combo_counter").reset()
 	for index in result.groups.size():
 		var row: Control = _combo.get_row(index)
@@ -87,11 +89,11 @@ func _append_event(event: Dictionary) -> void:
 
 func _append_selection(event: Dictionary) -> void:
 	var source: Control = _cats.get_card(event.source)
-	var duration := CatFeedback.EFFECT_DURATION
-	_timeline.tween_callback(source.begin_feedback.bind(CatText.effect(event)))
+	var duration := CatActivation.COUNT_DURATION
+	_append_activation(source, event)
 	for index in event.excluded:
 		_timeline.tween_callback(_combo.get_row(index).begin_count.bind(0.0, duration))
-	_timeline.tween_method(source.feedback_progress, 0.0, 1.0, duration)
+	_timeline.tween_interval(duration)
 	for index in event.excluded:
 		var row: Control = _combo.get_row(index)
 		_timeline.parallel().tween_method(row.count_progress, 0.0, 1.0, duration)
@@ -114,16 +116,20 @@ func _append_group_start(event: Dictionary) -> void:
 	_timeline.tween_callback(_score.get_node("combo_counter").finish_count)
 
 func _append_effect(event: Dictionary) -> void:
-	var source: Control = _cats.get_card(event.source)
-	var duration := CatFeedback.EFFECT_DURATION
-	_timeline.tween_callback(source.begin_feedback.bind(CatText.effect(event)))
+	_append_activation(_cats.get_card(event.source), event)
+	var duration := CatActivation.COUNT_DURATION
 	match event.target:
 		"group":
-			_append_count(_combo.get_row(event.group), event.after, duration, source.feedback_progress)
+			_append_count(_combo.get_row(event.group), event.after, duration)
 		"multiplier":
-			_append_count(_score.get_node("combo_counter"), event.after, duration, source.feedback_progress)
+			_append_count(_score.get_node("combo_counter"), event.after, duration)
 		"subtotal", "total":
-			_append_count(_score.get_node("number"), event.after, duration, source.feedback_progress)
+			_append_count(_score.get_node("number"), event.after, duration)
+
+# 貓牌發動與數字標籤同時開始，標籤到位時目標開始跑數字；卡片依自身時鐘完成停留與收回。
+func _append_activation(source: Control, event: Dictionary) -> void:
+	_timeline.tween_callback(source.begin_feedback.bind(CatText.badge(event)))
+	_timeline.tween_interval(ActivationTiming.arrival())
 
 func _append_count(counter: Control, target: float, duration: float, feedback := Callable()) -> void:
 	_timeline.tween_callback(counter.begin_count.bind(target, duration))
@@ -150,6 +156,7 @@ func _set_fast(fast: bool) -> void:
 	_speed = Config.FAST_SPEED if fast else 1.0
 	_score.get_node("number").set_playback_speed(_speed)
 	get_tree().call_group(OdometerConfig.GROUP_NAME, "set_playback_speed", _speed)
+	_cats.set_playback_speed(_speed)
 	if _running:
 		_timeline.set_speed_scale(_speed)
 
