@@ -6,7 +6,7 @@
 
 相同種類與起始方向的牌型，以完整相同路徑優先延續，其餘依共同格數由多至少進行一對一配對。共同格數相同時，先取原清單較前的組，再取新清單較前的組。順子延長、縮短及組內交換後維持同牌型的組沿用原列，更新分數與說明。種類改變，例如對子變三條，舊列退場後播放新牌型成立。兩組合併保留一列，一組拆分保留一列，其餘分別退場或新增。
 
-多組新成立牌型依核心清單的橫向在前、直向在後及固定座標順序播放，每組完整收整且 combo 擾動結束後再開始下一組。每組卡片沿 `cells` 提供的有序路徑逐張浮起：橫向由左至右，直向由上至下。路徑資料保留判定器的走訪順序，未來一次轉彎能力可提供轉彎後接續的格子，`direction` 表示起始方向；目前核心判定仍採橫直牌型。
+多組新成立牌型依核心清單順序播放，清單依原始分數由高到低，同分時橫向在前、再依牌型第一格位置，每組完整收整且 combo 擾動結束後再開始下一組。每組卡片沿 `cells` 提供的有序路徑逐張浮起：橫向由左至右，直向由上至下。路徑資料保留判定器的走訪順序，未來一次轉彎能力可提供轉彎後接續的格子，`direction` 表示起始方向；目前核心判定仍採橫直牌型。
 
 ## 卡片與 combo 同步
 
@@ -20,7 +20,7 @@ Combo 以自身中心從零放大，Back Out 帶出超越目標再回彈的幅�
 
 平時各列以微小幅度上下循環晃動，相鄰列依索引錯開相位，形成向下傳遞的波浪。游標進入任一列時，整份清單的波動時間立即凍結，各列保留當下的波動偏移。該列同時以 Back Out 放大，並在獨立視覺層播放短促位移與旋轉抖動。上方列向上、下方列向下推開，依放大後的高度與凍結的波動偏移計算 `HOVER_GAP` 間隙，全體讓位在 Hover 當下開始，位移量維持間隙計算結果。`HOVER_DISTURB_COUNT` 範圍內的列共用插入動畫的 DISTURB 位移、旋轉與接續節奏，擾動強度依列距衰減，位移時間獨立於擾動延遲。抖動逐漸衰減至零，停留期間維持放大與間距。
 
-游標切換到另一列時，前一列平滑恢復尺寸與角度，新列立即播放 Hover 回饋，整份清單的波動相位持續凍結，推開的空間平滑轉移。離開所有列後收回間距，波動從凍結的相位接續。新列加入、列順序改變及主要演出結束時，波動由當下偏移平滑銜接新的波形位置。固定的列節點負責輸入命中與排列，`spacing` 子節點負責 Hover 推移及受擾動，`spacing/idle` 負責波動，`spacing/idle/visual` 負責 Hover 縮放與抖動，讓視覺變形期間的 Hover 判定保持穩定。
+游標切換到另一列時，前一列平滑恢復尺寸與角度，新列立即播放 Hover 回饋，整份清單的波動相位持續凍結，推開的空間平滑轉移。離開所有列後收回間距，波動從凍結的相位接續。新列加入、列順序改變及主要演出結束時，波動由當下偏移平滑銜接新的波形位置。結算的牌型亮相以程式依序聚焦得分列，在平時波動停用期間播放相同的 Hover 回饋與推開，最後一列收回後恢復靜止排列，跳過結算時立即回到靜止排列，詳見 [結算分數演出](settlement.md)。固定的列節點負責輸入命中與排列，`spacing` 子節點負責 Hover 推移及受擾動，`spacing/idle` 負責波動，`spacing/idle/visual` 負責 Hover 縮放與抖動，讓視覺變形期間的 Hover 判定保持穩定。
 
 ## 演出期間的操作
 
@@ -28,7 +28,7 @@ Combo 以自身中心從零放大，Back Out 帶出超越目標再回彈的幅�
 
 ## 元件與設定
 
-`src/service/combo/group_transition.gd` 負責牌型延續、失效與新增的純資料計算。`src/scripts/combo/combo.gd` 依配對結果維持各列實例、更新內容與計算槽位；`src/scripts/combo/combo_animator.gd` 負責 combo 出場、退場、遞補及插入時的推移與擾動；`src/scripts/combo/combo_idle_animator.gd` 負責平時波動、全體相位凍結及 Hover 回饋。`src/scripts/combo/combo_displacement.gd` 將共用的排列推移與擾動結果套用至視覺節點；`src/service/combo/displacement_math.gd` 負責每側範圍、列距衰減、接續順序及兩段時間的純計算。`src/scripts/playing_card/group_card_animator.gd` 負責卡片依路徑上彈、微幅回落及同步歸位，位移作用於 `playing_card.tscn` 的 `visual` 子節點。`src/scripts/gameplay/group_feedback_presenter.gd` 協調各階段完成時點，`gameplay.gd` 管理操作開放範圍。
+`src/service/combo/group_transition.gd` 負責牌型延續、失效與新增的純資料計算。`src/scripts/combo/combo.gd` 依配對結果維持各列實例、更新內容與計算槽位；`src/scripts/combo/combo_animator.gd` 負責 combo 出場、退場、遞補及插入時的推移與擾動；`src/scripts/combo/combo_idle_animator.gd` 負責平時波動、全體相位凍結、Hover 回饋及結算亮相的程式聚焦。Hover 抖動使用 `src/service/motion/shake_motion.gd` 的共用衰減抖動曲線。`src/scripts/combo/combo_displacement.gd` 將共用的排列推移與擾動結果套用至視覺節點；`src/service/combo/displacement_math.gd` 負責每側範圍、列距衰減、接續順序及兩段時間的純計算。`src/scripts/playing_card/group_card_animator.gd` 負責卡片依路徑上彈、微幅回落及同步歸位，位移作用於 `playing_card.tscn` 的 `visual` 子節點。`src/scripts/gameplay/group_feedback_presenter.gd` 協調各階段完成時點，`gameplay.gd` 管理操作開放範圍。
 
 卡片參數集中於 `src/configs/playing_card/group_animation_config.gd`，包含上彈高度、每張間隔、上升／回彈／停留／歸位時間、回彈距離及圖層。Combo 參數集中於 `src/configs/combo/combo_animation_config.gd`，包含冒出時長、伸縮、旋轉、顫抖、擾動方向的位移量與間隔、退場尺寸與時間、遞補及停穩參數。`INSERT_PUSH_DURATION` 控制插入與 Hover 的排列推移時間；`INSERT_DISTURB_COUNT`、`HOVER_DISTURB_COUNT` 分別控制每側受擾動的可見列數，預設皆為 3；`DISTURB_FALLOFF` 控制每遠一層的強度倍率，預設 0.65，作用於擾動位移與旋轉。`DISTURB_DISTANCE`、`DISTURB_TILT` 為最近上下各一列的完整強度，擾動時間與頻率維持共用設定；`IDLE_*` 控制波動幅度、週期、列間相位差與恢復時間；`HOVER_*` 控制放大倍率、放大時間、抖動位移、旋轉、頻率、衰減、離開恢復時間、上下間隙與圖層。兩種動畫各自實作並提供完成時點，單獨調整任一動畫時，排程沿用相同的同步關係。
 

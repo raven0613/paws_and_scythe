@@ -7,7 +7,7 @@ const Effects = preload("res://src/service/cat_cards/effect_rules.gd")
 const Scoring = preload("res://src/service/gameplay/scoring.gd")
 
 # 純計算：結果及事件共用完整精度，預覽與演出讀取相同快照。
-# 事件依演出順序排列：得分資格、高牌保底、各組貓牌加成與額外計分、依序入帳、整次與總分效果。
+# 事件依演出順序排列：得分資格、高牌保底、得分牌型亮相、各組貓牌加成與額外計分、依序入帳、整次與總分效果。
 static func resolve(raw: Dictionary, board: Dictionary, ids: Array, state: Dictionary) -> Dictionary:
 	var result: Dictionary = raw.duplicate(true)
 	var selection := Modifiers.selection_source(ids)
@@ -30,6 +30,10 @@ static func resolve(raw: Dictionary, board: Dictionary, ids: Array, state: Dicti
 		result.events.append(event)
 	if raw.high > 0:
 		result.events.append(_event("high", "", "subtotal", 0, raw.high))
+	if not scoring.is_empty():
+		var reveal := _event("reveal", "", "group", 0, 0)
+		reveal.groups = scoring.duplicate()
+		result.events.append(reveal)
 	for index in result.groups.size():
 		var group: Dictionary = result.groups[index]
 		group.original_score = raw.groups[index].score
@@ -67,7 +71,6 @@ static func _group_pass(result: Dictionary, context: Dictionary, ids: Array, ind
 		var effect: Dictionary = Catalog.CARDS[id]
 		if effect.stage != "group":
 			continue
-		var each_group: bool = effect.get("each_group", false)
 		var emitted := false
 		for index in indices:
 			if not Effects.eligible(effect, context, index):
@@ -81,9 +84,7 @@ static func _group_pass(result: Dictionary, context: Dictionary, ids: Array, ind
 			events.append(event)
 			current[index] = after
 			emitted = true
-			if each_group:
-				activation += 1
-		if emitted and not each_group:
+		if emitted:
 			activation += 1
 	for index in indices:
 		result.groups[index].score = current[index]

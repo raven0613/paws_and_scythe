@@ -30,6 +30,9 @@ func get_occupied_cells() -> Array[Vector2i]:
 	result.assign(_cards.keys())
 	return result
 
+func card_at(cell: Vector2i) -> Control:
+	return _cards[cell]
+
 func can_place(cell: Vector2i) -> bool:
 	return Rules.can_place(get_occupied_cells(), cell)
 

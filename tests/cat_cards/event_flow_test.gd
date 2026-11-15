@@ -77,6 +77,12 @@ func _replay(result: Dictionary) -> void:
 # 所有組先完成貓牌加成與額外計分，再依 Combo 清單順序入帳並推進組數。
 func _check_order(result: Dictionary, ids: Array) -> void:
 	var events: Array = result.events
+	var scoring: Array = range(result.groups.size()).filter(func(i): return result.groups[i].scoring)
+	var reveals: Array = range(events.size()).filter(func(i): return events[i].kind == "reveal")
+	_check(reveals.size() == (1 if not scoring.is_empty() else 0), "Scoring groups are revealed once per settlement")
+	for slot in reveals:
+		_check(events[slot].groups == scoring, "Reveal lists every scoring group in combo order")
+		_check(events.slice(0, slot).all(func(e): return e.kind in ["selection", "high"]), "Reveal follows selection and high cards")
 	var row_work: Array = range(events.size()).filter(func(i): return events[i].kind == "repeat" or (events[i].kind == "effect" and events[i].target == "group"))
 	var award_slots: Array = range(events.size()).filter(func(i): return events[i].kind == "group_award")
 	if not row_work.is_empty() and not award_slots.is_empty():
@@ -102,11 +108,7 @@ func _check_order(result: Dictionary, ids: Array) -> void:
 		sources[event.source] = sources.get(event.source, []) + [event.activation]
 	for id in sources:
 		var activations: Array = sources[id]
-		var distinct := {}
-		for activation in activations:
-			distinct[activation] = true
-		var expected := activations.size() if Catalog.CARDS[id].get("each_group", false) else 1
-		_check(distinct.size() == expected, "Shared cats activate once and each-group cats once per group")
+		_check(activations.all(func(a): return a == activations[0]), "Each group cat activates once for every matching group")
 
 func _test_shared_activation() -> void:
 	var board := {Vector2i(0, 0): Cards.id(8, 0), Vector2i(1, 0): Cards.id(8, 1),
@@ -118,7 +120,8 @@ func _test_shared_activation() -> void:
 	var compact: Array = result.events.filter(func(e): return e.source == "compact")
 	_check(compact.size() == 2 and compact[0].activation == compact[1].activation, "One shared activation scales every matching group together")
 	var consecutive: Array = result.events.filter(func(e): return e.source == "consecutive")
-	_check(consecutive.size() == 2 and consecutive[0].activation != consecutive[1].activation, "Each-group cat activates separately for every matching group")
+	_check(consecutive.size() == 2 and consecutive[0].activation == consecutive[1].activation, "Run bonuses differ per group within one activation")
+	_check(consecutive[0].amount != consecutive[1].amount, "Each group keeps its own run bonus")
 	_check(consecutive.all(func(e): return e.activation > compact[0].activation), "Later equipped cat activates after the earlier one")
 
 func _verify_calculation(event: Dictionary, original: float) -> void:

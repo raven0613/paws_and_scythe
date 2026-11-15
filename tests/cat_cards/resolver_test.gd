@@ -69,7 +69,8 @@ func _test_patterns() -> void:
 	result = Resolver.resolve(raw, board, ["unique", "variety"], {})
 	_check(result.total == raw.base * (raw.multiplier + raw.combo * _value("variety")) * _value("unique"), "All distinct kinds activate diversity")
 	result = Resolver.resolve(raw, board, ["matching", "reserve"], {"hand_count": 2})
-	_check(result.events.filter(func(e): return e.source == "reserve")[0].group == 2, "Highest target uses original scores even after earlier cat boosts")
+	var reserved: int = result.events.filter(func(e): return e.source == "reserve")[0].group
+	_check(result.groups[reserved].kind == "straight", "Highest target uses original scores even after earlier cat boosts")
 	_check(Catalog.valid_selection([]) and Catalog.valid_selection(["copy"]), "Zero and single selections are valid")
 	_check(not Catalog.valid_selection(["copy", "copy"]) and not Catalog.valid_selection(["missing"]), "Duplicate and unknown cats rejected")
 	_check(not Catalog.valid_selection(Catalog.CARDS.keys()), "Selection obeys configured capacity")

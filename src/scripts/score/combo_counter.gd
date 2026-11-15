@@ -3,8 +3,11 @@ extends Control
 
 const Config = preload("res://src/configs/score/score_feedback_config.gd")
 const Scoring = preload("res://src/service/gameplay/scoring.gd")
+const Hit = preload("res://src/service/score/multiplier_hit.gd")
+var _multiplier_home := Vector2.ZERO
 
 func _ready() -> void:
+	_multiplier_home = $multiplier.position
 	z_index = Config.NUMBER_LAYER
 	for label in [$heading/count, $heading/word, $multiplier]:
 		label.add_theme_color_override("font_color", Config.COMBO_COLOR)
@@ -42,8 +45,12 @@ func group_progress(progress: float) -> void:
 	$heading/word.scale = Vector2.ONE * lerpf(1.0, Config.COMBO_WORD_POP_SCALE, pop)
 	$multiplier.scale = Vector2.ONE * lerpf(1.0, Config.MULTIPLIER_POP_SCALE, pop)
 
-func multiplier_feedback(progress: float) -> void:
-	$multiplier.scale = Vector2.ONE * lerpf(1.0, Config.MULTIPLIER_POP_SCALE, _pop_amount(progress))
+# 中央分數乘上倍率期間，倍率數字以自身中心放大、旋轉並抖動，duration 結束時回到原位。
+func multiplier_hit(time: float, duration: float) -> void:
+	var pose := Hit.pose(time, duration)
+	$multiplier.scale = Vector2.ONE * pose.scale
+	$multiplier.position = _multiplier_home + pose.position
+	$multiplier.rotation = pose.rotation
 
 func _pop_amount(progress: float) -> float:
 	var peak := Config.COMBO_POP_UP / (Config.COMBO_POP_UP + Config.COMBO_POP_DOWN)
@@ -55,7 +62,7 @@ func _update_pivots() -> void:
 		label.pivot_offset = Vector2(label.get_minimum_size().x / 2, label.size.y / 2)
 
 func left_pop_margin() -> float:
-	var peak := maxf(Config.COMBO_NUMBER_POP_SCALE, maxf(Config.COMBO_WORD_POP_SCALE, Config.MULTIPLIER_POP_SCALE))
+	var peak := maxf(maxf(Config.COMBO_NUMBER_POP_SCALE, Config.COMBO_WORD_POP_SCALE), maxf(Config.MULTIPLIER_POP_SCALE, Config.MULTIPLIER_HIT_SCALE))
 	return size.x * maxf(0.0, peak - 1.0) / 2
 
 func begin_count(amount: float, seconds: float) -> void:
@@ -65,10 +72,12 @@ func begin_count(amount: float, seconds: float) -> void:
 
 func count_progress(progress: float) -> void:
 	$multiplier.count_progress(progress)
-	multiplier_feedback(progress)
+	$multiplier.scale = Vector2.ONE * lerpf(1.0, Config.MULTIPLIER_POP_SCALE, _pop_amount(progress))
 
 func finish_count() -> void:
 	$multiplier.finish_count()
 	$heading/count.finish_count()
 	for label in [$heading/count, $heading/word, $multiplier]:
 		label.scale = Vector2.ONE
+	$multiplier.position = _multiplier_home
+	$multiplier.rotation = 0.0

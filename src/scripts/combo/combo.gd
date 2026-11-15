@@ -228,6 +228,13 @@ func _on_row_exited() -> void:
 		_idle.refresh_hover.call_deferred()
 	group_hovered.emit([])
 
+func showcase_row(index: int, speed: float) -> void:
+	_idle.showcase(_rows[index], speed)
+
+func end_showcase(speed: float) -> void:
+	_idle.showcase(null, speed)
+
 func reset_feedback() -> void:
+	_idle.clear_focus()
 	for row in _rows:
 		row.reset_feedback()

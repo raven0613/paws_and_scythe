@@ -12,12 +12,17 @@ const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Celebration = preload("res://src/service/score/celebration_math.gd")
 const OdometerConfig = preload("res://src/configs/score/odometer_config.gd")
 const Particles = preload("res://src/scripts/score/score_particles.gd")
+const ShowcaseConfig = preload("res://src/configs/score/showcase_config.gd")
+const ShowcaseMotion = preload("res://src/service/score/showcase_motion.gd")
+const ShowcaseCards = preload("res://src/scripts/playing_card/showcase_card_animator.gd")
 const TOTAL_WAVE = -1
 var _score: Control
 var _combo: Control
 var _level: Control
 var _cats: Control
+var _board: Control
 var _particles: Control
+var _showcase := ShowcaseCards.new()
 var _timeline: Tween
 var _result: Dictionary
 var _level_target := 0.0
@@ -26,11 +31,13 @@ var _speed := 1.0
 var _last_central := -1
 var _award_landed := -1
 
-func setup(score: Control, combo: Control, level: Control, cats: Control, canvas: Control) -> void:
+func setup(score: Control, combo: Control, level: Control, cats: Control, board: Control, canvas: Control) -> void:
 	_score = score
 	_combo = combo
 	_level = level
 	_cats = cats
+	_board = board
+	add_child(_showcase)
 	_particles = Particles.new()
 	canvas.add_child(_particles)
 	_score.get_node("controls/skip").pressed.connect(finish)
@@ -46,6 +53,7 @@ func play(result: Dictionary, current_score: float) -> void:
 	_score.get_node("number").set_playback_speed(_speed)
 	get_tree().call_group(OdometerConfig.GROUP_NAME, "set_playback_speed", _speed)
 	_cats.set_playback_speed(_speed)
+	_showcase.set_playback_speed(_speed)
 	_score.get_node("combo_counter").reset()
 	for index in result.groups.size():
 		var row: Control = _combo.get_row(index)
@@ -93,6 +101,9 @@ func _append_segment(events: Array, start: int, end: int) -> void:
 			_append_selection(first)
 		"high":
 			_append_count(_score.get_node("number"), first.after, Config.COUNT_DURATION, final)
+		"reveal":
+			_append_reveal(first)
+			return
 		"effect", "repeat":
 			_append_effect(events.slice(start, end), final)
 		"group_award":
@@ -100,7 +111,7 @@ func _append_segment(events: Array, start: int, end: int) -> void:
 			_append_awards(events.slice(start, end), final, after_rows)
 		"combo_apply":
 			_append_count(_score.get_node("number"), first.after, Config.COUNT_DURATION, final,
-				_score.get_node("combo_counter").multiplier_feedback)
+				_score.get_node("combo_counter").multiplier_hit.bind(Config.COUNT_DURATION))
 	if not final:
 		_timeline.tween_interval(Config.STEP_HOLD)
 
@@ -120,6 +131,28 @@ func _append_selection(event: Dictionary) -> void:
 	_timeline.tween_property(chosen, "scale", Vector2.ONE, Config.ROW_POP_DOWN).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	for index in event.excluded:
 		_timeline.tween_callback(_combo.get_row(index).finish_count)
+
+# 得分的 combo 條依序聚焦並推開鄰列，場上對應的牌同時沿路徑浮成扇形；最後一組開始收回時銜接下一段，收回與後續演出同時進行。
+func _append_reveal(event: Dictionary) -> void:
+	var groups: Array = []
+	var counts: Array = []
+	for index in event.groups:
+		var cards: Array = []
+		for cell in _result.groups[index].cells:
+			cards.append(_board.card_at(cell))
+		groups.append(cards)
+		counts.append(cards.size())
+	_timeline.tween_interval(ShowcaseMotion.stage_end(counts))
+	_timeline.parallel().tween_callback(_showcase.play.bind(groups))
+	for order in event.groups.size():
+		_timeline.parallel().tween_callback(_showcase_row.bind(event.groups[order])).set_delay(order * ShowcaseConfig.ROW_INTERVAL)
+	_timeline.tween_callback(_end_showcase)
+
+func _showcase_row(index: int) -> void:
+	_combo.showcase_row(index, _speed)
+
+func _end_showcase() -> void:
+	_combo.end_showcase(_speed)
 
 # 來源貓牌發動一次，標籤到位後本段所有目標同時跑數字。
 func _append_effect(events: Array, final: bool) -> void:
@@ -189,11 +222,12 @@ func _award_progress(time: float, events: Array, schedule: Array) -> void:
 	number.count_progress(AwardSchedule.progress(current, time, current.seconds))
 	counter.group_progress(AwardSchedule.progress(current, time, current.combo_seconds))
 
+# feedback 與跑分同時播放，接收自本段開始經過的時間。
 func _append_count(counter: Control, target: float, duration: float, final: bool, feedback := Callable()) -> void:
 	_timeline.tween_callback(counter.begin_count.bind(target, duration))
 	_timeline.tween_method(counter.count_progress, 0.0, 1.0, duration)
 	if feedback.is_valid():
-		_timeline.parallel().tween_method(feedback, 0.0, 1.0, duration)
+		_timeline.parallel().tween_method(feedback, 0.0, duration, duration)
 	_timeline.tween_callback(counter.finish_count)
 	if counter == _score.get_node("number") and not final:
 		_append_central_feedback(false)
@@ -215,6 +249,7 @@ func _set_fast(fast: bool) -> void:
 	_score.get_node("number").set_playback_speed(_speed)
 	get_tree().call_group(OdometerConfig.GROUP_NAME, "set_playback_speed", _speed)
 	_cats.set_playback_speed(_speed)
+	_showcase.set_playback_speed(_speed)
 	if _running:
 		_timeline.set_speed_scale(_speed)
 
@@ -224,6 +259,7 @@ func finish() -> void:
 	_running = false
 	_timeline.kill()
 	_particles.clear()
+	_showcase.reset()
 	_combo.reset_feedback()
 	_cats.reset_feedback()
 	_score.get_node("number").reset_feedback()

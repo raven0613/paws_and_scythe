@@ -6,10 +6,8 @@ const Patterns = preload("res://src/service/gameplay/poker_patterns.gd")
 
 static func evaluate(board: Dictionary, new_cards: Array, extended_min: int = Config.EXTENDED_MIN) -> Dictionary:
 	var groups: Array = []
-	var cells: Array = board.keys()
-	cells.sort_custom(_cell_before)
 	for direction in [Vector2i.RIGHT, Vector2i.DOWN]:
-		for start in cells:
+		for start in board.keys():
 			if board.has(start - direction):
 				continue
 			var line: Array = []
@@ -18,6 +16,7 @@ static func evaluate(board: Dictionary, new_cards: Array, extended_min: int = Co
 				line.append(cell)
 				cell += direction
 			groups.append_array(_select_line(board, line, direction, extended_min))
+	groups.sort_custom(_display_before)
 	var base := 0.0
 	var used := {}
 	for group in groups:
@@ -57,8 +56,15 @@ static func _select_line(board: Dictionary, cells: Array, direction: Vector2i, e
 		groups.append(group)
 		for cell in group.cells:
 			used[cell] = true
-	groups.sort_custom(func(a, b): return _cell_before(a.cells[0], b.cells[0]))
 	return groups
+
+# Combo 清單依原始分數由高到低排列；同分時橫向在前，再依牌型第一格由上到下、由左到右。
+static func _display_before(a: Dictionary, b: Dictionary) -> bool:
+	if a.score != b.score:
+		return a.score > b.score
+	if a.direction != b.direction:
+		return a.direction == Vector2i.RIGHT
+	return _cell_before(a.cells[0], b.cells[0])
 
 static func _priority_before(a: Dictionary, b: Dictionary) -> bool:
 	var a_rank := Config.HAND_ORDER.find(a.kind)

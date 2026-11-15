@@ -42,7 +42,7 @@ func _ready() -> void:
 	_dealer.completed.connect(_finish_deal)
 	_dealer.card_emitted.connect($resources_display.set_deck_count)
 	add_child(_presenter)
-	_presenter.setup($settlement_score, $combo, $level_board, $cat_card_area, self)
+	_presenter.setup($settlement_score, $combo, $level_board, $cat_card_area, $board, self)
 	_presenter.completed.connect(_complete_settlement)
 	$hand_area.clear_preview()
 	$hand_area.selection_changed.connect(_on_hand_selection_changed)

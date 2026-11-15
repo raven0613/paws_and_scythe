@@ -4,7 +4,7 @@
 
 ## 狀態與責任
 
-`src/service/gameplay/run_state.gd` 管理一場遊戲的牌庫、手牌、牌陣、操作歷史、費用、額度與關卡判定。卡牌以唯一 ID 表示，`cards.gd` 負責 ID 與花色、牌面點數及計分點數的對應，`deck.gd` 負責洗牌、抽牌與棄牌堆回收。`poker_patterns.gd` 辨識連續格子內的撲克牌型，`scoring.gd` 按牌型階級、長度及固定位置選出同方向互不重疊的分組，再合併橫直方向計算 Combo 與新出高牌保底分。牌型分數為參與卡牌點數總和加上牌型達成分數；交叉牌在兩個方向各加一次點數，新出未參與牌型的牌依自身點數提供高牌保底。階級、點數與達成分數分別由 `game_rules.gd` 的 `HAND_ORDER`、`RANK_POINTS`、`HAND_BONUSES` 設定。貓牌的辨識修正先傳入候選選取，辨識後由 `service/cat_cards/cat_resolver.gd` 決定得分資格、套用效果並產生逐步事件。預覽、演出與正式結算共用同一份計算結果，貓牌模組責任見 [貓牌系統](cat_card.md)。
+`src/service/gameplay/run_state.gd` 管理一場遊戲的牌庫、手牌、牌陣、操作歷史、費用、額度與關卡判定。卡牌以唯一 ID 表示，`cards.gd` 負責 ID 與花色、牌面點數及計分點數的對應，`deck.gd` 負責洗牌、抽牌與棄牌堆回收。`poker_patterns.gd` 辨識連續格子內的撲克牌型，`scoring.gd` 按牌型階級、長度及固定位置選出同方向互不重疊的分組，再合併橫直方向，依原始分數由高到低、同分時橫向在前及牌型第一格位置排出 Combo 清單，並計算 Combo 與新出高牌保底分。牌型分數為參與卡牌點數總和加上牌型達成分數；交叉牌在兩個方向各加一次點數，新出未參與牌型的牌依自身點數提供高牌保底。階級、點數與達成分數分別由 `game_rules.gd` 的 `HAND_ORDER`、`RANK_POINTS`、`HAND_BONUSES` 設定。貓牌的辨識修正先傳入候選選取，辨識後由 `service/cat_cards/cat_resolver.gd` 決定得分資格、套用效果並產生逐步事件。預覽、演出與正式結算共用同一份計算結果，貓牌模組責任見 [貓牌系統](cat_card.md)。
 
 `src/scripts/gameplay/gameplay.gd` 將遊戲狀態接至現有場景，依卡牌 ID 重用 `playing_card` 實例。開局選牌、貓牌排序與結果畫面由各自的元件處理，`settlement_presenter.gd` 讀取結算事件，串起來源貓牌、目標分數、Combo、粒子與入帳。演出期間鎖定遊戲操作，完成或跳過時提交確認時保存的快照一次，詳見 [結算分數演出](settlement.md)。
 
@@ -70,7 +70,7 @@
 
 ## 核心驗證
 
-`tests/gameplay/scoring_test.gd` 覆蓋牌型、跨越 K-A-2 的環狀連號、所有起點與支援長度、延伸牌型、階級優先、同級取長與固定位置決勝、各牌面點數、橫直交叉點數、孤島、高牌保底及高牌參與倍率；`deck_test.gd` 覆蓋完整牌庫、固定種子洗牌與回收；`run_state_test.gd` 覆蓋零分與不足額拒絕、實際分數付款、即時扣款、原價退費、操作額度、結算入帳、棄牌與撤銷交錯、容量判定、關卡重置及最終通關。`invariants_test.gd` 使用固定種子混合操作，驗證卡牌守恆、預覽與結算一致、手牌與出牌限制。`draw_events_test.gd` 驗證起始金錢、跨關保留、重新開始重置及抽牌事件，包含洗回後補抽同一張牌。這些測試只載入核心邏輯。
+`tests/gameplay/scoring_test.gd` 覆蓋牌型、跨越 K-A-2 的環狀連號、所有起點與支援長度、延伸牌型、階級優先、同級取長與固定位置決勝、各牌面點數、橫直交叉點數、孤島、清單依原始分數與同分位置排序、無關牌連到牌列時維持順序、高牌保底及高牌參與倍率；`deck_test.gd` 覆蓋完整牌庫、固定種子洗牌與回收；`run_state_test.gd` 覆蓋零分與不足額拒絕、實際分數付款、即時扣款、原價退費、操作額度、結算入帳、棄牌與撤銷交錯、容量判定、關卡重置及最終通關。`invariants_test.gd` 使用固定種子混合操作，驗證卡牌守恆、預覽與結算一致、手牌與出牌限制。`draw_events_test.gd` 驗證起始金錢、跨關保留、重新開始重置及抽牌事件，包含洗回後補抽同一張牌。這些測試只載入核心邏輯。
 
 貓牌核心另由 `tests/cat_cards/resolver_test.gd`、`run_integration_test.gd` 與 `event_flow_test.gd` 驗證第一批效果、額外計分累加、成長、順序、撤銷與事件精度。`second_batch_test.gd` 驗證第二批條件與交互作用，`resource_state_test.gd` 驗證完整二十一關的操作累積、追溯、撤銷、棄牌重置及容量優先順序。
 

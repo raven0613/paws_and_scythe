@@ -5,13 +5,18 @@ const Config = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
 const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Cards = preload("res://src/service/gameplay/cards.gd")
 
-# 發動標籤只顯示加分與倍率；最高分獨占與額外計分沒有標籤。
+# 發動標籤只顯示加分與倍率；最高分獨占與額外計分沒有標籤。標示 badge_unit 的貓牌顯示卡面的單位數值。
 static func badge(event: Dictionary) -> String:
-	return effect(event) if event.kind == "effect" else ""
+	if event.kind != "effect":
+		return ""
+	var card: Dictionary = Catalog.CARDS[event.source]
+	return _signed(event.op, card.value if card.get("badge_unit", false) else event.amount)
 
 static func effect(event: Dictionary) -> String:
-	var sign_text := "+" if event.op == "add" else "x"
-	return sign_text + Numbers.precise(event.amount)
+	return _signed(event.op, event.amount)
+
+static func _signed(op: String, amount: float) -> String:
+	return ("+" if op == "add" else "x") + Numbers.precise(amount)
 
 static func flow(event: Dictionary) -> String:
 	if event.kind == "selection":

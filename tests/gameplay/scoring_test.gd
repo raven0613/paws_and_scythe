@@ -9,6 +9,7 @@ func _init() -> void:
 	_test_hand_priority()
 	_test_card_points()
 	_test_contiguous_sets()
+	_test_display_order()
 	_check(Scoring.combo_multiplier(0) == Scoring.combo_multiplier(1), "Zero and one combo share the base multiplier")
 	var pair := _line([7, 7])
 	var result := Scoring.evaluate(pair, pair.values())
@@ -93,7 +94,7 @@ func _test_hand_priority() -> void:
 	board = _line([1, 1, 2, 6, 6, 9, 9, 5], true)
 	_check_groups(Scoring.evaluate(board, []), [["flush", 0, 8]], "Eight-card flush takes priority over pairs")
 	board = _line([1, 1, 2, 6, 6, 9, 9, 9], true)
-	_check_groups(Scoring.evaluate(board, []), [["pair", 0, 2], ["full_house", 3, 8]], "Full house takes priority over flush and leaves a separate pair")
+	_check_groups(Scoring.evaluate(board, []), [["full_house", 3, 8], ["pair", 0, 2]], "Full house takes priority over flush and leaves a separate pair")
 	result = Scoring.evaluate(board, board.values())
 	_check(result.high == _rank_points([2]), "Only the unused new card receives fallback after selecting the full house and pair")
 	board = _line([2, 2, 2, 13, 13, 13])
@@ -108,6 +109,23 @@ func _test_hand_priority() -> void:
 	result = Scoring.evaluate(vertical, [])
 	_check(result.groups.size() == 1 and result.groups[0].cells[0] == Vector2i.ZERO, "Vertical ties choose the topmost group")
 	_check_groups(_score([1, 2, 3, 4, 5, 6, 6, 6]), [["straight", 0, 6], ["pair", 6, 8]], "Same-rank candidates choose the longest group before processing the remainder")
+
+# 清單依原始分數由高到低；同分時橫向在前，再依牌型第一格位置，連接在牌列上的無關牌不改變順序。
+func _test_display_order() -> void:
+	var board := _line([4, 4, 4, 9, 9])
+	board.erase(Vector2i(2, 0))
+	var result := Scoring.evaluate(board, [])
+	_check(result.groups[0].score > result.groups[1].score and result.groups[0].cells[0] == Vector2i(3, 0), "Higher original score comes first regardless of position")
+	var ties := {Vector2i(2, 2): Cards.id(8, 0), Vector2i(2, 3): Cards.id(8, 1),
+		Vector2i(0, 2): Cards.id(8, 2), Vector2i(0, 3): Cards.id(8, 3), Vector2i(4, 5): Cards.id(8, 0), Vector2i(5, 5): Cards.id(8, 1)}
+	var tied := Scoring.evaluate(ties, [])
+	var starts: Array = tied.groups.map(func(group): return group.cells[0])
+	_check(starts == [Vector2i(4, 5), Vector2i(0, 2), Vector2i(2, 2)], "Equal scores list horizontal groups first, then by first cell")
+	var extended := ties.duplicate()
+	extended[Vector2i(2, 1)] = Cards.id(3, 2)
+	extended[Vector2i(2, 4)] = Cards.id(12, 2)
+	var after: Array = Scoring.evaluate(extended, []).groups.map(func(group): return group.cells)
+	_check(after == tied.groups.map(func(group): return group.cells), "Unrelated cards joining a line keep the list order")
 
 func _check_groups(result: Dictionary, expected: Array, message: String) -> void:
 	_check(result.groups.size() == expected.size(), message + ": group count")
