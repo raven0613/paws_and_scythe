@@ -6,6 +6,7 @@ signal selection_requested(card: Control)
 const Config = preload("res://src/configs/playing_card/playing_card_config.gd")
 const Rules = preload("res://src/configs/gameplay/game_rules.gd")
 const Cards = preload("res://src/service/gameplay/cards.gd")
+const CardTilt = preload("res://src/scripts/motion/card_tilt.gd")
 
 @export var selection_enabled: bool = false:
 	set(value):
@@ -22,6 +23,7 @@ var selected := false
 var mark_colors: Array = []
 var target_selected := false
 var _marks: Node2D
+var _tilt: RefCounted
 
 func _ready() -> void:
 	_marks = Node2D.new()
@@ -33,6 +35,7 @@ func _ready() -> void:
 	focus_entered.connect(_marks.queue_redraw)
 	focus_exited.connect(_marks.queue_redraw)
 	if not Engine.is_editor_hint():
+		_tilt = CardTilt.new($visual, size)
 		HoverInfo.bind_source(self, _hover_content)
 
 func _hover_content() -> Array:
@@ -75,3 +78,7 @@ func _draw_marks() -> void:
 
 func group_visual() -> Node2D:
 	return $visual
+
+# 整張卡面依 tilt 透視傾斜，在 visual 位置更新後呼叫；零為原本的平面卡面。
+func set_tilt(tilt: Vector2, perspective: float) -> void:
+	_tilt.apply(tilt, perspective)

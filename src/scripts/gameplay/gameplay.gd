@@ -206,6 +206,7 @@ func _place_selected_card(cell: Vector2i) -> void:
 		return
 	if game.place(selected[0], cell):
 		_begin_card_action()
+		$hand_area.close_gaps(game.hand)
 		await _card_animator.play_place(_views[selected[0]], $board.card_destination(cell))
 		_clear_selection()
 		_finish_card_action()
@@ -228,6 +229,7 @@ func _on_action_requested(action_id: StringName) -> void:
 				for id in selected:
 					outgoing.append(_views[id])
 				_begin_card_action()
+				$hand_area.close_gaps(game.hand)
 				await _card_animator.play_discard(outgoing)
 				$board.set_motion_paused(false)
 				_clear_selection()
@@ -256,7 +258,7 @@ func _undo_action() -> void:
 		"place":
 			var index: int = game.hand.find(action.card)
 			var spacing_duration := minf(ActionConfig.UNDO_HAND_SHIFT_DURATION, ActionConfig.UNDO_PLACE_DURATION)
-			$hand_area.open_slot(index, spacing_duration)
+			$hand_area.make_room(game.hand, spacing_duration)
 			await _card_animator.play_place(_views[action.card], $hand_area.card_destination(index), true)
 		"swap":
 			await _card_animator.play_swap(_views[game.board[action.a]], _views[game.board[action.b]], true)

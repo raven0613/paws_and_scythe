@@ -10,12 +10,17 @@ const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Effects = preload("res://src/service/cat_cards/effect_rules.gd")
 const CardMotion = preload("res://src/service/cat_cards/activation/card_motion.gd")
 const Badge = preload("res://src/scripts/cat_cards/activation/activation_badge.gd")
-const TILT_SHADER = preload("res://src/scripts/cat_cards/activation/card_tilt.gdshader")
+const CardTilt = preload("res://src/scripts/motion/card_tilt.gd")
+const HoverTilt = preload("res://src/service/motion/hover_tilt.gd")
 var cat_id := ""
 var description_text := ""
 var interaction_enabled := false
 var _badge: Node2D
-var _tilt: ShaderMaterial
+var _tilt: RefCounted
+var _active := false
+var _hovered := false
+var _hover_tilt := Vector2.ZERO
+var _release_tween: Tween
 var _clock := 0.0
 var _speed := 1.0
 var _shadow_rest := Vector2.ZERO
@@ -25,12 +30,9 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_tilt = ShaderMaterial.new()
-	_tilt.shader = TILT_SHADER
-	_tilt.set_shader_parameter("perspective", Activation.CARD_PERSPECTIVE)
-	_tilt.set_shader_parameter("card_size", Config.CARD_SIZE)
-	_tilt.set_shader_parameter("margin", Activation.CARD_TILT_MARGIN)
-	$visual.material = _tilt
+	_tilt = CardTilt.new($visual, Config.CARD_SIZE)
+	mouse_entered.connect(_set_hovered.bind(true))
+	mouse_exited.connect(_set_hovered.bind(false))
 	_shadow_rest = $visual/shadow.position
 	_badge = Badge.new()
 	_badge.hide()
@@ -59,6 +61,7 @@ func set_playback_speed(value: float) -> void:
 # fills 為標籤主體與尾巴的填色色標，依主體、第一節、第二節排列。
 func begin_feedback(text: String, fills: Array[PackedColorArray]) -> void:
 	_clock = 0.0
+	_active = true
 	z_index = Activation.LAYER
 	_badge.text = text
 	_badge.paint(fills)
@@ -66,12 +69,35 @@ func begin_feedback(text: String, fills: Array[PackedColorArray]) -> void:
 	set_process(true)
 	_apply()
 
+# 發動期間由發動姿態決定透視；其餘時間 Hover 中的卡片依滑鼠位置透視傾斜，大小與位置維持原樣。
 func _process(delta: float) -> void:
-	_clock += delta * _speed
-	if CardMotion.finished(_clock):
-		reset_feedback()
+	if _active:
+		_clock += delta * _speed
+		if CardMotion.finished(_clock):
+			reset_feedback()
+		else:
+			_apply()
+	elif _hovered:
+		var target := HoverTilt.target(get_local_mouse_position(), size, Config.HOVER_TILT)
+		_set_hover_tilt(HoverTilt.follow(_hover_tilt, target, delta, Config.HOVER_TILT_FOLLOW))
 	else:
-		_apply()
+		set_process(false)
+
+# 離開時以 Quad Out 補間回正。
+func _set_hovered(hovered: bool) -> void:
+	_hovered = hovered
+	if _release_tween:
+		_release_tween.kill()
+	if hovered:
+		set_process(true)
+	else:
+		_release_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_release_tween.tween_method(_set_hover_tilt, _hover_tilt, Vector2.ZERO, Config.HOVER_RELEASE_DURATION)
+
+func _set_hover_tilt(value: Vector2) -> void:
+	_hover_tilt = value
+	if not _active:
+		_tilt.apply(value, Config.HOVER_PERSPECTIVE)
 
 func _apply() -> void:
 	var pose := CardMotion.pose(_clock)
@@ -79,17 +105,19 @@ func _apply() -> void:
 	$visual.scale = Vector2.ONE * pose.scale
 	$visual.rotation = pose.rotation
 	$visual/shadow.position = CardMotion.shadow(_shadow_rest, _clock)
-	_tilt.set_shader_parameter("tilt", pose.tilt)
+	_tilt.apply(pose.tilt, Activation.CARD_PERSPECTIVE)
 	_badge.position = Config.CARD_SIZE / 2 + pose.anchor
 	_badge.update(_clock)
 
+# 發動結束後從平面卡面開始，Hover 中的卡片再平滑傾向滑鼠。
 func reset_feedback() -> void:
-	set_process(false)
+	_active = false
+	set_process(_hovered)
 	$visual.position = Vector2.ZERO
 	$visual.scale = Vector2.ONE
 	$visual.rotation = 0.0
 	$visual/shadow.position = _shadow_rest
-	_tilt.set_shader_parameter("tilt", Vector2.ZERO)
+	_set_hover_tilt(Vector2.ZERO)
 	z_index = 0
 	_badge.hide()
 

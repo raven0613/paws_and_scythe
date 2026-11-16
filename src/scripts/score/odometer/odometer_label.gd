@@ -16,10 +16,21 @@ const Fonts = preload("res://src/service/fonts/font_library.gd")
 		_refresh()
 @export var multiplier := false
 @export var horizontal_alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT
+# 外層描邊畫在主題描邊外側，粗細與主題的 outline_size 使用相同單位，超出內層的部分露在外側；0 表示單層描邊。
+@export var outer_outline_size := 0:
+	set(value):
+		outer_outline_size = value
+		_refresh()
+@export var outer_outline_color := Color.TRANSPARENT:
+	set(value):
+		outer_outline_color = value
+		_redraw()
 @export var display_value := 0.0:
 	set(value):
 		display_value = value
 		set_value(value)
+
+enum Stroke {OUTER, INNER, FILL}
 
 var motion := Motion.new()
 var _precision := 0
@@ -30,6 +41,7 @@ var _places := 1
 var _font: Font
 var _digit_width := 0.0
 var _minimum := Vector2.ZERO
+var _outer: Node2D
 var _outline: Node2D
 var _fill: Node2D
 var _tick := 0.0
@@ -41,12 +53,15 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
 	_font = Fonts.get_font()
+	_outer = Node2D.new()
 	_outline = Node2D.new()
 	_fill = Node2D.new()
+	add_child(_outer)
 	add_child(_outline)
 	add_child(_fill)
-	_outline.draw.connect(_draw_layer.bind(_outline, true))
-	_fill.draw.connect(_draw_layer.bind(_fill, false))
+	_outer.draw.connect(_draw_layer.bind(_outer, Stroke.OUTER))
+	_outline.draw.connect(_draw_layer.bind(_outline, Stroke.INNER))
+	_fill.draw.connect(_draw_layer.bind(_fill, Stroke.FILL))
 	resized.connect(_redraw)
 	add_to_group(Config.GROUP_NAME)
 	set_value(display_value)
@@ -121,13 +136,14 @@ func _refresh() -> void:
 		width += _width(".")
 	if mini(_from_units, _target_units) < 0:
 		width += _width("-")
-	var border := get_theme_constant("outline_size")
+	var border := _border()
 	_minimum = Vector2(width + border * 2, _font.get_height(font_size) + (border + Config.VERTICAL_PADDING) * 2)
 	update_minimum_size()
 	_redraw()
 
 func _redraw() -> void:
 	if _fill:
+		_outer.queue_redraw()
 		_outline.queue_redraw()
 		_fill.queue_redraw()
 
@@ -146,27 +162,31 @@ func digit_bounds() -> Vector2:
 
 func measure_value(value: float) -> float:
 	var digits := Math.format_units(Math.units(value, _precision), _precision)
-	return _width(prefix + suffix) + digits.length() * _digit_width + get_theme_constant("outline_size") * 2
+	return _width(prefix + suffix) + digits.length() * _digit_width + _border() * 2
 
-func _draw_layer(layer: Node2D, outline: bool) -> void:
+# 預留尺寸以兩層描邊中較粗者計算。
+func _border() -> int:
+	return maxi(get_theme_constant("outline_size"), outer_outline_size)
+
+func _draw_layer(layer: Node2D, stroke: Stroke) -> void:
 	var font_size := get_theme_font_size("font_size")
 	var height := size.y
 	var baseline := _font.get_ascent(font_size) - _font.get_height(font_size) / 2
 	var visible_places := Math.visible_places(_units, _precision)
 	var visible_width := _minimum.x - (_places - visible_places) * _digit_width
-	var x := float(get_theme_constant("outline_size"))
+	var x := float(_border())
 	if horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER:
 		x += (size.x - visible_width) / 2
 	elif horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT:
 		x += size.x - visible_width
-	_draw_glyph(layer, prefix, Vector2(x, height / 2 + baseline), outline)
+	_draw_glyph(layer, prefix, Vector2(x, height / 2 + baseline), stroke)
 	x += _width(prefix)
 	if mini(_from_units, _target_units) < 0:
-		_draw_glyph(layer, "-" if _units < 0 else "", Vector2(x, height / 2 + baseline), outline)
+		_draw_glyph(layer, "-" if _units < 0 else "", Vector2(x, height / 2 + baseline), stroke)
 		x += _width("-")
 	for place in range(visible_places - 1, -1, -1):
 		if _precision > 0 and place == _precision - 1:
-			_draw_glyph(layer, ".", Vector2(x, height / 2 + baseline), outline)
+			_draw_glyph(layer, ".", Vector2(x, height / 2 + baseline), stroke)
 			x += _width(".")
 		var spinning := motion.active and _progress < Math.handoff(_from_units, _target_units, _seconds, place)
 		var wheel := Math.reel(_from_units, _target_units, _progress, _seconds, place) if spinning else Math.wheel(_units, place)
@@ -177,19 +197,23 @@ func _draw_layer(layer: Node2D, outline: bool) -> void:
 		layer.draw_set_transform(Vector2(x + _digit_width / 2, height / 2), 0.0, tick_scale)
 		var digit := str(int(wheel.x))
 		if place <= _precision or absf(_units) >= pow(Config.RADIX, place):
-			_draw_glyph(layer, digit, Vector2(-_width(digit) / 2, baseline - wheel.y * height), outline)
+			_draw_glyph(layer, digit, Vector2(-_width(digit) / 2, baseline - wheel.y * height), stroke)
 		if wheel.y > 0.0:
 			var next := str((int(wheel.x) + 1) % Config.RADIX)
-			_draw_glyph(layer, next, Vector2(-_width(next) / 2, baseline + (1.0 - wheel.y) * height), outline)
+			_draw_glyph(layer, next, Vector2(-_width(next) / 2, baseline + (1.0 - wheel.y) * height), stroke)
 		layer.draw_set_transform(Vector2.ZERO)
 		x += _digit_width
-	_draw_glyph(layer, suffix, Vector2(x, height / 2 + baseline), outline)
+	_draw_glyph(layer, suffix, Vector2(x, height / 2 + baseline), stroke)
 
-func _draw_glyph(layer: Node2D, text: String, origin: Vector2, outline: bool) -> void:
+func _draw_glyph(layer: Node2D, text: String, origin: Vector2, stroke: Stroke) -> void:
 	var font_size := get_theme_font_size("font_size")
-	if outline:
-		var border := get_theme_constant("outline_size")
-		if border > 0:
-			layer.draw_string_outline(_font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, border, get_theme_color("font_outline_color"))
-	else:
-		layer.draw_string(_font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, get_theme_color("font_color"))
+	match stroke:
+		Stroke.OUTER:
+			if outer_outline_size > 0:
+				layer.draw_string_outline(_font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, outer_outline_size, outer_outline_color)
+		Stroke.INNER:
+			var border := get_theme_constant("outline_size")
+			if border > 0:
+				layer.draw_string_outline(_font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, border, get_theme_color("font_outline_color"))
+		Stroke.FILL:
+			layer.draw_string(_font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, get_theme_color("font_color"))

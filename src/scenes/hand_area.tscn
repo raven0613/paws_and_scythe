@@ -20,11 +20,11 @@ mouse_filter = 2
 script = ExtResource("3_hand_area")
 
 [node name="background" type="NinePatchRect" parent="." unique_id=444478664]
+editor_description = "底板寬度由程式依手牌張數設定，補位時右緣跟隨最後一張移動的牌收回；高度跟隨手牌區。"
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
+anchors_preset = 9
 anchor_bottom = 1.0
-grow_horizontal = 2
+offset_right = 500.0
 grow_vertical = 2
 texture = ExtResource("1_background")
 patch_margin_left = 16

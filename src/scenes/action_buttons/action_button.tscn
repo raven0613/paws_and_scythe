@@ -51,7 +51,26 @@ script = ExtResource("1_script")
 definition = ExtResource("2_definition")
 remaining_count = 6
 
-[node name="waves" type="NinePatchRect" parent="." unique_id=1778503092]
+[node name="spacing" type="Control" parent="." unique_id=1580467231]
+editor_description = "Hover 時被左右按鈕推開的位移層；visual 承接放大與抖動，按鈕根節點固定負責輸入。"
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="visual" type="Control" parent="spacing" unique_id=1580467232]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="waves" type="NinePatchRect" parent="spacing/visual" unique_id=1778503092]
 material = SubResource("ShaderMaterial_vx3xh")
 layout_mode = 1
 anchors_preset = 15
@@ -65,7 +84,7 @@ patch_margin_top = 8
 patch_margin_right = 8
 patch_margin_bottom = 8
 
-[node name="frame" type="NinePatchRect" parent="." unique_id=1095413479]
+[node name="frame" type="NinePatchRect" parent="spacing/visual" unique_id=1095413479]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -78,7 +97,7 @@ patch_margin_top = 8
 patch_margin_right = 8
 patch_margin_bottom = 8
 
-[node name="center" type="CenterContainer" parent="." unique_id=1744662547]
+[node name="center" type="CenterContainer" parent="spacing/visual" unique_id=1744662547]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -87,18 +106,18 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="content" type="HBoxContainer" parent="center" unique_id=1802915928]
+[node name="content" type="HBoxContainer" parent="spacing/visual/center" unique_id=1802915928]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="icon" type="TextureRect" parent="center/content" unique_id=763927886]
+[node name="icon" type="TextureRect" parent="spacing/visual/center/content" unique_id=763927886]
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 texture = ExtResource("5_pbg5m")
 
-[node name="caption" type="Label" parent="center/content" unique_id=696328738]
+[node name="caption" type="Label" parent="spacing/visual/center/content" unique_id=696328738]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69411767, 0.8117647, 0.9764706, 1)
 theme_override_font_sizes/font_size = 12
@@ -106,7 +125,7 @@ text = "結算"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="counter" type="HBoxContainer" parent="." unique_id=1100909934]
+[node name="counter" type="HBoxContainer" parent="spacing/visual" unique_id=1100909934]
 layout_mode = 0
 offset_left = 80.0
 offset_top = -9.0
@@ -115,13 +134,13 @@ offset_bottom = 19.0
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="time_icon" type="TextureRect" parent="counter" unique_id=198914665]
+[node name="time_icon" type="TextureRect" parent="spacing/visual/counter" unique_id=198914665]
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 texture = ExtResource("4_time")
 
-[node name="number" type="Label" parent="counter" unique_id=898792418]
+[node name="number" type="Label" parent="spacing/visual/counter" unique_id=898792418]
 layout_mode = 2
 mouse_filter = 2
 horizontal_alignment = 1

@@ -50,6 +50,8 @@ func _ready() -> void:
 	_digits.add_theme_color_override("font_color", Config.NUMBER_COLOR)
 	_digits.add_theme_color_override("font_outline_color", Config.NUMBER_OUTLINE)
 	_digits.add_theme_constant_override("outline_size", Config.NUMBER_OUTLINE_SIZE)
+	_digits.outer_outline_size = Config.NUMBER_OUTER_OUTLINE_SIZE
+	_digits.outer_outline_color = Config.NUMBER_OUTER_OUTLINE
 	_visual.add_child(_digits)
 	_fill = Fill.new()
 	_digits.set_fill_material(_fill)

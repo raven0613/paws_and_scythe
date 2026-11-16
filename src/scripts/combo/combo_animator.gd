@@ -1,6 +1,6 @@
 extends Node
 
-const Displacement = preload("res://src/scripts/combo/combo_displacement.gd")
+const Displacement = preload("res://src/scripts/motion/displacement.gd")
 const Config = preload("res://src/configs/combo/combo_animation_config.gd")
 
 func retire(rows: Array[Control]) -> void:
@@ -53,7 +53,7 @@ func reveal(row: Control, rows: Array[Control], targets: Array[Vector2]) -> Twee
 			var offset := targets[index] + other.size / 2 - center
 			others.append({"node": other, "origin": other.position, "target": targets[index], "rotation": other.rotation,
 				"direction": offset.normalized(), "index": visible_rows.find(other)})
-	Displacement.append(timeline, others, visible_rows.find(row), Config.INSERT_DISTURB_COUNT)
+	Displacement.append(timeline, others, visible_rows.find(row), Config.INSERT_DISTURB_COUNT, Config.DISTURB_PROFILE)
 	timeline.chain().tween_callback(func():
 		row.position = origin
 		row.scale = Vector2.ONE

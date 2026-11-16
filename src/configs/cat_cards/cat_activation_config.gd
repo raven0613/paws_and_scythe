@@ -10,7 +10,7 @@ const RELEASE_HOLD = 0.01
 # 卡片姿態：OFFSET 為放大後卡片中心相對原本貓牌中心的位移（像素，y 向下），放大時移過去、收回時移回原位。
 # SHADOW_OFFSET 為發動時影子相對卡面的位置（卡片原尺寸的像素），隨放大由場景設定的右下位置移過去，收回時移回。
 # 旋轉以弧度計，負值為逆時針。TILT.x 讓左側靠近鏡頭、TILT.y 讓上緣靠近鏡頭，
-# PERSPECTIVE 為鏡頭到卡面的距離（像素），越小透視越強；TILT_MARGIN 為透視變形可超出卡片邊緣的繪製範圍。
+# PERSPECTIVE 為鏡頭到卡面的距離（卡片原尺寸像素），越小透視越強；透視由 src/scripts/motion/card_tilt.gdshader 繪製。
 # 放大以 POP_DURATION 瞬間完成並以 POP_OVERSHOOT 衝過頭；收回以 RETURN_EASE 補間（Godot ease 曲線，負值為慢進慢出）。
 const CARD_OFFSET = Vector2(48, -12)
 const CARD_SHADOW_OFFSET = Vector2(-2, 2)
@@ -18,7 +18,6 @@ const CARD_SCALE = 1.8
 const CARD_ROTATION = -0.1
 const CARD_TILT = Vector2(0.3, 0.11)
 const CARD_PERSPECTIVE = 125.0
-const CARD_TILT_MARGIN = 16.0
 const CARD_POP_DURATION = 0.07
 const CARD_POP_OVERSHOOT = 1.7
 const CARD_RETURN_DURATION = 0.1

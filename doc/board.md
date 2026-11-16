@@ -4,7 +4,7 @@
 
 ## 場景責任
 
-`playing_card.tscn` 呈現卡牌牌面、陰影、overlay、stamp 與最上層的牌型標示，根 Control 提供格位與選取輸入，`visual` 子節點包含所有卡面圖層及標示，承接成立牌型時逐張上彈、微幅回落與同時歸位的位移。遊戲以唯一卡牌 ID 設定點數、花色及對應顏色；同一實體牌在手牌與牌陣間移動時沿用同一個場景實例，保留附加圖層。手牌選取使用向上位移，點擊同一張可取消，支援同時選取多張。
+`playing_card.tscn` 呈現卡牌牌面、陰影、overlay、stamp 與最上層的牌型標示，根 Control 提供格位與選取輸入，`visual` 子節點包含所有卡面圖層及標示，承接成立牌型時逐張上彈、微幅回落與同時歸位的位移。遊戲以唯一卡牌 ID 設定點數、花色及對應顏色；同一實體牌在手牌與牌陣間移動時沿用同一個場景實例，保留附加圖層。手牌選取使用向上位移，點擊同一張可取消，支援同時選取多張。手牌可操作時，滑鼠進入的牌以 Back Out 上浮並拉到最上層，同時以卡牌中心為軸透視傾斜：滑鼠所在的一側往後壓，左右與上下的角度依滑鼠在牌面上的位置變化，越靠牌緣越斜，傾斜平滑跟隨滑鼠移動，尺寸維持原樣。離開時以 Quad Out 歸位並回正，歸位期間位於其他手牌上層、Hover 中的牌下層。位移與透視作用於 `visual` 子節點，牌底、花色、角落數字與牌型標示共用 `src/scripts/motion/card_tilt.gdshader` 的同一個透視平面，根 Control 固定在槽位負責輸入，浮起期間 Hover 範圍維持不變；已選取的牌在選取位移上再浮起。發牌、出牌、棄牌、撤銷與結算鎖定手牌時，Hover 中與歸位中的牌立即回到原位與原圖層。
 
 `src/scenes/card_placement/card_placement.tscn` 使用底色、外框與加號素材，提供 `Initial`、`Available` 兩種狀態。Initial 在下方顯示「放置第一張牌」；Available 顯示加號。點擊待放格送出 `placement_requested(cell)`，合法座標由 board 提供。空盤直接顯示中心起始格，選取一張手牌後啟用點擊。已有卡牌時，恰好選取一張手牌且仍有出牌額度才顯示待放格；出牌後、取消選取、選取多張及進入場上操作模式時收起。顯示與收起均使用透明度與縮放補間。收起時立即釋放滑鼠輸入，讓空白處可拖曳鏡頭。
 
@@ -20,6 +20,6 @@
 
 `src/scripts/board/board_camera.gd` 負責鏡頭適配、平移與縮放。自動追蹤預設開啟，以所有場上實體牌及合法待放格的外接矩形為準，包含當下隱藏的待放格；場上結構改變時平滑適配。完整牌陣置中於黑邊及固定介面內的安全區，四周保留間隙。玩家可在空白背景以滑鼠左鍵或中鍵拖曳，使用滾輪及 Mac 觸控板捲動以游標為中心縮放，手機則以雙指中點捏合縮放。Zoom In／Out 按鈕以安全區中心平滑縮放，Reset 與 Auto 共用完整適配。手動視角維持至下一次牌陣結構變動；關閉追蹤後由玩家控制，重新開啟時立即平滑適配。場景分工、觸控判定與安全區算法詳見 [鏡頭控制、牌庫與金錢](gameplay_controls.md)。
 
-格距、鏡頭邊距、縮放上下限與動畫時間集中於 `src/configs/board/board_config.gd`，出牌上限共用 `src/configs/gameplay/game_rules.gd`。待放格提示、顏色及補間集中於 `src/configs/card_placement/card_placement_config.gd`，手牌向上位移量由 `src/configs/hand_area/hand_area_config.gd` 的 `SELECTED_OFFSET` 控制，牌型標示的線寬與透明度由 `src/configs/playing_card/playing_card_config.gd` 控制。
+格距、鏡頭邊距、縮放上下限與動畫時間集中於 `src/configs/board/board_config.gd`，出牌上限共用 `src/configs/gameplay/game_rules.gd`。待放格提示、顏色及補間集中於 `src/configs/card_placement/card_placement_config.gd`，手牌向上位移量由 `src/configs/hand_area/hand_area_config.gd` 的 `SELECTED_OFFSET` 控制，手牌 Hover 的上浮距離、左右與上下的傾斜上限、透視鏡頭距離、跟隨速率、進入與歸位時間及圖層由同檔的 `HOVER_*` 控制，牌型標示的線寬與透明度由 `src/configs/playing_card/playing_card_config.gd` 控制。
 
-`tests/board/board_rules_test.gd` 驗證初始位置、四向相鄰、對角線排除、重複落點、中央補洞、孤島、負座標；`tests/board/camera_math_test.gd` 驗證含待放格的安全適配、手勢縮放與觸控辨識。單次出牌上限由核心流程測試驗證。場上容量由核心流程在結算時判定。
+`tests/board/board_rules_test.gd` 驗證初始位置、四向相鄰、對角線排除、重複落點、中央補洞、孤島、負座標；`tests/board/camera_math_test.gd` 驗證含待放格的安全適配、手勢縮放與觸控辨識。`tests/motion/hover_tilt_test.gd` 驗證手牌與貓牌 Hover 透視傾斜的方向、雙軸上限、牌緣漸增，以及與幀率無關的平滑跟隨。單次出牌上限由核心流程測試驗證。場上容量由核心流程在結算時判定。

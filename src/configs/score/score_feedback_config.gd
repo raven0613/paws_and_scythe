@@ -35,8 +35,12 @@ const NUMBER_LAYER = 11
 const FAST_SPEED = 3.0
 const NUMBER_FONT_SIZE = 72
 const NUMBER_COLOR = Color("edf7ff")
+# 中央數字雙層描邊：內層 NUMBER_OUTLINE／NUMBER_OUTLINE_SIZE 緊貼字形，外層 NUMBER_OUTER_OUTLINE／NUMBER_OUTER_OUTLINE_SIZE 畫在內層外側。
+# 兩層粗細使用相同單位，外層大於內層的部分露在內層外側。
 const NUMBER_OUTLINE = Color("071B2B")
 const NUMBER_OUTLINE_SIZE = 8
+const NUMBER_OUTER_OUTLINE = Color("e6edf7")
+const NUMBER_OUTER_OUTLINE_SIZE = 16
 const COMBO_FONT_SIZE = 24
 const COMBO_TEXT_GAP = 8
 const SCORE_COMBO_GAP = 24.0

@@ -48,3 +48,15 @@ const HOVER_DECAY_POWER = 2.0
 const HOVER_RELEASE_DURATION = 0.16
 const HOVER_LAYER = 1
 const HOVER_GAP = 6.0
+
+# 插入與 Hover 共用的排列推移與 DISTURB；直向清單的擾動旋轉跟隨上下方向。
+const DISTURB_PROFILE = {
+	"falloff": DISTURB_FALLOFF, "interval": DISTURB_INTERVAL, "push_duration": INSERT_PUSH_DURATION,
+	"disturb_duration": DISTURB_DURATION, "cycles": DISTURB_CYCLES, "decay_power": DECAY_POWER,
+	"distance": DISTURB_DISTANCE, "tilt": DISTURB_TILT, "lean_axis": Vector2.DOWN,
+}
+const HOVER_PROFILE = {
+	"scale": HOVER_SCALE, "scale_duration": HOVER_SCALE_DURATION, "shake_duration": HOVER_SHAKE_DURATION,
+	"shake": HOVER_SHAKE, "tilt": HOVER_TILT, "cycles": HOVER_CYCLES, "vertical_cycles": HOVER_VERTICAL_CYCLES,
+	"decay_power": HOVER_DECAY_POWER, "release_duration": HOVER_RELEASE_DURATION, "layer": HOVER_LAYER,
+}

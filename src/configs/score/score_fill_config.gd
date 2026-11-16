@@ -15,8 +15,8 @@ const GALAXY_CONTRAST = 1.6
 const GALAXY_BRIGHTNESS = 1.0
 # 深空至明亮雲霧，依序排列。
 const GALAXY_COLORS = [
-	Color("04091e"), Color("142c59"), Color("396ca8"),
-	Color("81bce9"), Color("d0e9fa"),
+	Color("040924"), Color("182c7a"), Color("6835b8"),
+	Color("c74ca3"), Color("f5c6e8"),
 ]
 const GALAXY_VIOLET = Color("7863ac")
 const GALAXY_VIOLET_AMOUNT = 0.18
@@ -34,8 +34,8 @@ const HOLOGRAPHIC_COLOR_CYCLES = 1.6
 const HOLOGRAPHIC_SHEEN = 0.1
 # 循環的明亮全像色盤；首尾相同，霧狀色塊連續交融。
 const HOLOGRAPHIC_COLORS = [
-	Color("92b4f2"), Color("a985e6"), Color("ea94c8"), Color("f2a98a"),
-	Color("f2df8c"), Color("9bdca4"), Color("7fd0e3"), Color("92b4f2"),
+	Color("76a4fa"), Color("9d6ef5"), Color("f577bf"), Color("fa9064"),
+	Color("f7d954"), Color("6ee084"), Color("4fd2ea"), Color("76a4fa"),
 ]
 
 # 銀河星點使用獨立座標流動；大小與格距為畫面像素。

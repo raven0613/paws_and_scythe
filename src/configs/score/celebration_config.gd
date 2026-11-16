@@ -114,13 +114,13 @@ const ENERGY_FULL = 0.72
 # spin：每秒轉動弧度範圍，方向隨機；spread：升到頂時的橫向偏移範圍（像素）。
 # FIRE_EMERGE 與 FIRE_FADE 為方塊在底部長出、到頂縮小消失各佔的壽命比例。
 const FIRE_LAYERS = [
-	{"color": Color("fde69a"), "bottom": 1.1, "top": 2.8, "width": 0.9, "count": 12, "size": Vector2(5, 11),
+	{"color": Color("fff6cc"), "bottom": 1.1, "top": 2.8, "width": 0.9, "count": 12, "size": Vector2(5, 11),
 		"shrink": 0.6, "lifetime": Vector2(0.5, 0.9), "acceleration": 1.3, "spin": Vector2(3.0, 6.0), "spread": 30.0},
-	{"color": Color("fde69a"), "bottom": 1.0, "top": 2.0, "width": 1.0, "count": 40, "size": Vector2(20, 55),
+	{"color": Color("fff6cc"), "bottom": 1.0, "top": 2.0, "width": 1.0, "count": 40, "size": Vector2(20, 55),
 		"shrink": 0.4, "lifetime": Vector2(0.5, 0.85), "acceleration": 1.6, "spin": Vector2(1.6, 3.4), "spread": 18.0},
-	{"color": Color("f0b250"), "bottom": 0.8, "top": 1.4 , "width": 1.0, "count": 34, "size": Vector2(20, 70),
+	{"color": Color("ffd15c"), "bottom": 0.8, "top": 1.4 , "width": 1.0, "count": 34, "size": Vector2(20, 70),
 		"shrink": 0.5, "lifetime": Vector2(0.55, 0.9), "acceleration": 1.5, "spin": Vector2(1.0, 2.2), "spread": 14.0},
-	{"color": Color("d5673a"), "bottom": 0.5, "top": 1.1, "width": 1.17, "count": 50, "size": Vector2(20, 75),
+	{"color": Color("d97724"), "bottom": 0.5, "top": 1.1, "width": 1.17, "count": 50, "size": Vector2(20, 75),
 		"shrink": 0.6, "lifetime": Vector2(0.7, 1.2), "acceleration": 1.8, "spin": Vector2(0.3, 0.9), "spread": 10.0},
 ]
 const FIRE_EMERGE = 0.08

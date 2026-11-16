@@ -4,6 +4,8 @@ extends Button
 const Config = preload("res://src/configs/action_buttons/action_button_config.gd")
 const Definition = preload("res://src/configs/action_buttons/action_button_definition.gd")
 const FrameFill = preload("res://src/scripts/action_buttons/frame_fill.gd")
+const Motion = preload("res://src/configs/action_buttons/action_button_motion_config.gd")
+const Slosh = preload("res://src/service/action_buttons/water_slosh.gd")
 
 @export var definition: Definition:
 	set(value):
@@ -17,16 +19,19 @@ const FrameFill = preload("res://src/scripts/action_buttons/frame_fill.gd")
 		remaining_count = maxi(value, 0)
 		_update_counter()
 
-@onready var _waves: NinePatchRect = $waves
-@onready var _frame: NinePatchRect = $frame
-@onready var _content: HBoxContainer = $center/content
-@onready var _icon: TextureRect = $center/content/icon
-@onready var _caption: Label = $center/content/caption
-@onready var _counter: HBoxContainer = $counter
-@onready var _time_icon: TextureRect = $counter/time_icon
-@onready var _count_label: Label = $counter/number
+@onready var _spacing: Control = $spacing
+@onready var _visual: Control = $spacing/visual
+@onready var _waves: NinePatchRect = $spacing/visual/waves
+@onready var _frame: NinePatchRect = $spacing/visual/frame
+@onready var _content: HBoxContainer = $spacing/visual/center/content
+@onready var _icon: TextureRect = $spacing/visual/center/content/icon
+@onready var _caption: Label = $spacing/visual/center/content/caption
+@onready var _counter: HBoxContainer = $spacing/visual/counter
+@onready var _time_icon: TextureRect = $spacing/visual/counter/time_icon
+@onready var _count_label: Label = $spacing/visual/counter/number
 
 var _wave_material: ShaderMaterial
+var _slosh: Dictionary = Slosh.REST
 
 
 func _ready() -> void:
@@ -36,6 +41,7 @@ func _ready() -> void:
 	_counter.minimum_size_changed.connect(_position_counter)
 	resized.connect(_layout_visuals)
 	_apply_definition()
+	set_process(false)
 	if not Engine.is_editor_hint():
 		HoverInfo.bind_source(self, func(): return [definition.caption, ""])
 
@@ -49,6 +55,8 @@ func _apply_definition() -> void:
 		for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 			panel.set_patch_margin(side, Config.FRAME_SLICE_MARGIN)
 	_wave_material.set_shader_parameter("phase", definition.wave_phase)
+	_wave_material.set_shader_parameter("chop_wavelength", Motion.SLOSH_CHOP_WAVELENGTH)
+	_wave_material.set_shader_parameter("chop_speed", Motion.SLOSH_CHOP_SPEED)
 	_icon.texture = definition.icon
 	_caption.text = definition.caption
 	_caption.add_theme_font_size_override("font_size", definition.caption_font_size)
@@ -89,6 +97,8 @@ func _layout_visuals() -> void:
 	if not is_node_ready():
 		return
 	_wave_material.set_shader_parameter("panel_size", size)
+	_spacing.pivot_offset = size / 2
+	_visual.pivot_offset = size / 2
 	_position_counter()
 
 
@@ -107,14 +117,33 @@ func _draw() -> void:
 		return
 	var tint := Color.WHITE
 	match get_draw_mode():
-		DRAW_HOVER:
-			tint = Config.HOVER_TINT
 		DRAW_PRESSED, DRAW_HOVER_PRESSED:
 			tint = Config.PRESSED_TINT
 		DRAW_DISABLED:
 			tint = Config.DISABLED_TINT
-	if has_focus() and not disabled:
-		tint = Config.HOVER_TINT
 	_frame.modulate = tint
 	_waves.modulate = tint
 	_content.modulate = tint
+
+
+func hover_visual() -> Control:
+	return _visual
+
+
+func spacing_visual() -> Control:
+	return _spacing
+
+
+# 外框被甩動時水面跟著晃，impulse 正值代表向右甩；擺盪平靜後停止更新。
+func slosh(impulse: float) -> void:
+	_slosh = Slosh.kick(_slosh, impulse)
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	_slosh = Slosh.step(_slosh, delta)
+	if Slosh.is_calm(_slosh):
+		_slosh = Slosh.REST
+		set_process(false)
+	_wave_material.set_shader_parameter("slosh_tilt", _slosh.tilt)
+	_wave_material.set_shader_parameter("slosh_chop", _slosh.chop * Motion.SLOSH_CHOP_AMPLITUDE)

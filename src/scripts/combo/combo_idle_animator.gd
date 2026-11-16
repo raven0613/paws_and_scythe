@@ -1,8 +1,8 @@
 extends Node
 
 const Config = preload("res://src/configs/combo/combo_animation_config.gd")
-const Displacement = preload("res://src/scripts/combo/combo_displacement.gd")
-const Shake = preload("res://src/service/motion/shake_motion.gd")
+const Displacement = preload("res://src/scripts/motion/displacement.gd")
+const HoverPop = preload("res://src/scripts/motion/hover_pop.gd")
 var _rows: Array[Control] = []
 var _hovered: Control
 var _enabled := true
@@ -81,11 +81,7 @@ func clear_focus() -> void:
 		_spacing_tween.kill()
 	for row in _rows:
 		_stop_tween(row)
-		var visual: Control = row.hover_visual()
-		visual.scale = Vector2.ONE
-		visual.position = Vector2.ZERO
-		visual.rotation = 0.0
-		visual.z_index = 0
+		HoverPop.rest(row.hover_visual())
 		row.spacing_visual().position = Vector2.ZERO
 		row.spacing_visual().rotation = 0.0
 	_hovered = null
@@ -129,7 +125,7 @@ func _open_gap(selected: Control) -> void:
 		var offset := row.position + Vector2(row.size.x / 2, row.idle_offset() + row.size.y / 2) + target - center
 		motions.append({"node": spacing, "origin": spacing.position, "target": target,
 			"rotation": spacing.rotation, "direction": offset.normalized(), "index": index})
-	Displacement.append(_spacing_tween, motions, selected_index, Config.HOVER_DISTURB_COUNT)
+	Displacement.append(_spacing_tween, motions, selected_index, Config.HOVER_DISTURB_COUNT, Config.DISTURB_PROFILE)
 
 func _close_gap() -> void:
 	if _spacing_tween:
@@ -149,31 +145,8 @@ func _stop_tween(row: Control) -> void:
 
 func _enter(row: Control) -> void:
 	_stop_tween(row)
-	var visual: Control = row.hover_visual()
-	visual.z_index = Config.HOVER_LAYER
-	var timeline := create_tween().set_parallel().set_speed_scale(_speed)
-	_tweens[row] = timeline
-	timeline.tween_property(visual, "scale", Vector2.ONE * Config.HOVER_SCALE, Config.HOVER_SCALE_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	timeline.tween_method(_shake.bind(visual, visual.position, visual.rotation), 0.0, 1.0, Config.HOVER_SHAKE_DURATION)
-	timeline.chain().tween_callback(func():
-		visual.scale = Vector2.ONE * Config.HOVER_SCALE
-		visual.position = Vector2.ZERO
-		visual.rotation = 0.0
-		_tweens.erase(row))
+	_tweens[row] = HoverPop.enter(self, row.hover_visual(), Config.HOVER_PROFILE, _speed)
 
 func _release(row: Control) -> void:
 	_stop_tween(row)
-	var visual: Control = row.hover_visual()
-	var timeline := create_tween().set_parallel().set_speed_scale(_speed).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_tweens[row] = timeline
-	timeline.tween_property(visual, "scale", Vector2.ONE, Config.HOVER_RELEASE_DURATION)
-	timeline.tween_property(visual, "position", Vector2.ZERO, Config.HOVER_RELEASE_DURATION)
-	timeline.tween_property(visual, "rotation", 0.0, Config.HOVER_RELEASE_DURATION)
-	timeline.chain().tween_callback(func():
-		visual.z_index = 0
-		_tweens.erase(row))
-
-func _shake(progress: float, visual: Control, from: Vector2, rotation_from: float) -> void:
-	var pose := Shake.pose(progress, Config.HOVER_SHAKE, Config.HOVER_TILT, Config.HOVER_CYCLES, Config.HOVER_VERTICAL_CYCLES, Config.HOVER_DECAY_POWER)
-	visual.position = from * pose.decay + pose.position
-	visual.rotation = rotation_from * pose.decay + pose.rotation
+	_tweens[row] = HoverPop.release(self, row.hover_visual(), Config.HOVER_PROFILE, _speed)
