@@ -1,7 +1,12 @@
 extends RefCounted
 
-const FORCE_HIGH_SCORE = false
+# 結算表演等級：NORMAL 為一般表演，HOLOGRAPHIC 為全像彩虹，GALAXY 跑分時為全像彩虹、在最後撞頂時轉場成銀河。
+# 最終分數達到關卡目標的 HIGH_SCORE_RATIO 倍使用全像彩虹，達到 GALAXY_SCORE_RATIO 倍使用銀河。
+# FORCE_HIGH_SCORE 為每次結算至少使用的等級，NORMAL 時完全依分數判定。
+enum Tier { NORMAL, HOLOGRAPHIC, GALAXY }
+const FORCE_HIGH_SCORE = Tier.HOLOGRAPHIC
 const HIGH_SCORE_RATIO = 1.5
+const GALAXY_SCORE_RATIO = 3.0
 
 # 高分特效開關：火焰、撞擊閃白的暖色回落與光暈、畫面震動、火焰噴發、撞擊碎片。
 const FIRE_ENABLED = true
@@ -57,7 +62,7 @@ const BOUNCE_DECAY = 0.55
 const LANDING_SHAKE = 0.35
 const LANDING_SHAKE_DURATION = 0.06
 
-# 撞擊力道：天花板為主要撞擊，地板第一個角著地為次要撞擊，兩者各自設定。
+# 撞擊力道：天花板為主要撞擊，地板第一個角著地為次要撞擊，兩者各自設定；銀河等級的撞頂閃白由轉場反轉幀取代。
 # 震動頻率以每秒次數計，各種撞擊衰減共用 COLLISION_FALLOFF。
 const CEILING_SHAKE = Vector2(7, 11)
 const CEILING_QUAKE = Vector2(8, 12)
@@ -90,11 +95,12 @@ const FLARE_SIZE = 0.8
 
 # 撞擊碎片：火焰色方塊帶重力與旋轉。撞頂時由上緣兩端沿天花板向左右噴出並以 CEILING_DEBRIS_DROP 往下偏，
 # 畫在數字前方；落地時由著地的角向上噴出，畫在數字後方。SPREAD 為以噴出方向為中心的散開角度。
-const CEILING_DEBRIS_COUNT = 36
+# DEBRIS_COUNT 依表演等級設定，銀河炸開的碎片多於全像彩虹。
+const CEILING_DEBRIS_COUNT = {Tier.HOLOGRAPHIC: 36, Tier.GALAXY: 80}
 const CEILING_DEBRIS_SPEED = Vector2(320, 640)
 const CEILING_DEBRIS_SPREAD = 0.45
 const CEILING_DEBRIS_DROP = 0.3
-const FLOOR_DEBRIS_COUNT = 10
+const FLOOR_DEBRIS_COUNT = {Tier.HOLOGRAPHIC: 10, Tier.GALAXY: 20}
 const FLOOR_DEBRIS_SPEED = Vector2(140, 300)
 const FLOOR_DEBRIS_SPREAD = 1.0
 const DEBRIS_GRAVITY = 1500.0
@@ -102,18 +108,34 @@ const DEBRIS_LIFETIME = Vector2(0.3, 0.6)
 const DEBRIS_SIZE = Vector2(6, 14)
 const DEBRIS_SPIN = 14.0
 
-# 高分填色與火焰的共用漸強進度；填色模式與外觀由 score_fill_config 管理。
-const ENERGY_START = 0.28
-const ENERGY_FULL = 0.72
+# 全像彩虹填色與火焰的共用漸強進度，以跑分佔本次最終分數的比例計算；填色外觀由 score_fill_config 管理，銀河轉場由 galaxy_transition_config 管理。
+const ENERGY_START = 0.20
+const ENERGY_FULL = 0.50
 
-# 火焰由多層重疊方塊組成，參考 gameplay.png；FIRE_LAYERS 由後往前繪製，最前方為深橘色主體。
-# 依序為：頂端飄散的淺黃小方點、淺黃頂冠、從深橘頂緣露出的黃橘帶、包住數字的深橘主體。
+# 火焰由多層重疊方塊組成，參考 gameplay.png；各組由後往前繪製，最前方為主體。
+# 依序為：頂端飄散的小方點、頂冠、從主體頂緣露出的色帶、包住數字的主體。
+# FIRE_LAYERS_HOLOGRAPHIC 與 FIRE_LAYERS_GALAXY 依同樣順序逐層對應，層數相同；全像彩虹使用彩虹組，
+# 銀河撞頂換成銀河後，各層的顏色與數值在 FIRE_BLEND_DURATION（galaxy_transition_config）內由彩虹組漸變到銀河組。
 # bottom／top：滿能量時方塊出發與升到頂的高度，以字高為單位，0 為數字字底、1 為字頂；漸強期間整團火焰以字底為基準等比例縮放。
 # width：分布寬度相對整串數字的比例；count：方塊數；size：邊長範圍（像素）；shrink：升到頂時相對初始邊長的比例。
-# lifetime：上升一次的秒數範圍；acceleration：上升位移為壽命進度的次方，越大底部越慢、上方越快。
+# lifetime：速度倍率為 1 時上升一次的秒數範圍；acceleration：上升位移為壽命進度的次方，越大底部越慢、上方越快。
 # spin：每秒轉動弧度範圍，方向隨機；spread：升到頂時的橫向偏移範圍（像素）。
+# FIRE_SPEED_HOLOGRAPHIC 與 FIRE_SPEED_GALAXY 為兩組火焰上升與轉動的速度倍率，漸變期間跟著顏色一起過渡。
 # FIRE_EMERGE 與 FIRE_FADE 為方塊在底部長出、到頂縮小消失各佔的壽命比例。
-const FIRE_LAYERS = [
+const FIRE_SPEED_HOLOGRAPHIC = 0.7
+const FIRE_SPEED_GALAXY = 1.8
+const FIRE_LAYERS_HOLOGRAPHIC = [
+	{"color": Color("ffbe3d"), "bottom": 1.1, "top": 2.8, "width": 0.9, "count": 12, "size": Vector2(5, 11),
+		"shrink": 0.6, "lifetime": Vector2(0.5, 0.9), "acceleration": 1.3, "spin": Vector2(3.0, 6.0), "spread": 30.0},
+	{"color": Color("ffbe3d"), "bottom": 1.0, "top": 2.0, "width": 1.0, "count": 40, "size": Vector2(20, 55),
+		"shrink": 0.4, "lifetime": Vector2(0.5, 0.85), "acceleration": 1.6, "spin": Vector2(1.6, 3.4), "spread": 18.0},
+	{"color": Color("eb5e28"), "bottom": 0.8, "top": 1.4 , "width": 1.0, "count": 34, "size": Vector2(20, 70),
+		"shrink": 0.5, "lifetime": Vector2(0.55, 0.9), "acceleration": 1.5, "spin": Vector2(1.0, 2.2), "spread": 14.0},
+	{"color": Color("9e241b"), "bottom": 0.5, "top": 1.1, "width": 1.17, "count": 50, "size": Vector2(20, 75),
+		"shrink": 0.6, "lifetime": Vector2(0.7, 1.2), "acceleration": 1.8, "spin": Vector2(0.3, 0.9), "spread": 10.0},
+]
+
+const FIRE_LAYERS_GALAXY = [
 	{"color": Color("fff6cc"), "bottom": 1.1, "top": 2.8, "width": 0.9, "count": 12, "size": Vector2(5, 11),
 		"shrink": 0.6, "lifetime": Vector2(0.5, 0.9), "acceleration": 1.3, "spin": Vector2(3.0, 6.0), "spread": 30.0},
 	{"color": Color("fff6cc"), "bottom": 1.0, "top": 2.0, "width": 1.0, "count": 40, "size": Vector2(20, 55),

@@ -40,7 +40,7 @@ var _actual_score := float(Config.PREVIEW_CURRENT_SCORE)
 var _tween: Tween
 
 func _ready() -> void:
-	$progress_label.z_index = Feedback.NUMBER_LAYER
+	$progress_label.z_index = Feedback.LABEL_LAYER
 	$progress_label.set_value(current_score)
 	_update_display()
 

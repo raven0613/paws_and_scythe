@@ -3,24 +3,28 @@ extends ShaderMaterial
 
 const Config = preload("res://src/configs/score/score_fill_config.gd")
 const Feel = preload("res://src/configs/score/celebration_config.gd")
+const Transition = preload("res://src/configs/score/galaxy_transition_config.gd")
 const Galaxy = preload("res://src/scripts/score/celebration/galaxy.gdshader")
 const Holographic = preload("res://src/scripts/score/celebration/rainbow.gdshader")
+var base_brightness := 1.0
 
-static func debris_palette() -> Array:
-	if Config.MODE == Config.Mode.GALAXY:
+# 撞擊碎片取自該等級撞頂時的填色：銀河取亮色雲霧、星點色與紫色，全像彩虹取整組色盤。
+static func debris_palette(tier: int) -> Array:
+	if tier == Feel.Tier.GALAXY:
 		return Config.GALAXY_COLORS.slice(Config.GALAXY_DEBRIS_FROM) + [Config.STAR_COLOR, Config.GALAXY_VIOLET]
 	return Config.HOLOGRAPHIC_COLORS.slice(0, -1)
 
-func _init() -> void:
-	var galaxy: bool = Config.MODE == Config.Mode.GALAXY
+func _init(tier: int = Feel.Tier.HOLOGRAPHIC) -> void:
+	var galaxy := tier == Feel.Tier.GALAXY
 	shader = Galaxy if galaxy else Holographic
+	base_brightness = Config.GALAXY_BRIGHTNESS if galaxy else Config.HOLOGRAPHIC_BRIGHTNESS
 	var parameters := {
 		"flow_speed": Config.GALAXY_FLOW_SPEED if galaxy else Config.HOLOGRAPHIC_FLOW_SPEED,
 		"spatial_scale": Config.GALAXY_SPATIAL_SCALE if galaxy else Config.HOLOGRAPHIC_SPATIAL_SCALE,
 		"warp": Config.GALAXY_WARP if galaxy else Config.HOLOGRAPHIC_WARP,
 		"evolution_speed": Config.GALAXY_EVOLUTION_SPEED if galaxy else Config.HOLOGRAPHIC_EVOLUTION_SPEED,
 		"fog_contrast": Config.GALAXY_CONTRAST if galaxy else Config.HOLOGRAPHIC_CONTRAST,
-		"brightness": Config.GALAXY_BRIGHTNESS if galaxy else Config.HOLOGRAPHIC_BRIGHTNESS,
+		"brightness": base_brightness,
 	}
 	var gradient := Gradient.new()
 	gradient.colors = PackedColorArray(Config.GALAXY_COLORS if galaxy else Config.HOLOGRAPHIC_COLORS)
@@ -34,6 +38,7 @@ func _init() -> void:
 	ramp.gradient = gradient
 	parameters.color_ramp = ramp
 	parameters.flash_tint = Feel.FLASH_TINT if Feel.FLASH_TINT_ENABLED else Color.WHITE
+	parameters.impact_color = Transition.IMPACT_FILL
 	if galaxy:
 		parameters.merge({
 			"violet": Config.GALAXY_VIOLET, "violet_amount": Config.GALAXY_VIOLET_AMOUNT,

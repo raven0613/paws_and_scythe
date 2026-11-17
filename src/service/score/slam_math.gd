@@ -24,9 +24,11 @@ static func contacts(progress: float) -> int:
 			count += 1
 	return count
 
-static func impact(index: int) -> Dictionary:
+# 銀河等級的撞頂以轉場反轉幀取代閃白。
+static func impact(index: int, tier: int) -> Dictionary:
 	if index == 0:
-		return {"shake": Config.CEILING_SHAKE, "quake": Config.CEILING_QUAKE, "flash": Config.CEILING_FLASH, "flare": Config.CEILING_FLARE}
+		var flash: float = 0.0 if tier == Config.Tier.GALAXY else Config.CEILING_FLASH
+		return {"shake": Config.CEILING_SHAKE, "quake": Config.CEILING_QUAKE, "flash": flash, "flare": Config.CEILING_FLARE}
 	return {"shake": Config.FLOOR_SHAKE, "quake": Config.FLOOR_QUAKE, "flash": Config.FLOOR_FLASH, "flare": Config.FLOOR_FLARE}
 
 # 第 0 次著地為第一個角，之後每次彈起後著地一次，最後一次兩腳同時著地。
@@ -41,8 +43,8 @@ static func landing_time(index: int) -> float:
 static func landing_tilt(index: int) -> float:
 	return 0.0 if index >= Config.BOUNCE_COUNT else Config.FLOOR_TILT * pow(-Config.BOUNCE_DECAY, index)
 
-# 碎片噴出點以靜止中心為原點：撞頂由上緣兩端向外，落地由著地的角向上。
-static func emitters(index: int, size: Vector2) -> Array:
+# 碎片噴出點以靜止中心為原點：撞頂由上緣兩端向外，落地由著地的角向上；碎片數量依表演等級決定。
+static func emitters(index: int, size: Vector2, tier: int) -> Array:
 	var pose := _motion(contact_time(index), size)
 	var ceiling := index == 0
 	var points := [
@@ -50,7 +52,7 @@ static func emitters(index: int, size: Vector2) -> Array:
 		_emitter(pose, size, Vector2(0.5, -0.5), Vector2.RIGHT.rotated(Config.CEILING_DEBRIS_DROP)),
 	] if ceiling else [_emitter(pose, size, Vector2(signf(Config.FLOOR_TILT) * 0.5, 0.5), Vector2.UP)]
 	var shared := {
-		"count": roundi(float(Config.CEILING_DEBRIS_COUNT if ceiling else Config.FLOOR_DEBRIS_COUNT) / points.size()),
+		"count": roundi(float(Config.CEILING_DEBRIS_COUNT[tier] if ceiling else Config.FLOOR_DEBRIS_COUNT[tier]) / points.size()),
 		"speed": Config.CEILING_DEBRIS_SPEED if ceiling else Config.FLOOR_DEBRIS_SPEED,
 		"spread": Config.CEILING_DEBRIS_SPREAD if ceiling else Config.FLOOR_DEBRIS_SPREAD,
 		"front": ceiling,
@@ -58,7 +60,7 @@ static func emitters(index: int, size: Vector2) -> Array:
 	return points.map(func(point: Dictionary) -> Dictionary: return point.merged(shared))
 
 # 已發生的撞擊各自淡出並疊加成閃白、火焰噴發與畫面震動。
-static func pose(progress: float, size: Vector2) -> Dictionary:
+static func pose(progress: float, size: Vector2, tier: int) -> Dictionary:
 	var time := progress * duration()
 	var result := _motion(time, size)
 	var flash := 0.0
@@ -66,7 +68,7 @@ static func pose(progress: float, size: Vector2) -> Dictionary:
 	var quake := Vector2.ZERO
 	for index in contacts(progress):
 		var since := time - contact_time(index)
-		var strength := impact(index)
+		var strength := impact(index, tier)
 		flash += strength.flash * fade(since, Config.FLASH_DURATION)
 		flare += strength.flare * fade(since, Config.FLARE_DURATION)
 		quake += strength.quake * vibration(since, Config.QUAKE_DURATION, Config.QUAKE_FREQUENCY)

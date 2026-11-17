@@ -50,17 +50,14 @@ func play(result: Dictionary, current_score: float) -> void:
 	_score.show()
 	_score.get_node("number").show()
 	_score.get_node("number").prepare(result.total, _level.target_score)
-	_score.get_node("number").set_playback_speed(_speed)
-	get_tree().call_group(OdometerConfig.GROUP_NAME, "set_playback_speed", _speed)
-	_cats.set_playback_speed(_speed)
-	_showcase.set_playback_speed(_speed)
 	_score.get_node("combo_counter").reset()
 	for index in result.groups.size():
 		var row: Control = _combo.get_row(index)
 		row.prepare_settlement()
 		row.modulate = Color.WHITE
 		row.score = result.groups[index].original_score
-	_timeline = create_tween().set_speed_scale(_speed)
+	_timeline = create_tween()
+	_apply_speed()
 	_last_central = Celebration.last_central_event(result.events)
 	var start := 0
 	while start < result.events.size():
@@ -236,7 +233,7 @@ func _append_central_feedback(final: bool) -> void:
 	var number: Control = _score.get_node("number")
 	_timeline.tween_method(number.feedback_progress.bind(final), 0.0, 1.0, number.feedback_duration(final))
 	if final:
-		_timeline.tween_interval(Config.STEP_HOLD)
+		_timeline.tween_interval(Config.FINAL_HOLD)
 
 func _fly_row(row: Control, key: int) -> void:
 	_particles.begin(key, row.score_origin(), _score.get_node("number").particle_origin())
@@ -246,6 +243,9 @@ func _fly_total() -> void:
 
 func _set_fast(fast: bool) -> void:
 	_speed = Config.FAST_SPEED if fast else 1.0
+	_apply_speed()
+
+func _apply_speed() -> void:
 	_score.get_node("number").set_playback_speed(_speed)
 	get_tree().call_group(OdometerConfig.GROUP_NAME, "set_playback_speed", _speed)
 	_cats.set_playback_speed(_speed)

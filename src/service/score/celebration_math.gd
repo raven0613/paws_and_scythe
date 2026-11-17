@@ -2,9 +2,16 @@ extends RefCounted
 
 const Config = preload("res://src/configs/score/celebration_config.gd")
 const Slam = preload("res://src/service/score/slam_math.gd")
+const Surge = preload("res://src/service/score/galaxy_surge.gd")
 
-static func is_high(total: float, level_target: float, forced: bool = Config.FORCE_HIGH_SCORE) -> bool:
-	return forced or total >= level_target * Config.HIGH_SCORE_RATIO
+# 依最終分數相對關卡目標的倍數決定表演等級，forced 為至少使用的等級。
+static func tier(total: float, level_target: float, forced: int = Config.FORCE_HIGH_SCORE) -> int:
+	var earned := Config.Tier.NORMAL
+	if total >= level_target * Config.GALAXY_SCORE_RATIO:
+		earned = Config.Tier.GALAXY
+	elif total >= level_target * Config.HIGH_SCORE_RATIO:
+		earned = Config.Tier.HOLOGRAPHIC
+	return maxi(earned, forced)
 
 static func central_change(event: Dictionary) -> bool:
 	var central: bool = event.kind in ["high", "group_award", "combo_apply"] or (event.kind == "effect" and event.get("target", "") in ["subtotal", "total"])
@@ -19,9 +26,11 @@ static func last_central_event(events: Array) -> int:
 static func energy(value: float, total: float) -> float:
 	return smoothstep(Config.ENERGY_START, Config.ENERGY_FULL, value / total) if total > 0.0 else 0.0
 
-static func duration(high: bool, final: bool) -> float:
+# 高分的結算完成表演為撞擊時間軸，銀河等級在撞擊前加上蓄力。
+static func duration(tier: int, final: bool) -> float:
+	var high := tier != Config.Tier.NORMAL
 	if final and high:
-		return Slam.duration()
+		return Surge.lead(tier) + Slam.duration()
 	return Config.FINAL_DURATION if final else (Config.HIGH_STEP_DURATION if high else Config.STEP_DURATION)
 
 static func impact(progress: float, high: bool, final: bool) -> Dictionary:

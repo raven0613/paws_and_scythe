@@ -1,9 +1,6 @@
 extends RefCounted
 
-enum Mode { GALAXY, HOLOGRAPHIC }
-# GALAXY：銀河；HOLOGRAPHIC：柔和全像彩虹。
-const MODE = Mode.HOLOGRAPHIC
-
+# 高分填色：全像彩虹等級使用 HOLOGRAPHIC_*，銀河等級先使用全像彩虹，轉場後換成 GALAXY_*。
 # 兩種填色共用霧狀流場；速度為每秒向左移動的畫面像素。
 # SPATIAL_SCALE 越大，雲霧越細；WARP 控制扭曲程度。
 # EVOLUTION_SPEED 控制局部翻湧；CONTRAST 與 BRIGHTNESS 控制明暗層次。

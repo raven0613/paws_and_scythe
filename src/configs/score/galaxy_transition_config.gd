@@ -1,0 +1,34 @@
+extends RefCounted
+
+# 銀河轉場併入結算完成的撞頂：跑分全程為全像彩虹，最後一段跑完後先蓄力 CHARGE_DURATION 秒，
+# 彩虹流速在期間加速到 CHARGE_FLOW 倍、亮度提高 CHARGE_BRIGHTNESS 比例，數字壓扁到 CHARGE_SQUASH，接著衝上撞頂。
+# 撞頂瞬間播放 IMPACT_DURATION 秒的反轉幀取代撞頂閃白：填色換成高亮青白 IMPACT_FILL，外層白描邊反轉成深紫黑 IMPACT_OUTLINE，暗角同時出現。
+# 反轉幀結束換成銀河並噴出撞頂碎片，火焰在 FIRE_BLEND_DURATION 秒內由彩虹組漸變到銀河組；撞頂後的動作、震動與落地沿用 celebration_config。
+const CHARGE_DURATION = 0.05
+const CHARGE_FLOW = 6.0
+const CHARGE_BRIGHTNESS = 0.45
+const CHARGE_SQUASH = Vector2(1.1, 0.86)
+const IMPACT_DURATION = 0.07
+const IMPACT_FILL = Color("e6fdff")
+const IMPACT_OUTLINE = Color("1c0c2c")
+const FIRE_BLEND_DURATION = 0.25
+
+# 暗角：撞頂瞬間以半徑 VIGNETTE_RADIUS、強度 VIGNETTE_INTENSITY 出現，在 VIGNETTE_BURST_DURATION 秒內猛地彈開到 VIGNETTE_BURST_RADIUS，
+# 強度以 VIGNETTE_FLICKER 比例、每秒 VIGNETTE_FLICKER_FREQUENCY 次閃爍，在 VIGNETTE_FLICKER_DURATION 秒內衰減。
+# 半徑以畫面半高為 1，從畫面中心起算，1152×648 的四角約為 2.04；VIGNETTE_SOFTNESS 為由透明到最暗的過渡寬度。
+# VIGNETTE_AFTERGLOW 選擇彈開後的收尾：FADE 在 VIGNETTE_FADE_DURATION 秒內散去；
+# LINGER 在同樣時間內收回 VIGNETTE_LINGER_RADIUS 並淡到 VIGNETTE_LINGER_INTENSITY，以淡淡的暗角聚焦分數到結算結束。
+enum Afterglow { FADE, LINGER }
+const VIGNETTE_COLOR = Color("0b0719")
+const VIGNETTE_SOFTNESS = 1.2
+const VIGNETTE_RADIUS = 0.6
+const VIGNETTE_INTENSITY = 0.5
+const VIGNETTE_BURST_DURATION = 0.16
+const VIGNETTE_BURST_RADIUS = 1.9
+const VIGNETTE_FLICKER = 0.3
+const VIGNETTE_FLICKER_FREQUENCY = 18.0
+const VIGNETTE_FLICKER_DURATION = 0.4
+const VIGNETTE_AFTERGLOW = Afterglow.LINGER
+const VIGNETTE_FADE_DURATION = 0.5
+const VIGNETTE_LINGER_RADIUS = 0.8
+const VIGNETTE_LINGER_INTENSITY = 0.3

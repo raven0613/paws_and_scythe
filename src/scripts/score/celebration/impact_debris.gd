@@ -2,11 +2,11 @@
 extends Node2D
 
 const Config = preload("res://src/configs/score/celebration_config.gd")
-const Fill = preload("res://src/scripts/score/celebration/score_fill.gd")
 var speed := 1.0
+# 碎片顏色，由分數依當次表演等級的填色設定。
+var palette: Array = []
 var _time := 0.0
 var _pieces: Array[Dictionary] = []
-var _palette := Fill.debris_palette()
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -25,7 +25,7 @@ func burst(origin: Vector2, emitter: Dictionary) -> void:
 			"size": _rng.randf_range(Config.DEBRIS_SIZE.x, Config.DEBRIS_SIZE.y),
 			"angle": _rng.randf() * TAU,
 			"spin": _rng.randf_range(-Config.DEBRIS_SPIN, Config.DEBRIS_SPIN),
-			"color": _palette[_rng.randi() % _palette.size()],
+			"color": palette[_rng.randi() % palette.size()],
 		})
 
 func clear() -> void:

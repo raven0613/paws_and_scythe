@@ -10,6 +10,8 @@ const NUMBER_POP_START = 0.55
 const NUMBER_POP_PEAK = 0.78
 const NUMBER_POP_SCALE = 1.2
 const STEP_HOLD = 0.2
+# 結算完成表演結束後，最終分數停留 FINAL_HOLD 秒再飛往關卡面板。
+const FINAL_HOLD = 1.0
 const LEVEL_COUNT_DURATION = 0.48
 # 依序入帳：各條每隔 AWARD_INTERVAL 發射一波粒子，飛行 AWARD_FLIGHT_DURATION 後中央接續累加；
 # 中間各段的跑分長度等於發射間隔，最後一段使用 COUNT_DURATION。
@@ -30,8 +32,11 @@ const PARTICLE_COLOR = Color("b5eaff")
 const PARTICLE_CORE_COLOR = Color("f5fcff")
 const PARTICLE_WAIT_ALPHA = 0.45
 const PARTICLE_GLOW_ALPHA = 0.07
-const PARTICLE_LAYER = 10
-const NUMBER_LAYER = 11
+# 結算圖層由下往上：Combo 條標題與關卡分數等周邊標籤、銀河暗角、飛行粒子、中央分數與右側倍率。
+const LABEL_LAYER = 11
+const VIGNETTE_LAYER = 12
+const PARTICLE_LAYER = 13
+const NUMBER_LAYER = 14
 const FAST_SPEED = 3.0
 const NUMBER_FONT_SIZE = 72
 const NUMBER_COLOR = Color("edf7ff")

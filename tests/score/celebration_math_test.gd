@@ -2,6 +2,7 @@ extends SceneTree
 
 const Math = preload("res://src/service/score/celebration_math.gd")
 const Slam = preload("res://src/service/score/slam_math.gd")
+const Surge = preload("res://src/service/score/galaxy_surge.gd")
 const Config = preload("res://src/configs/score/celebration_config.gd")
 const Rules = preload("res://src/configs/gameplay/game_rules.gd")
 var failures := 0
@@ -9,9 +10,15 @@ var failures := 0
 func _init() -> void:
 	var goal: float = Rules.LEVEL_TARGETS[0]
 	var boundary := goal * Config.HIGH_SCORE_RATIO
-	_check(Math.is_high(boundary, goal, false), "High-score threshold includes exact boundary")
-	_check(not Math.is_high(boundary - Rules.COMBO_STEP, goal, false), "Below threshold uses normal feedback")
-	_check(Math.is_high(0, goal, true), "Force switch overrides score threshold")
+	var galaxy := goal * Config.GALAXY_SCORE_RATIO
+	var unforced := Config.Tier.NORMAL
+	_check(Math.tier(boundary, goal, unforced) == Config.Tier.HOLOGRAPHIC, "Holographic threshold includes exact boundary")
+	_check(Math.tier(boundary - Rules.COMBO_STEP, goal, unforced) == Config.Tier.NORMAL, "Below threshold uses normal feedback")
+	_check(Math.tier(galaxy - Rules.COMBO_STEP, goal, unforced) == Config.Tier.HOLOGRAPHIC, "High scores below the galaxy threshold stay holographic")
+	_check(Math.tier(galaxy, goal, unforced) == Config.Tier.GALAXY, "Galaxy threshold includes exact boundary")
+	_check(Math.tier(0, goal, Config.Tier.HOLOGRAPHIC) == Config.Tier.HOLOGRAPHIC, "Forcing holographic overrides a low score")
+	_check(Math.tier(0, goal, Config.Tier.GALAXY) == Config.Tier.GALAXY, "Forcing galaxy overrides a low score")
+	_check(Math.tier(galaxy, goal, Config.Tier.HOLOGRAPHIC) == Config.Tier.GALAXY, "Forcing a lower tier keeps the earned tier")
 	_check(Math.energy(boundary * Config.ENERGY_START, boundary) == 0, "High-score effects start from white")
 	_check(Math.energy(boundary * Config.ENERGY_FULL, boundary) == 1, "High-score effects reach full intensity at configured progress")
 	_check(Math.energy(0, 0) == 0, "Zero result keeps white text")
@@ -34,7 +41,9 @@ func _init() -> void:
 				continue
 			var pose := Math.impact(1, high, final)
 			_check(pose.position.is_zero_approx() and pose.scale.is_equal_approx(Vector2.ONE) and is_zero_approx(pose.rotation), "Step and final feedback restore exact rest pose")
-	_check(is_equal_approx(Math.duration(true, true), Slam.duration()), "High-score final feedback uses the full slam timeline")
+	_check(is_equal_approx(Math.duration(Config.Tier.HOLOGRAPHIC, true), Slam.duration()), "Holographic final feedback uses the full slam timeline")
+	_check(is_equal_approx(Math.duration(Config.Tier.GALAXY, true), Surge.lead(Config.Tier.GALAXY) + Slam.duration()), "Galaxy final feedback charges before the slam")
+	_check(Surge.lead(Config.Tier.GALAXY) > 0.0 and is_zero_approx(Surge.lead(Config.Tier.HOLOGRAPHIC)), "Only galaxy charges before the slam")
 	print("Celebration math: %d failures" % failures)
 	quit(1 if failures else 0)
 

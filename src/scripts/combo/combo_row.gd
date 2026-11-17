@@ -41,7 +41,7 @@ var description_text := ""
 
 
 func _ready() -> void:
-	$spacing/idle/visual/caption.z_index = Feedback.NUMBER_LAYER
+	$spacing/idle/visual/caption.z_index = Feedback.LABEL_LAYER
 	$spacing/idle/visual/caption/hand.minimum_size_changed.connect(_fit_text)
 	$spacing/idle/visual/caption/score.minimum_size_changed.connect(_fit_text)
 	_refresh_score()
