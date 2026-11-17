@@ -123,12 +123,13 @@ grow_horizontal = 0
 layout_mode = 1
 
 [node name="settlement_score" parent="." unique_id=1846871130 instance=ExtResource("13_score")]
+visible = true
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -273.0
-offset_top = 60.0
+offset_top = 85.0
 offset_right = 27.0
-offset_bottom = 194.0
+offset_bottom = 219.0
 grow_horizontal = 2

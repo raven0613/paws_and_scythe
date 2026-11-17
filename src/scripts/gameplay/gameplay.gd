@@ -294,6 +294,7 @@ func _update_input() -> void:
 	var browsing: bool = not _busy and game.status == Run.Status.PLAYING
 	var active: bool = browsing and not _feedback_active
 	$combo.set_idle_enabled(active)
+	$board.set_hover_enabled(active)
 	$cat_card_area.set_interaction_enabled(active)
 	if (_mode == &"remove" and not game.can_dig()) or (_mode == &"swap" and not game.can_swap()):
 		_mode = &""

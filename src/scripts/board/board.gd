@@ -9,6 +9,7 @@ const Layout = preload("res://src/service/board/board_layout.gd")
 const PlacementScene = preload("res://src/scenes/card_placement/card_placement.tscn")
 const Camera = preload("res://src/scripts/board/board_camera.gd")
 const ViewArea = preload("res://src/scripts/board/board_view_area.gd")
+const HoverAnimator = preload("res://src/scripts/board/board_hover_animator.gd")
 var _cards: Dictionary = {}
 var _placements: Dictionary = {}
 var _input_enabled := false
@@ -18,11 +19,16 @@ var _focus_tween: Tween
 var _focused: Array[Control] = []
 var _home: Dictionary = {}
 var _view_area: RefCounted
+var _hover: Node
 
 func _ready() -> void:
 	_camera = Camera.new()
 	add_child(_camera)
 	_camera.setup(self, $content)
+	if not Engine.is_editor_hint():
+		_hover = HoverAnimator.new()
+		_hover.setup(self)
+		add_child(_hover)
 	_refresh_placements()
 
 func get_occupied_cells() -> Array[Vector2i]:
@@ -97,6 +103,19 @@ func set_motion_paused(paused: bool) -> void:
 	_camera.motion_paused = paused
 	if paused:
 		reset_focus()
+
+# 盤面可操作時，場上卡牌在 Hover 時呼吸一次。
+func set_hover_enabled(enabled: bool) -> void:
+	_hover.set_enabled(enabled)
+
+# 畫面上 point 處未被固定介面遮住的場上卡牌。
+func card_at_point(point: Vector2) -> Control:
+	if not allows_camera_at(point):
+		return null
+	for card in _cards.values():
+		if ViewArea.contains_point(card, point):
+			return card
+	return null
 
 func has_card_at(point: Vector2) -> bool:
 	for card in _cards.values():

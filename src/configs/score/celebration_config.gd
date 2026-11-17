@@ -4,7 +4,7 @@ extends RefCounted
 # 最終分數達到關卡目標的 HIGH_SCORE_RATIO 倍使用全像彩虹，達到 GALAXY_SCORE_RATIO 倍使用銀河。
 # FORCE_HIGH_SCORE 為每次結算至少使用的等級，NORMAL 時完全依分數判定。
 enum Tier { NORMAL, HOLOGRAPHIC, GALAXY }
-const FORCE_HIGH_SCORE = Tier.HOLOGRAPHIC
+const FORCE_HIGH_SCORE = Tier.NORMAL
 const HIGH_SCORE_RATIO = 1.5
 const GALAXY_SCORE_RATIO = 3.0
 
