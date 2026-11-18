@@ -27,6 +27,21 @@ static func layer(index: int, blend: float) -> Dictionary:
 		result[key] = lerp(from[key], to[key], blend)
 	return result
 
+# 火焰光暈由彩虹組往銀河組混合 blend 比例後的設定。
+static func glow(blend: float) -> Dictionary:
+	var result := {}
+	for key in Config.FIRE_GLOW_HOLOGRAPHIC:
+		result[key] = lerpf(Config.FIRE_GLOW_HOLOGRAPHIC[key], Config.FIRE_GLOW_GALAXY[key], blend)
+	return result
+
+# 光暈顏色：該層火焰色往白色提亮。
+static func glow_color(layer: Dictionary, glow: Dictionary) -> Color:
+	return layer.color.lerp(Color.WHITE, glow.lighten)
+
+# 發光時火焰方塊本身的提亮顏色。
+static func lit_color(layer: Dictionary, glow: Dictionary) -> Color:
+	return layer.color.lerp(Color.WHITE, glow.brighten)
+
 static func speed(blend: float) -> float:
 	return lerpf(Config.FIRE_SPEED_HOLOGRAPHIC, Config.FIRE_SPEED_GALAXY, blend)
 

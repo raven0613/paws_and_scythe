@@ -10,6 +10,7 @@ const Math = preload("res://src/service/score/celebration_math.gd")
 const Slam = preload("res://src/service/score/slam_math.gd")
 const Surge = preload("res://src/service/score/galaxy_surge.gd")
 const VignetteMotion = preload("res://src/service/score/vignette_motion.gd")
+const Distortion = preload("res://src/service/score/impact_distortion.gd")
 const Odometer = preload("res://src/scripts/score/odometer/odometer_label.gd")
 const Flame = preload("res://src/scripts/score/celebration/block_flame.gd")
 const Glow = preload("res://src/scripts/score/celebration/flash_glow.gd")
@@ -17,6 +18,7 @@ const Debris = preload("res://src/scripts/score/celebration/impact_debris.gd")
 const Quake = preload("res://src/scripts/score/celebration/screen_quake.gd")
 const Fill = preload("res://src/scripts/score/celebration/score_fill.gd")
 const Vignette = preload("res://src/scripts/score/celebration/vignette.gd")
+const DistortionLayer = preload("res://src/scripts/score/celebration/impact_distortion.gd")
 var _visual: Node2D
 var _digits: Control
 var _flame: Node2D
@@ -24,6 +26,7 @@ var _glow: Node2D
 var _debris_back: Node2D
 var _debris_front: Node2D
 var _vignette: ColorRect
+var _distortion: ColorRect
 var _fills := {}
 var _fill: ShaderMaterial
 var _tier := Feel.Tier.NORMAL
@@ -35,8 +38,12 @@ var _flow := 1.0
 var _speed := 1.0
 var _width := 0.0
 var _contacts := 0
-# 銀河撞頂後經過的秒數，負值表示尚未撞頂。
+# 銀河撞頂後與衝擊波發出後經過的秒數，負值表示尚未發生。
 var _surge_time := -1.0
+var _wave_time := -1.0
+var _wave_center := Vector2.ZERO
+# 熱浪雜訊累積的向上飄移量（像素），速度改變時連續。
+var _haze_drift := 0.0
 var value: float:
 	get:
 		return _digits.motion.current if _digits else 0.0
@@ -65,6 +72,8 @@ func _ready() -> void:
 	_visual.add_child(_digits)
 	_vignette = Vignette.new()
 	add_child(_vignette)
+	_distortion = DistortionLayer.new()
+	add_child(_distortion)
 	for tier in [Feel.Tier.HOLOGRAPHIC, Feel.Tier.GALAXY]:
 		_fills[tier] = Fill.new(tier)
 	_use_fill(Feel.Tier.HOLOGRAPHIC)
@@ -81,7 +90,7 @@ func prepare(total: float, level_target: float) -> void:
 	_clock = 0.0
 	_fill_clock = 0.0
 	_contacts = 0
-	_clear_surge()
+	_clear_finale()
 	_active = true
 	set_value(0.0)
 
@@ -122,12 +131,12 @@ func reset_feedback() -> void:
 	_contacts = 0
 	_digits.set_value(_total)
 	_rest()
-	_clear_surge()
+	_clear_finale()
 	_fill.set_shader_parameter("energy", 0.0)
 	_set_flash(0.0)
 	_flame.energy = 0.0
 	_flame.flare = 0.0
-	_flame.queue_redraw()
+	_flame.redraw()
 	_debris_back.clear()
 	_debris_front.clear()
 	Quake.reset(get_viewport())
@@ -138,8 +147,11 @@ func _high() -> bool:
 func _galaxy() -> bool:
 	return _fill == _fills[Feel.Tier.GALAXY]
 
-func _clear_surge() -> void:
+func _clear_finale() -> void:
 	_surge_time = -1.0
+	_wave_time = -1.0
+	_haze_drift = 0.0
+	_distortion.hide()
 	for fill in _fills.values():
 		fill.set_shader_parameter("impact", 0.0)
 	_use_fill(Feel.Tier.HOLOGRAPHIC)
@@ -186,6 +198,8 @@ func _slam(progress: float) -> void:
 			_surge_time = 0.0
 		else:
 			_burst(_contacts)
+		if _contacts == 0 and _tier == Feel.Tier.HOLOGRAPHIC:
+			_start_wave()
 		_contacts += 1
 
 func _burst(contact: int) -> void:
@@ -245,6 +259,10 @@ func _process(delta: float) -> void:
 	if _surge_time >= 0.0:
 		_surge_time += elapsed
 		_advance_surge()
+	if _wave_time >= 0.0:
+		_wave_time += elapsed
+	if _high():
+		_update_distortion(elapsed)
 	_fill_clock += elapsed * _flow
 	_fill.set_shader_parameter("clock_time", _fill_clock)
 	_flame.advance(elapsed)
@@ -256,9 +274,35 @@ func _advance_surge() -> void:
 		_use_fill(Feel.Tier.GALAXY)
 		_update_energy()
 		_burst(0)
+		_start_wave()
 	_fill.set_shader_parameter("impact", pose.impact)
 	var outline := Transition.IMPACT_OUTLINE if pose.impact > 0.0 else Config.NUMBER_OUTER_OUTLINE
 	if _digits.outer_outline_color != outline:
 		_digits.outer_outline_color = outline
 	_flame.blend = pose.fire
 	_vignette.apply(VignetteMotion.pose(_surge_time))
+
+# 炸開的瞬間由數字當下的中心發出衝擊波，熱浪同時開始增強。
+func _start_wave() -> void:
+	_wave_time = 0.0
+	_wave_center = _visual.get_global_transform().origin
+
+# 熱浪隨火焰在跑分時出現，衝擊波發出後增強；兩者都沒有強度時隱藏扭曲層。
+func _update_distortion(elapsed: float) -> void:
+	var shockwave := Feel.SHOCKWAVE_ENABLED and _wave_time >= 0.0
+	var wave := Distortion.shockwave(_tier, _wave_time if shockwave else -1.0)
+	var settings := Distortion.haze(_tier, _flame.energy, _wave_time)
+	var strength: float = settings.strength if Feel.HEAT_HAZE_ENABLED and Feel.FIRE_ENABLED else 0.0
+	if wave.strength <= 0.0 and strength <= 0.0:
+		_distortion.hide()
+		return
+	_haze_drift += elapsed * settings.speed
+	var region := Distortion.haze_region(settings, _flame.glyph)
+	var frame := _visual.get_global_transform()
+	_distortion.apply(_wave_center, wave, {
+		"center": frame * region.center,
+		"radius": region.radius * frame.get_scale(),
+		"strength": strength,
+		"frequency": settings.frequency,
+		"drift": _haze_drift,
+	})

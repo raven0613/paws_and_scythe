@@ -12,6 +12,9 @@ const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Celebration = preload("res://src/service/score/celebration_math.gd")
 const OdometerConfig = preload("res://src/configs/score/odometer_config.gd")
 const Particles = preload("res://src/scripts/score/score_particles.gd")
+const HighConfig = preload("res://src/configs/score/high_card_config.gd")
+const HighPop = preload("res://src/service/score/high_card_pop.gd")
+const HighPops = preload("res://src/scripts/score/high_card_pops.gd")
 const ShowcaseConfig = preload("res://src/configs/score/showcase_config.gd")
 const ShowcaseMotion = preload("res://src/service/score/showcase_motion.gd")
 const ShowcaseCards = preload("res://src/scripts/playing_card/showcase_card_animator.gd")
@@ -22,6 +25,7 @@ var _level: Control
 var _cats: Control
 var _board: Control
 var _particles: Control
+var _pops: Node2D
 var _showcase := ShowcaseCards.new()
 var _timeline: Tween
 var _result: Dictionary
@@ -29,7 +33,8 @@ var _level_target := 0.0
 var _running := false
 var _speed := 1.0
 var _last_central := -1
-var _award_landed := -1
+var _relay_landed := -1
+var _pops_shown := false
 
 func setup(score: Control, combo: Control, level: Control, cats: Control, board: Control, canvas: Control) -> void:
 	_score = score
@@ -40,6 +45,8 @@ func setup(score: Control, combo: Control, level: Control, cats: Control, board:
 	add_child(_showcase)
 	_particles = Particles.new()
 	canvas.add_child(_particles)
+	_pops = HighPops.new()
+	canvas.add_child(_pops)
 	_score.get_node("controls/skip").pressed.connect(finish)
 	_score.get_node("controls/fast").toggled.connect(_set_fast)
 
@@ -97,7 +104,7 @@ func _append_segment(events: Array, start: int, end: int) -> void:
 		"selection":
 			_append_selection(first)
 		"high":
-			_append_count(_score.get_node("number"), first.after, Config.COUNT_DURATION, final)
+			_append_high(first, final)
 		"reveal":
 			_append_reveal(first)
 			return
@@ -178,15 +185,33 @@ func _append_activation(source: Control, event: Dictionary) -> void:
 	_timeline.tween_callback(source.begin_feedback.bind(CatText.badge(event), BadgePalette.fills(event)))
 	_timeline.tween_interval(ActivationTiming.arrival())
 
+# 各張新出高牌依閱讀順序跳出 +N，彈完時中央接續加上該張點數；+N 在中央到位回饋開始時一起縮掉。
+func _append_high(event: Dictionary, final: bool) -> void:
+	var schedule := AwardSchedule.build(event.cards.size(), HighConfig.POP_INTERVAL, HighPop.lead())
+	var entries: Array = []
+	var targets: Array = []
+	var total := 0.0
+	for index in event.cards.size():
+		var card: Dictionary = event.cards[index]
+		total += card.points
+		targets.append(total)
+		entries.append({"card": _board.card_at(card.cell), "points": card.points, "launch": schedule[index].launch})
+	_timeline.tween_callback(_pops.begin.bind(entries))
+	_append_relay(schedule, targets, [])
+	_timeline.parallel().tween_method(_pops.advance, 0.0, AwardSchedule.duration(schedule), AwardSchedule.duration(schedule))
+	_timeline.tween_callback(_score.get_node("number").finish_count)
+	_pops_shown = true
+	if not final:
+		_append_central_feedback(false)
+
 # 各條依時間表放大並發射粒子，抵達時中央接續累加並推進 Combo；整段結束後回饋一次。
 func _append_awards(events: Array, final: bool, after_rows: bool) -> void:
 	var number: Control = _score.get_node("number")
 	var counter: Control = _score.get_node("combo_counter")
-	var schedule := AwardSchedule.build(events.size())
+	var schedule := AwardSchedule.build(events.size(), Config.AWARD_INTERVAL, Config.AWARD_FLIGHT_DURATION)
 	if after_rows:
 		_timeline.tween_interval(Config.AWARD_PHASE_HOLD)
-	_timeline.tween_callback(func(): _award_landed = -1)
-	_timeline.tween_method(_award_progress.bind(events, schedule), 0.0, AwardSchedule.duration(schedule), AwardSchedule.duration(schedule))
+	_append_relay(schedule, events.map(func(event): return event.after), events.map(func(event): return event.combo_count))
 	for index in events.size():
 		_append_launch(_combo.get_row(events[index].group), events[index].group, schedule[index].launch)
 	_timeline.tween_callback(number.finish_count)
@@ -200,24 +225,32 @@ func _append_launch(row: Control, key: int, launch: float) -> void:
 	_timeline.parallel().tween_property(row, "scale", Vector2.ONE * Config.AWARD_ROW_POP_SCALE, Config.ROW_POP_UP).set_delay(launch).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_timeline.parallel().tween_property(row, "scale", Vector2.ONE, Config.ROW_POP_DOWN).from(Vector2.ONE * Config.AWARD_ROW_POP_SCALE).set_delay(launch + Config.ROW_POP_UP).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-# 依入帳時間軸驅動中央與 Combo：每條抵達時前一段以卡點停在精確值，再接續跑向新的累計值。
-func _award_progress(time: float, events: Array, schedule: Array) -> void:
+func _append_relay(schedule: Array, targets: Array, combos: Array) -> void:
+	_timeline.tween_callback(func(): _relay_landed = -1)
+	_timeline.tween_method(_relay_progress.bind(schedule, targets, combos), 0.0, AwardSchedule.duration(schedule), AwardSchedule.duration(schedule))
+
+# 依入帳時間軸驅動中央：每項抵達時前一段以卡點停在精確值，再接續跑向 targets 的新累計值；
+# combos 有值時右側 Combo 組數同步推進。
+func _relay_progress(time: float, schedule: Array, targets: Array, combos: Array) -> void:
 	var number: Control = _score.get_node("number")
 	var counter: Control = _score.get_node("combo_counter")
 	var landed := AwardSchedule.landed(schedule, time)
-	while _award_landed < landed:
-		if _award_landed >= 0:
+	while _relay_landed < landed:
+		if _relay_landed >= 0:
 			number.count_progress(1.0)
-			counter.group_progress(1.0)
-		_award_landed += 1
-		var entry: Dictionary = schedule[_award_landed]
-		number.begin_count(events[_award_landed].after, entry.seconds)
-		counter.begin_group(events[_award_landed].combo_count, entry.combo_seconds)
-	if _award_landed < 0:
+			if not combos.is_empty():
+				counter.group_progress(1.0)
+		_relay_landed += 1
+		var entry: Dictionary = schedule[_relay_landed]
+		number.begin_count(targets[_relay_landed], entry.seconds)
+		if not combos.is_empty():
+			counter.begin_group(combos[_relay_landed], AwardSchedule.combo_seconds(entry))
+	if _relay_landed < 0:
 		return
-	var current: Dictionary = schedule[_award_landed]
+	var current: Dictionary = schedule[_relay_landed]
 	number.count_progress(AwardSchedule.progress(current, time, current.seconds))
-	counter.group_progress(AwardSchedule.progress(current, time, current.combo_seconds))
+	if not combos.is_empty():
+		counter.group_progress(AwardSchedule.progress(current, time, AwardSchedule.combo_seconds(current)))
 
 # feedback 與跑分同時播放，接收自本段開始經過的時間。
 func _append_count(counter: Control, target: float, duration: float, final: bool, feedback := Callable()) -> void:
@@ -232,6 +265,9 @@ func _append_count(counter: Control, target: float, duration: float, final: bool
 func _append_central_feedback(final: bool) -> void:
 	var number: Control = _score.get_node("number")
 	_timeline.tween_method(number.feedback_progress.bind(final), 0.0, 1.0, number.feedback_duration(final))
+	if _pops_shown:
+		_timeline.parallel().tween_method(_pops.shrink, 0.0, 1.0, HighConfig.SHRINK_DURATION)
+		_pops_shown = false
 	if final:
 		_timeline.tween_interval(Config.FINAL_HOLD)
 
@@ -259,6 +295,7 @@ func finish() -> void:
 	_running = false
 	_timeline.kill()
 	_particles.clear()
+	_pops.clear()
 	_showcase.reset()
 	_combo.reset_feedback()
 	_cats.reset_feedback()

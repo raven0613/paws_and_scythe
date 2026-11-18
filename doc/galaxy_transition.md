@@ -8,19 +8,19 @@
 
 ## 撞頂炸開
 
-數字撞上天花板的瞬間播放 `IMPACT_DURATION` 秒的閃白反轉幀，取代全像彩虹撞頂的白色閃光：填色整片換成高亮青白 `IMPACT_FILL`，外層白描邊反轉成深紫黑 `IMPACT_OUTLINE`，暗角同時出現。反轉幀在數字貼住天花板的頓停期間結束，填色直接換成銀河，同時由上緣兩端噴出撞頂碎片。純色的反轉幀把彩虹與銀河完全隔開，兩者不經過混色。碎片顏色取自銀河填色，數量使用 `CEILING_DEBRIS_COUNT`、`FLOOR_DEBRIS_COUNT` 的銀河設定，多於全像彩虹。
+數字撞上天花板的瞬間播放 `IMPACT_DURATION` 秒的閃白反轉幀，取代全像彩虹撞頂的白色閃光：填色整片換成高亮青白 `IMPACT_FILL`，外層白描邊反轉成深紫黑 `IMPACT_OUTLINE`，暗角同時出現。反轉幀在數字貼住天花板的頓停期間結束，填色直接換成銀河，同時由上緣兩端噴出撞頂碎片，並從數字中心發出本次結算唯一一次的銀河衝擊波，火焰外圍的熱浪隨之增強到銀河的強度，詳見 [高分衝擊波、熱浪與火焰發光](impact_effects.md)。純色的反轉幀把彩虹與銀河完全隔開，兩者不經過混色。碎片顏色取自銀河填色，數量使用 `CEILING_DEBRIS_COUNT`、`FLOOR_DEBRIS_COUNT` 的銀河設定，多於全像彩虹。
 
 撞頂的數字震動、畫面震動、火焰噴發，以及之後的下墜、落地、彈跳與旋轉沿用原本的撞擊表演；落地的閃白照常播放。火焰在換成銀河後的 `FIRE_BLEND_DURATION` 秒內以色溫漸變由彩虹組過渡到銀河組，動態同步加快。
 
 ## 暗角
 
-暗角為帶透明度的超深藍紫 `VIGNETTE_COLOR`，鋪滿畫面，由畫面中心往外加深，用途是讓周圍稍微變暗、把視線聚焦到分數。圖層位於盤面背景、周邊 UI、Combo 條標題與關卡分數之上，位於飛行粒子、中央分數與火焰碎片、右側倍率之下；發動中的貓牌與亮相中的牌位於暗角上方。
+暗角為帶透明度的超深藍紫 `VIGNETTE_COLOR`，鋪滿畫面，由畫面中心往外加深，用途是讓周圍稍微變暗、把視線聚焦到分數。圖層位於盤面背景、周邊 UI、Combo 條標題、關卡分數與衝擊波熱浪的背景扭曲之上，位於飛行粒子、中央分數與火焰碎片、右側倍率之下；發動中的貓牌與亮相中的牌位於暗角上方。
 
 撞頂瞬間暗角以半徑 `VIGNETTE_RADIUS`、強度 `VIGNETTE_INTENSITY` 出現，隨即在 `VIGNETTE_BURST_DURATION` 內猛地彈開到 `VIGNETTE_BURST_RADIUS`，強度以 `VIGNETTE_FLICKER` 的幅度快速閃爍並在 `VIGNETTE_FLICKER_DURATION` 內衰減。半徑以畫面半高為 1、從畫面中心起算，`VIGNETTE_SOFTNESS` 為由透明到最暗的過渡寬度。`VIGNETTE_AFTERGLOW` 選擇彈開後的收尾：`Afterglow.LINGER` 在 `VIGNETTE_FADE_DURATION` 內收回 `VIGNETTE_LINGER_RADIUS` 並淡到 `VIGNETTE_LINGER_INTENSITY`，以淡淡的暗角聚焦分數到結算結束；`Afterglow.FADE` 在同樣時間內散去。
 
 ## 停留與跳過
 
-結算完成表演結束後，最終分數停留 `FINAL_HOLD`（`score_feedback_config.gd`）再飛往關卡面板，銀河、火焰與暗角在停留期間持續播放。加速播放時蓄力、反轉幀、火焰漸變與暗角跟隨播放速度；跳過時清除反轉幀、銀河、火焰漸變與暗角，回到全像彩虹的初始狀態。
+結算完成表演結束後，最終分數停留 `FINAL_HOLD`（`score_feedback_config.gd`）再飛往關卡面板，銀河、火焰、熱浪與暗角在停留期間持續播放。加速播放時蓄力、反轉幀、火焰漸變與暗角跟隨播放速度；跳過時清除反轉幀、銀河、火焰漸變與暗角，回到全像彩虹的初始狀態。
 
 ## 元件與設定
 

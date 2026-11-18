@@ -68,7 +68,10 @@ func _replay(result: Dictionary) -> void:
 				totals.subtotal += group_values[event.group]
 				awards[event.group] = awards.get(event.group, 0.0) + group_values[event.group]
 				_check(is_equal_approx(totals.subtotal, event.after), "Group award equals displayed group score")
-			"high": totals.subtotal = event.after
+			"high":
+				var points: float = event.cards.reduce(func(sum, card): return sum + card.points, 0.0)
+				_check(is_equal_approx(points, event.after), "High event lists every high card and its points")
+				totals.subtotal = event.after
 	_check(is_equal_approx(totals.total, result.total), "Replaying events reconstructs exact final score")
 	for i in result.groups.size():
 		_check(is_equal_approx(awards.get(i, 0.0), result.groups[i].total_score), "Preview group total includes all passes")

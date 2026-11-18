@@ -10,6 +10,7 @@ func _init() -> void:
 	_test_card_points()
 	_test_contiguous_sets()
 	_test_display_order()
+	_test_high_cards()
 	_check(Scoring.combo_multiplier(0) == Scoring.combo_multiplier(1), "Zero and one combo share the base multiplier")
 	var pair := _line([7, 7])
 	var result := Scoring.evaluate(pair, pair.values())
@@ -84,6 +85,24 @@ func _line(ranks: Array, same_suit := false) -> Dictionary:
 		board[Vector2i(i, 0)] = Cards.id(ranks[i], 0 if same_suit else suit_index)
 		next_suit[ranks[i]] = (suit_index + 1) % Config.SUITS.size()
 	return board
+
+# 高牌保底逐張列出格子與點數，依上排左至右的閱讀順序排列，點數總和等於高牌保底分。
+func _test_high_cards() -> void:
+	var board := {
+		Vector2i(3, 1): Cards.id(9, 0), Vector2i(0, 1): Cards.id(13, 1),
+		Vector2i(2, 0): Cards.id(1, 2), Vector2i(5, 0): Cards.id(4, 3), Vector2i(7, 1): Cards.id(6, 0),
+	}
+	var new_cards: Array = [board[Vector2i(3, 1)], board[Vector2i(0, 1)], board[Vector2i(2, 0)], board[Vector2i(5, 0)]]
+	var result := Scoring.evaluate(board, new_cards)
+	var cells: Array = result.high_cards.map(func(entry): return entry.cell)
+	_check(cells == [Vector2i(2, 0), Vector2i(5, 0), Vector2i(0, 1), Vector2i(3, 1)], "High cards list new lone cards in reading order")
+	var points: Array = result.high_cards.map(func(entry): return entry.points)
+	_check(points == [_rank_points([1]), _rank_points([4]), _rank_points([13]), _rank_points([9])], "Each high card carries its configured points")
+	_check(points.reduce(func(sum, value): return sum + value, 0) == result.high, "High-card points sum to the fallback score")
+	var straight := _line([7, 9, 11, 1, 2, 3, 4, 5, 8, 12, 13], true)
+	var scored: Array = Scoring.evaluate(straight, straight.values()).high_cards.map(func(entry): return entry.cell.x)
+	_check(scored == [0, 1, 2, 8, 9, 10], "Cards used by a hand are excluded from the high-card list")
+	_check(Scoring.evaluate(straight, []).high_cards.is_empty(), "Existing cards produce no high-card entries")
 
 func _test_hand_priority() -> void:
 	var board := _line([7, 9, 11, 1, 2, 3, 4, 5, 8, 12, 13], true)

@@ -4,17 +4,20 @@ extends RefCounted
 # 最終分數達到關卡目標的 HIGH_SCORE_RATIO 倍使用全像彩虹，達到 GALAXY_SCORE_RATIO 倍使用銀河。
 # FORCE_HIGH_SCORE 為每次結算至少使用的等級，NORMAL 時完全依分數判定。
 enum Tier { NORMAL, HOLOGRAPHIC, GALAXY }
-const FORCE_HIGH_SCORE = Tier.NORMAL
+const FORCE_HIGH_SCORE = Tier.HOLOGRAPHIC
 const HIGH_SCORE_RATIO = 1.5
 const GALAXY_SCORE_RATIO = 3.0
 
-# 高分特效開關：火焰、撞擊閃白的暖色回落與光暈、畫面震動、火焰噴發、撞擊碎片。
+# 高分特效開關：火焰、撞擊閃白的暖色回落與光暈、畫面震動、火焰噴發、撞擊碎片、火焰發光、撞頂衝擊波、火焰熱浪。
 const FIRE_ENABLED = true
 const FLASH_TINT_ENABLED = true
 const FLASH_GLOW_ENABLED = false
 const SCREEN_QUAKE_ENABLED = true
 const FIRE_FLARE_ENABLED = true
 const DEBRIS_ENABLED = true
+const FIRE_GLOW_ENABLED = true
+const SHOCKWAVE_ENABLED = true
+const HEAT_HAZE_ENABLED = true
 
 # 每段到位與一般結算完成的強度；各段先落定精確數字再演出。
 const STEP_DURATION = 0.24
@@ -148,3 +151,11 @@ const FIRE_LAYERS_GALAXY = [
 const FIRE_EMERGE = 0.08
 const FIRE_FADE = 0.2
 const FIRE_INITIAL_ANGLE = Vector2(-PI, PI)
+
+# 火焰發光：所有方塊的光暈先合成整團火焰的輪廓，模糊後以疊加混色畫在火焰後方，光沿整團火焰的外形往外散，火焰本身同時提亮。
+# size：每個方塊的光暈邊長相對方塊邊長的倍數，決定輪廓往外擴的範圍；lighten：光暈顏色由該層火焰色往白色混合的比例；
+# blur：輪廓的模糊半徑（像素）；intensity：疊加強度；brighten：火焰方塊本身往白色提亮的比例。
+# 銀河等級的發光跟著火焰漸變，由彩虹組過渡到銀河組；FIRE_GLOW_RESOLUTION 為光暈貼圖邊長（像素）。
+const FIRE_GLOW_HOLOGRAPHIC = {"size": 1.0, "lighten": 1.8, "blur": 45.0, "intensity": 1.2, "brighten": 0.1}
+const FIRE_GLOW_GALAXY = {"size": 1.0, "lighten": 2.0, "blur": 50.0, "intensity": 1.5, "brighten": 0.15}
+const FIRE_GLOW_RESOLUTION = 64

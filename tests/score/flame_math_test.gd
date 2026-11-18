@@ -50,6 +50,13 @@ func _check_layer(layer: Dictionary, particle: Dictionary) -> void:
 func _check_blend(rng: RandomNumberGenerator) -> void:
 	_check(is_equal_approx(Flame.speed(0.0), Config.FIRE_SPEED_HOLOGRAPHIC) and is_equal_approx(Flame.speed(1.0), Config.FIRE_SPEED_GALAXY), "Flame speed follows the blend between both sets")
 	_check(Flame.speed(1.0) > Flame.speed(0.0), "Galaxy flame moves faster than holographic flame")
+	var calm := Flame.glow(0.0)
+	var bright := Flame.glow(1.0)
+	_check(is_equal_approx(calm.blur, Config.FIRE_GLOW_HOLOGRAPHIC.blur) and is_equal_approx(bright.intensity, Config.FIRE_GLOW_GALAXY.intensity), "Flame glow follows the blend between both sets")
+	_check(bright.blur > calm.blur and bright.intensity > calm.intensity and bright.size > calm.size, "Galaxy flame glows wider and brighter")
+	var glow_layer := Flame.layer(0, 0.0)
+	_check(Flame.glow_color(glow_layer, calm).get_luminance() >= glow_layer.color.get_luminance(), "Glow takes a lighter shade of the flame color")
+	_check(Flame.lit_color(glow_layer, bright).get_luminance() >= Flame.lit_color(glow_layer, calm).get_luminance(), "Galaxy brightens the flame itself more")
 	for index in Flame.layer_count():
 		var from: Dictionary = Config.FIRE_LAYERS_HOLOGRAPHIC[index]
 		var to: Dictionary = Config.FIRE_LAYERS_GALAXY[index]

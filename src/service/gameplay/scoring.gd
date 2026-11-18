@@ -23,14 +23,21 @@ static func evaluate(board: Dictionary, new_cards: Array, extended_min: int = Co
 		base += group.score
 		for cell in group.cells:
 			used[board[cell]] = true
+	var high_cells: Array = []
+	for cell in board.keys():
+		if new_cards.has(board[cell]) and not used.has(board[cell]):
+			high_cells.append(cell)
+	high_cells.sort_custom(_cell_before)
+	var high_cards: Array = []
 	var high := 0
-	for card in board.values():
-		if new_cards.has(card) and not used.has(card):
-			high += Cards.points(card)
+	for cell in high_cells:
+		var points := Cards.points(board[cell])
+		high_cards.append({"cell": cell, "points": points})
+		high += points
 	var multiplier := combo_multiplier(groups.size())
 	return {
 		"groups": groups, "base": base, "combo": groups.size(), "multiplier": multiplier,
-		"high": high, "total": (base + high) * multiplier,
+		"high": high, "high_cards": high_cards, "total": (base + high) * multiplier,
 	}
 
 static func combo_multiplier(count: int) -> float:

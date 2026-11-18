@@ -32,11 +32,12 @@ const PARTICLE_COLOR = Color("b5eaff")
 const PARTICLE_CORE_COLOR = Color("f5fcff")
 const PARTICLE_WAIT_ALPHA = 0.45
 const PARTICLE_GLOW_ALPHA = 0.07
-# 結算圖層由下往上：Combo 條標題與關卡分數等周邊標籤、銀河暗角、飛行粒子、中央分數與右側倍率。
+# 結算圖層由下往上：Combo 條標題與關卡分數等周邊標籤、衝擊波與熱浪的背景扭曲、銀河暗角、飛行粒子、中央分數與右側倍率。
 const LABEL_LAYER = 11
-const VIGNETTE_LAYER = 12
-const PARTICLE_LAYER = 13
-const NUMBER_LAYER = 14
+const DISTORTION_LAYER = 12
+const VIGNETTE_LAYER = 13
+const PARTICLE_LAYER = 14
+const NUMBER_LAYER = 15
 const FAST_SPEED = 3.0
 const NUMBER_FONT_SIZE = 72
 const NUMBER_COLOR = Color("edf7ff")

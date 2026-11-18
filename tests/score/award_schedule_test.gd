@@ -7,13 +7,13 @@ var failures := 0
 
 func _init() -> void:
 	for count in range(1, Rules.BOARD_LIMIT + 1):
-		var schedule := Schedule.build(count)
+		var schedule := Schedule.build(count, Config.AWARD_INTERVAL, Config.AWARD_FLIGHT_DURATION)
 		_check(schedule.size() == count, "Every scoring group receives one launch")
 		for index in count:
 			var entry: Dictionary = schedule[index]
 			_check(is_equal_approx(entry.launch, index * Config.AWARD_INTERVAL), "Groups launch at the configured interval")
 			_check(is_equal_approx(entry.landing - entry.launch, Config.AWARD_FLIGHT_DURATION), "Each wave flies for the configured duration")
-			_check(entry.combo_seconds <= entry.seconds, "Combo pop finishes within its central segment")
+			_check(Schedule.combo_seconds(entry) <= entry.seconds, "Combo pop finishes within its central segment")
 			if index < count - 1:
 				var next: Dictionary = schedule[index + 1]
 				_check(is_equal_approx(entry.landing + entry.seconds, next.landing), "Central segments chain without overlap")
@@ -24,7 +24,7 @@ func _init() -> void:
 		_check(Schedule.landed(schedule, Schedule.duration(schedule)) == count - 1, "Every wave lands before the stage ends")
 		for index in count:
 			_check(Schedule.landed(schedule, schedule[index].landing) == index, "Arrival starts its own segment")
-	var entry: Dictionary = Schedule.build(1)[0]
+	var entry: Dictionary = Schedule.build(1, Config.AWARD_INTERVAL, Config.AWARD_FLIGHT_DURATION)[0]
 	_check(Schedule.progress(entry, entry.landing - 1.0, entry.seconds) == 0.0, "Progress waits for arrival")
 	_check(Schedule.progress(entry, entry.landing + entry.seconds * 2, entry.seconds) == 1.0, "Progress stays at the exact target")
 	print("Award schedule: %d failures" % failures)

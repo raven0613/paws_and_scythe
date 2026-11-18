@@ -29,7 +29,9 @@ static func resolve(raw: Dictionary, board: Dictionary, ids: Array, state: Dicti
 				event.excluded.append(index)
 		result.events.append(event)
 	if raw.high > 0:
-		result.events.append(_event("high", "", "subtotal", 0, raw.high))
+		var high := _event("high", "", "subtotal", 0, raw.high)
+		high.cards = raw.high_cards.duplicate(true)
+		result.events.append(high)
 	if not scoring.is_empty():
 		var reveal := _event("reveal", "", "group", 0, 0)
 		reveal.groups = scoring.duplicate()

@@ -2,18 +2,17 @@ extends RefCounted
 
 const Config = preload("res://src/configs/score/score_feedback_config.gd")
 
-# 依序入帳的時間表：各條依發射間隔出發，中央在粒子抵達時開始該段跑分；
-# 中間各段長度等於發射間隔，使前一段跑完的同時下一條抵達，最後一段使用完整跑分時間。
-static func build(count: int) -> Array:
+# 依序入帳的時間表：各項每隔 interval 出發，經過 lead 後抵達，中央在抵達時開始該段跑分；
+# 中間各段長度等於出發間隔，使前一段跑完的同時下一項抵達，最後一段使用完整跑分時間。
+# Combo 條入帳使用粒子發射間隔與飛行時間，高牌保底使用 +N 的跳出間隔與彈出時間。
+static func build(count: int, interval: float, lead: float) -> Array:
 	var schedule: Array = []
 	for index in count:
-		var launch := index * Config.AWARD_INTERVAL
-		var seconds: float = Config.COUNT_DURATION if index == count - 1 else Config.AWARD_INTERVAL
+		var launch := index * interval
 		schedule.append({
 			"launch": launch,
-			"landing": launch + Config.AWARD_FLIGHT_DURATION,
-			"seconds": seconds,
-			"combo_seconds": minf(seconds, Config.COMBO_POP_UP + Config.COMBO_POP_DOWN),
+			"landing": launch + lead,
+			"seconds": Config.COUNT_DURATION if index == count - 1 else interval,
 		})
 	return schedule
 
@@ -21,7 +20,11 @@ static func duration(schedule: Array) -> float:
 	var last: Dictionary = schedule[-1]
 	return last.landing + last.seconds
 
-# 該時間已抵達中央的最後一條，尚未抵達時為 -1。
+# Combo 組數的推進回饋在該段跑分內完成。
+static func combo_seconds(entry: Dictionary) -> float:
+	return minf(entry.seconds, Config.COMBO_POP_UP + Config.COMBO_POP_DOWN)
+
+# 該時間已抵達中央的最後一項，尚未抵達時為 -1。
 static func landed(schedule: Array, time: float) -> int:
 	var result := -1
 	for index in schedule.size():
