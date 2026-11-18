@@ -1,0 +1,86 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/shop/shop.gd" id="1_shop"]
+[ext_resource type="Script" path="res://src/scripts/shop/shop_box.gd" id="2_box"]
+
+[node name="shop" type="Control"]
+editor_description = "商店覆蓋牌陣區；四個方塊的位置與尺寸可在編輯器調整，區內格子依格數水平置中。"
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_shop")
+
+[node name="shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="cat_box" type="Panel" parent="."]
+editor_description = "貓牌區，格數由 shop_config.gd 設定。"
+layout_mode = 0
+offset_left = 285.0
+offset_top = 56.0
+offset_right = 585.0
+offset_bottom = 292.0
+script = ExtResource("2_box")
+section = 0
+
+[node name="item_box" type="Panel" parent="."]
+editor_description = "轉換牌／任務單／貓點心區，目前為空格，格數由 shop_config.gd 設定。"
+layout_mode = 0
+offset_left = 595.0
+offset_top = 56.0
+offset_right = 875.0
+offset_bottom = 292.0
+script = ExtResource("2_box")
+section = 1
+
+[node name="pack_box" type="Panel" parent="."]
+editor_description = "卡包區，目前為空格，格數由 shop_config.gd 設定。"
+layout_mode = 0
+offset_left = 285.0
+offset_top = 304.0
+offset_right = 585.0
+offset_bottom = 540.0
+script = ExtResource("2_box")
+section = 2
+
+[node name="action_box" type="Panel" parent="."]
+editor_description = "持有張數、重骰與下一關。"
+layout_mode = 0
+offset_left = 595.0
+offset_top = 304.0
+offset_right = 875.0
+offset_bottom = 540.0
+script = ExtResource("2_box")
+
+[node name="owned" type="Label" parent="action_box"]
+layout_mode = 0
+offset_top = 28.0
+offset_right = 280.0
+offset_bottom = 52.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="reroll" type="Button" parent="action_box"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 72.0
+offset_right = 230.0
+offset_bottom = 116.0
+
+[node name="next" type="Button" parent="action_box"]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 140.0
+offset_right = 230.0
+offset_bottom = 194.0

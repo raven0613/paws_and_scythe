@@ -13,6 +13,10 @@ const Presenter = preload("res://src/scripts/gameplay/settlement_presenter.gd")
 const GroupPresenter = preload("res://src/scripts/gameplay/group_feedback_presenter.gd")
 const CardAnimator = preload("res://src/scripts/playing_card/card_action_animator.gd")
 const ActionConfig = preload("res://src/configs/playing_card/action_animation_config.gd")
+const Economy = preload("res://src/scripts/gameplay/economy_presenter.gd")
+const CoinFlight = preload("res://src/scripts/money/coin_flight.gd")
+const TestEntry = preload("res://src/configs/gameplay/test_entry_config.gd")
+const BoxStyle = preload("res://src/scripts/ui/box_style.gd")
 
 var game = Run.new()
 var _views: Dictionary = {}
@@ -21,6 +25,8 @@ var _presenter := Presenter.new()
 var _dealer := Dealer.new()
 var _card_animator := CardAnimator.new()
 var _group_presenter := GroupPresenter.new()
+var _economy := Economy.new()
+var _coins := CoinFlight.new()
 var _feedback_active := false
 var _mode: StringName = &""
 var _swap_first: Variant = null
@@ -57,19 +63,37 @@ func _ready() -> void:
 		$convert_card_area, $boss, $camera_controls, $resources_display,
 	]
 	$board.configure_view($gameplay_frame, camera_overlays)
-	$gameplay_hud.continue_requested.connect(_next_level)
-	$gameplay_hud.restart_requested.connect(_open_picker)
+	$gameplay_hud.restart_requested.connect(_start_run.bind([]))
 	$cat_card_area.order_changed.connect(_on_cat_order_changed)
+	add_child(_coins)
+	add_child(_economy)
+	_economy.setup(game, $level_reward, $shop, $cat_card_area, $resources_display, _coins)
+	_economy.loadout_changed.connect(_refresh)
+	_economy.busy_changed.connect(_on_economy_busy)
+	_economy.next_level_requested.connect(_next_level)
 	_picker = CatPicker.instantiate()
 	add_child(_picker)
 	_picker.confirmed.connect(_start_run)
-	_open_picker()
+	_picker.cancelled.connect(_close_picker)
+	$test_entry.visible = TestEntry.SHOW_TEST_ENTRY
+	$test_entry.text = TestEntry.BUTTON_TEXT
+	BoxStyle.apply_button($test_entry, TestEntry.BUTTON_FONT_SIZE)
+	$test_entry.pressed.connect(_open_picker)
+	_start_run([])
 
+# 測試入口：開啟貓牌選擇，確認後以所選貓牌重新開始，取消則回到目前的遊戲。
 func _open_picker() -> void:
 	_busy = true
-	$gameplay_hud.hide_outcome()
 	_update_input()
 	_picker.open(game.cats.ids)
+
+func _close_picker() -> void:
+	_busy = false
+	_update_input()
+
+func _on_economy_busy(busy: bool) -> void:
+	_busy = busy
+	_update_input()
 
 func _on_cat_order_changed(ids: Array) -> void:
 	if not _busy and not _feedback_active and game.cats.reorder(ids):
@@ -79,6 +103,7 @@ func _start_run(selected_cats: Array) -> void:
 	_busy = true
 	_clear_selection()
 	game.start(-1, selected_cats)
+	_economy.reset()
 	_card_animator.clear_paths()
 	$level_board.reset_score(game.score)
 	$gameplay_hud.hide_outcome()
@@ -277,25 +302,30 @@ func _complete_settlement() -> void:
 func _refresh_and_deal() -> void:
 	_busy = true
 	_refresh()
-	$resources_display.update_values(game.deck.draw_pile.size(), game.money)
+	$resources_display.set_deck_count(game.deck.draw_pile.size())
 	if game.last_draw.is_empty():
 		_finish_deal()
 	else:
 		$resources_display.set_deck_count(game.last_draw[0].remaining + 1)
 		_dealer.play(game.last_draw, _views, $resources_display.deal_origin())
 
+# 發牌完成後恢復操作；過關進入過關獎勵，敗北與整場通關顯示結果。
 func _finish_deal() -> void:
 	_busy = false
-	$resources_display.update_values(game.deck.draw_pile.size(), game.money)
+	$resources_display.set_deck_count(game.deck.draw_pile.size())
 	_update_input()
-	$gameplay_hud.show_outcome(game)
+	if game.status == Run.Status.LEVEL_CLEARED:
+		_economy.present_reward()
+	else:
+		$gameplay_hud.show_outcome(game)
 
 func _update_input() -> void:
 	var browsing: bool = not _busy and game.status == Run.Status.PLAYING
 	var active: bool = browsing and not _feedback_active
 	$combo.set_idle_enabled(active)
 	$board.set_hover_enabled(active)
-	$cat_card_area.set_interaction_enabled(active)
+	$cat_card_area.set_interaction_enabled(active or (_economy.shop_open and not _busy))
+	$test_entry.disabled = not active
 	if (_mode == &"remove" and not game.can_dig()) or (_mode == &"swap" and not game.can_swap()):
 		_mode = &""
 		_swap_first = null

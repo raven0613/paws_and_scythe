@@ -1,7 +1,6 @@
 extends RefCounted
 
-# 0→5 張的曲線基準；開局選牌是構築試玩入口。
-const EXPECTED_COUNTS = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5]
+# 貓牌產出探針與關卡曲線探針共用的構築路線，依購買順序排列。
 const BUILDS = {
 	"steady": ["peace", "matching", "combo", "growth", "crossing"],
 	"pairs": ["matching", "pairs", "crossing", "small", "growth"],
@@ -10,5 +9,4 @@ const BUILDS = {
 }
 const PROBE_COUNTS = [0, 1, 2, 3, 4, 5]
 const PROBE_SAMPLES = 8
-const TARGET_TEST_LEVELS = [3, 6, 9, 12, 15, 21]
 const REPORT_TURNS = [3, 4, 5, 6]

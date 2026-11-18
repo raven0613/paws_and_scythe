@@ -1,0 +1,100 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/scripts/level_reward/level_reward.gd" id="1_script"]
+
+[node name="level_reward" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="pivot" type="Control" parent="."]
+editor_description = "面板中心；落下、傾斜與壓縮回彈作用於此節點，位置可在編輯器調整。"
+layout_mode = 0
+offset_left = 460.0
+offset_top = 326.0
+offset_right = 460.0
+offset_bottom = 326.0
+mouse_filter = 2
+
+[node name="panel" type="PanelContainer" parent="pivot"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -150.0
+offset_right = 170.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="margin" type="MarginContainer" parent="pivot/panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 20
+
+[node name="content" type="VBoxContainer" parent="pivot/panel/margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="title" type="Label" parent="pivot/panel/margin/content"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="score" type="Label" parent="pivot/panel/margin/content"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="rows" type="VBoxContainer" parent="pivot/panel/margin/content"]
+editor_description = "明細列由程式依獎勵項目建立。"
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="divider" type="ColorRect" parent="pivot/panel/margin/content"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="total" type="HBoxContainer" parent="pivot/panel/margin/content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="name" type="Label" parent="pivot/panel/margin/content/total"]
+layout_mode = 2
+size_flags_horizontal = 3
+vertical_alignment = 1
+
+[node name="amount" type="Label" parent="pivot/panel/margin/content/total"]
+layout_mode = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="actions" type="CenterContainer" parent="pivot/panel/margin/content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="shop" type="Button" parent="pivot/panel/margin/content/actions"]
+custom_minimum_size = Vector2(170, 38)
+layout_mode = 2

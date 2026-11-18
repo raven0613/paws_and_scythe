@@ -1,8 +1,8 @@
 # 貓牌系統
 
-貓牌是跨關保留的構築能力。目前提供兩批共三十張貓牌，開局以複選方式選擇零至五張，同名限一張；確認後進入遊戲，重新開局可以重選。操作階段可將貓牌拖到另一張的位置，插入該位置並推移中間卡牌。演出順序依上排左到右，再下排左到右排列，拖曳會即時更新分數預覽。發牌、結算與結果階段鎖定排序。
+貓牌是跨關保留的構築能力。目前提供兩批共三十張貓牌，每場從零張開始，過關後在 [商店](shop.md) 購買，最多持有五張、同名限一張；新買的貓牌排在最後，操作階段與商店期間可隨時賣出。操作階段可將貓牌拖到另一張的位置，插入該位置並推移中間卡牌。演出順序依上排左到右，再下排左到右排列，拖曳與賣出會即時更新分數預覽。發牌、結算與結果階段鎖定排序與賣出。
 
-本版使用開局選牌直接試玩單張與完整構築。關卡目標以從零張逐漸成長到五張為基準，詳見 [核心遊戲流程與關卡數值](core_gameplay.md)。完整貓牌構想保留於 [構想與實作狀態](cat_card_ideas.md)，完成項目於原分類標示已實作；該文件同時收錄特殊材質、轉換牌與後續能力候選。
+測試入口可直接以任意零至五張貓牌重新開始，用來試玩單張與完整構築。關卡目標依商店購買進度由探針產生，詳見 [核心遊戲流程與關卡數值](core_gameplay.md)。完整貓牌構想保留於 [構想與實作狀態](game_ideas.md)，完成項目於原分類標示已實作；該文件同時收錄特殊材質、轉換牌與後續能力候選。
 
 ## 卡池
 
@@ -94,20 +94,21 @@
 
 | 檔案／目錄                                 | 責任                                                     |
 | ------------------------------------------ | -------------------------------------------------------- |
-| `configs/cat_cards/cat_catalog.gd`         | 卡池定義、名稱、數值、階段及選牌容量。                   |
-| `service/cat_cards/cat_loadout.gd`         | 持有順序、合法選牌、本關已確認結算數與整局已確認操作數。 |
+| `configs/cat_cards/cat_catalog.gd`         | 卡池定義、名稱、數值、階段及持有上限。                   |
+| `service/cat_cards/cat_loadout.gd`         | 持有順序、購買加入與賣出移除、本關已確認結算數與整局已確認操作數。 |
 | `service/cat_cards/rule_modifiers.gd`      | 辨識最低長度、容量與得分資格規則。                       |
 | `service/cat_cards/board_facts.gd`         | 空格封閉、連通孤島與有效牌型外的格子計量。               |
 | `service/cat_cards/effect_context.gd`      | 建立原始目標、種類、長度及卡牌條件。                     |
 | `service/cat_cards/effect_rules.gd`        | 判定資格、合計單張效果並執行數學操作。                   |
 | `service/cat_cards/cat_resolver.gd`        | 按階段產生完整得分及逐步事件。                           |
 | `scripts/cat_cards/`                       | 選牌、卡面互動、說明內容、效果文字及發動演出呈現。       |
-| `scripts/cat_card_area/`                   | 貓牌區排列與拖曳順序。                                   |
+| `scripts/cat_card_area/`                   | 貓牌區排列、拖曳順序、賣出按鈕與賣出後重新排列。         |
 | `scripts/gameplay/settlement_presenter.gd` | 依事件目標驅動既有數字、粒子與貓牌回饋。                 |
-| `configs/cat_cards/cat_feedback_config.gd` | 卡片尺寸、排序動畫、說明文字、選牌排版參數。             |
+| `configs/cat_cards/cat_feedback_config.gd` | 卡片尺寸、排序動畫、說明文字、測試入口選牌排版參數。     |
+| `configs/cat_cards/cat_trade_config.gd`    | 賣出按鈕、賣出消失、購買彈出與重新排列參數。             |
 | `configs/cat_cards/cat_activation_config.gd` | 發動演出的卡片姿態、數字標籤與尾巴參數。               |
 | `service/cat_cards/activation/`            | 發動演出的時間點、卡片姿態、標籤路徑與尾巴模擬。         |
-| `configs/cat_cards/cat_balance_config.gd`  | 關卡預期張數及模擬構築。                                 |
+| `configs/cat_cards/cat_balance_config.gd`  | 產出探針與關卡曲線探針共用的構築路線。                   |
 
 新增同類效果時，以卡池資料指定階段、條件、計量、操作與發動方式；新增條件或計量集中擴充對應規則。辨識與容量修正於規則層接入，得分資格於逐組計分前決定，結算演出持續讀取來源與目標事件。
 

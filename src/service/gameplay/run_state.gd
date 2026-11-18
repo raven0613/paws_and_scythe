@@ -7,11 +7,17 @@ const BoardRules = preload("res://src/service/board/board_rules.gd")
 const CatLoadout = preload("res://src/service/cat_cards/cat_loadout.gd")
 const CatRules = preload("res://src/service/cat_cards/rule_modifiers.gd")
 const CatResolver = preload("res://src/service/cat_cards/cat_resolver.gd")
+const LevelReward = preload("res://src/service/level_reward/level_reward.gd")
+const Shop = preload("res://src/service/shop/shop_state.gd")
+const Market = preload("res://src/service/shop/cat_market.gd")
 enum Status { PLAYING, LEVEL_CLEARED, WON, LOST }
 
 var cats = CatLoadout.new()
 var deck = Deck.new()
+var shop = Shop.new()
 var money := Config.STARTING_MONEY
+# 最近一次過關的獎勵明細，過關時立即入帳，進入下一關時清空。
+var reward: Dictionary = {}
 var last_draw: Array[Dictionary] = []
 var hand: Array = []
 var board: Dictionary = {}
@@ -32,8 +38,10 @@ func start(seed_value: int = -1, selected_cats: Array = []) -> void:
 	assert(valid, "Invalid cat selection")
 	if seed_value < 0:
 		deck.rng.randomize()
+		shop.rng.randomize()
 	else:
 		deck.rng.seed = seed_value
+		shop.rng.seed = seed_value
 	level = 1
 	money = Config.STARTING_MONEY
 	_begin_level()
@@ -49,6 +57,7 @@ func _begin_level() -> void:
 	discards_left = Config.DISCARDS
 	status = Status.PLAYING
 	loss_reason = ""
+	reward = {}
 	_clear_turn()
 
 func target() -> int:
@@ -189,7 +198,7 @@ func settle(snapshot: Dictionary = {}) -> Dictionary:
 	deck.discard_pile.append_array(reserved_cards())
 	_clear_turn()
 	if score >= target():
-		status = Status.WON if level == Config.LEVEL_TARGETS.size() else Status.LEVEL_CLEARED
+		_clear_level()
 	elif board.size() >= board_limit():
 		_lose("場上牌數已達上限")
 	elif turns_left == 0:
@@ -210,11 +219,55 @@ func _lose(reason: String) -> void:
 	status = Status.LOST
 	loss_reason = reason
 
+# 最終關達標結束整場；其餘關卡以過關當下的持有金錢與剩餘結算次數計算獎勵並立即入帳。
+func _clear_level() -> void:
+	if level == Config.LEVEL_TARGETS.size():
+		status = Status.WON
+		return
+	status = Status.LEVEL_CLEARED
+	reward = LevelReward.compute(money, turns_left)
+	money += reward.total
+
 func advance() -> bool:
 	if status != Status.LEVEL_CLEARED:
 		return false
 	level += 1
 	_begin_level()
+	return true
+
+func open_shop() -> void:
+	shop.open(cats.ids)
+
+func can_buy(slot: int) -> bool:
+	var id: String = shop.offers[slot]
+	return status == Status.LEVEL_CLEARED and not id.is_empty() and not cats.is_full() and money >= Market.price(id)
+
+func buy(slot: int) -> bool:
+	if not can_buy(slot):
+		return false
+	money -= Market.price(shop.offers[slot])
+	cats.add(shop.take(slot))
+	return true
+
+func can_reroll() -> bool:
+	return status == Status.LEVEL_CLEARED and money >= shop.reroll_cost()
+
+func reroll() -> bool:
+	if not can_reroll():
+		return false
+	money -= shop.reroll_cost()
+	shop.reroll(cats.ids)
+	return true
+
+# 操作階段與商店期間都可賣出貓牌；效果隨持有清單即時移除。
+func can_sell(id: String) -> bool:
+	return status in [Status.PLAYING, Status.LEVEL_CLEARED] and cats.ids.has(id)
+
+func sell(id: String) -> bool:
+	if not can_sell(id):
+		return false
+	cats.remove(id)
+	money += Market.sell_price(id)
 	return true
 
 

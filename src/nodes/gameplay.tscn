@@ -15,6 +15,8 @@
 [ext_resource type="PackedScene" uid="uid://cbkbfmnd018fh" path="res://src/scenes/score/settlement_score.tscn" id="13_score"]
 [ext_resource type="PackedScene" path="res://src/scenes/gameplay_controls/camera_controls.tscn" id="14_camera"]
 [ext_resource type="PackedScene" path="res://src/scenes/gameplay_controls/resources_display.tscn" id="15_resources"]
+[ext_resource type="PackedScene" path="res://src/scenes/shop/shop.tscn" id="16_shop"]
+[ext_resource type="PackedScene" path="res://src/scenes/level_reward/level_reward.tscn" id="17_reward"]
 
 [node name="gameplay" type="Control" unique_id=791794535]
 texture_filter = 1
@@ -133,3 +135,21 @@ offset_top = 85.0
 offset_right = 27.0
 offset_bottom = 219.0
 grow_horizontal = 2
+
+[node name="test_entry" type="Button" parent="."]
+editor_description = "測試入口；是否顯示由 test_entry_config.gd 設定。"
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -92.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = 30.0
+grow_horizontal = 0
+
+[node name="shop" parent="." instance=ExtResource("16_shop")]
+layout_mode = 1
+
+[node name="level_reward" parent="." instance=ExtResource("17_reward")]
+layout_mode = 1

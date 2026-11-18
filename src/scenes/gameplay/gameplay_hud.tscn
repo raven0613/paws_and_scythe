@@ -66,10 +66,6 @@ layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 12
 
-[node name="continue" type="Button" parent="outcome/center/panel/margin/content/buttons"]
-layout_mode = 2
-text = "下一關"
-
 [node name="restart" type="Button" parent="outcome/center/panel/margin/content/buttons"]
 layout_mode = 2
 text = "重新開始"

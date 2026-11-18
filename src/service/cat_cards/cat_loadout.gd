@@ -13,6 +13,22 @@ func select(selected: Array) -> bool:
 	settlements = 0
 	return true
 
+func is_full() -> bool:
+	return ids.size() >= Catalog.MAX_EQUIPPED
+
+# 新取得的貓牌排在最後，沿用整局已確認的操作累積。
+func add(id: String) -> bool:
+	if not Catalog.valid_selection(ids + [id]):
+		return false
+	ids.append(id)
+	return true
+
+func remove(id: String) -> bool:
+	if not ids.has(id):
+		return false
+	ids.erase(id)
+	return true
+
 func reorder(ordered: Array) -> bool:
 	if ordered.size() != ids.size() or not Catalog.valid_selection(ordered):
 		return false

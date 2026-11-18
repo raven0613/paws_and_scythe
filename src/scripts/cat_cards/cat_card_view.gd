@@ -2,6 +2,7 @@
 extends Control
 
 signal reorder_requested(source: String, destination: String)
+signal clicked(id: String)
 
 const Catalog = preload("res://src/configs/cat_cards/cat_catalog.gd")
 const Config = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
@@ -12,6 +13,8 @@ const CardMotion = preload("res://src/service/cat_cards/activation/card_motion.g
 const Badge = preload("res://src/scripts/cat_cards/activation/activation_badge.gd")
 const CardTilt = preload("res://src/scripts/motion/card_tilt.gd")
 const HoverTilt = preload("res://src/service/motion/hover_tilt.gd")
+const Trade = preload("res://src/configs/cat_cards/cat_trade_config.gd")
+const PopBurst = preload("res://src/scripts/motion/pop_burst.gd")
 var cat_id := ""
 var description_text := ""
 var interaction_enabled := false
@@ -24,6 +27,7 @@ var _release_tween: Tween
 var _clock := 0.0
 var _speed := 1.0
 var _shadow_rest := Vector2.ZERO
+var _dragged := false
 
 func _ready() -> void:
 	set_process(false)
@@ -121,9 +125,37 @@ func reset_feedback() -> void:
 	z_index = 0
 	_badge.hide()
 
+# 新取得的貓牌從零彈出並抖動。
+func play_arrival() -> void:
+	$visual.scale = Vector2.ZERO
+	PopBurst.play(self, $visual, Trade.ARRIVAL_POP_SCALE, Trade.POP)
+
+func hide_for_arrival() -> void:
+	$visual.scale = Vector2.ZERO
+
+# 賣出時先往上彈起放大，再旋轉縮小消失。
+func play_vanish() -> Tween:
+	$visual.pivot_offset = Config.CARD_SIZE / 2
+	var tween := create_tween()
+	tween.tween_property($visual, "scale", Vector2.ONE * Trade.VANISH_LIFT_SCALE, Trade.VANISH_LIFT_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property($visual, "position:y", -Trade.VANISH_LIFT_HEIGHT, Trade.VANISH_LIFT_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property($visual, "scale", Vector2.ZERO, Trade.VANISH_SHRINK_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property($visual, "rotation", Trade.VANISH_SPIN, Trade.VANISH_SHRINK_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	return tween
+
+# 按下後未拖曳即放開視為點擊；拖曳排序維持原本的拖放流程。
+func _gui_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	if event.pressed:
+		_dragged = false
+	elif not _dragged and interaction_enabled and not cat_id.is_empty():
+		clicked.emit(cat_id)
+
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	if not interaction_enabled or cat_id.is_empty():
 		return null
+	_dragged = true
 	var preview := TextureRect.new()
 	preview.texture = $visual/artwork.texture
 	preview.custom_minimum_size = Config.CARD_SIZE

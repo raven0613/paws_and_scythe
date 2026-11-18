@@ -1,6 +1,7 @@
 extends Control
 
 signal confirmed(ids: Array)
+signal cancelled
 
 const Catalog = preload("res://src/configs/cat_cards/cat_catalog.gd")
 const Config = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
@@ -24,6 +25,8 @@ func _ready() -> void:
 		_choices[id] = choice
 	_content.get_node("footer/start").text = Config.START_TEXT
 	_content.get_node("footer/start").pressed.connect(_confirm)
+	_content.get_node("footer/cancel").text = Config.CANCEL_TEXT
+	_content.get_node("footer/cancel").pressed.connect(_cancel)
 	_update_choices()
 
 func open(selected: Array) -> void:
@@ -47,3 +50,7 @@ func _update_choices() -> void:
 func _confirm() -> void:
 	hide()
 	confirmed.emit(_selected.duplicate())
+
+func _cancel() -> void:
+	hide()
+	cancelled.emit()
