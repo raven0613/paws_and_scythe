@@ -29,7 +29,7 @@ func play(events: Array, views: Dictionary, origin: Vector2) -> void:
 		card.scale = Vector2.ONE * Config.INITIAL_SCALE
 		card.modulate.a = 0.0
 		card.z_index = Config.FLIGHT_LAYER
-		var flight := Flight.new(card, parent_transform * (target + card.pivot_offset), FlightConfig.DRAW_ENABLED)
+		var flight := Flight.new(card, Config.FLIGHT_DURATION, FlightConfig.DRAW_ENABLED, FlightConfig.LIGHT_LANDING)
 		_flights.append(flight)
 		var delay := index * Config.CARD_INTERVAL
 		_timeline.tween_callback(_emit_card.bind(card, event.remaining)).set_delay(delay)

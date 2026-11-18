@@ -68,4 +68,4 @@ theme_override_constants/separation = 12
 
 [node name="restart" type="Button" parent="outcome/center/panel/margin/content/buttons"]
 layout_mode = 2
-text = "重新開始"
+text = "開始"

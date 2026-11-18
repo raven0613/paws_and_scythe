@@ -20,7 +20,8 @@ func play_place(card: Control, destination: Transform2D, undo := false) -> void:
 	var target_position := target * card.pivot_offset - card.pivot_offset
 	var duration: float = Config.UNDO_PLACE_DURATION if undo else Config.PLACE_FLIGHT_DURATION
 	var enabled: bool = FlightConfig.UNDO_PLACE_ENABLED if undo else FlightConfig.PLACE_ENABLED
-	var flight := Flight.new(card, destination * card.pivot_offset, enabled)
+	var landing: Dictionary = FlightConfig.LIGHT_LANDING if undo else FlightConfig.PLACE_LANDING
+	var flight := Flight.new(card, duration, enabled, landing)
 	var timeline := create_tween().set_parallel()
 	var move := _place_progress.bind(card, pose, target_position, target.get_scale(), target.get_rotation(), flight)
 	timeline.tween_method(move, 0.0, 1.0, duration)
@@ -34,9 +35,9 @@ func play_swap(first: Control, second: Control, undo := false) -> void:
 	var first_pose := _capture(first)
 	var second_pose := _capture(second)
 	var enabled: bool = FlightConfig.UNDO_SWAP_ENABLED if undo else FlightConfig.SWAP_ENABLED
-	var first_flight := Flight.new(first, second.get_global_transform_with_canvas() * second.pivot_offset, enabled)
-	var second_flight := Flight.new(second, first.get_global_transform_with_canvas() * first.pivot_offset, enabled)
 	var duration: float = Config.UNDO_SWAP_DURATION if undo else Config.SWAP_DURATION
+	var first_flight := Flight.new(first, duration, enabled, FlightConfig.LIGHT_LANDING)
+	var second_flight := Flight.new(second, duration, enabled, FlightConfig.LIGHT_LANDING)
 	first.z_index += 1
 	var timeline := create_tween().set_parallel()
 	var move := _swap_progress.bind(first, second, first_pose.position, second_pose.position,
@@ -66,7 +67,6 @@ func play_undo_dig(card: Control) -> void:
 	var pose := _capture(card)
 	var path: Dictionary = _dig_paths[card.card_id]
 	_dig_paths.erase(card.card_id)
-	var destination := card.get_global_transform_with_canvas() * card.pivot_offset
 	# 鏡頭可在兩次操作之間移動；沿同一拋物線延伸起點至目前畫面下方。
 	var parent_transform: Transform2D = card.get_parent().get_global_transform_with_canvas()
 	var bottom := parent_transform.affine_inverse() * Vector2(0.0, card.get_viewport_rect().end.y)
@@ -75,8 +75,8 @@ func play_undo_dig(card: Control) -> void:
 	var start := maxf(1.0, DigMotion.time_to_drop(maxf(distance, 0.0), card.size.y) / path.duration)
 	_dig_progress(start, card, pose.position, path.side, path.duration)
 	card.show()
-	var flight := Flight.new(card, destination, FlightConfig.UNDO_DIG_ENABLED)
 	var duration: float = path.duration * start / Config.DIG_EJECT_SPEED / Config.DIG_SPEED / Config.UNDO_DIG_SPEED
+	var flight := Flight.new(card, duration, FlightConfig.UNDO_DIG_ENABLED, FlightConfig.LIGHT_LANDING)
 	var timeline := create_tween().set_parallel()
 	timeline.tween_method(_undo_dig_progress.bind(card, pose.position, path, start, flight), 0.0, 1.0, duration)
 	flight.land(timeline, duration)
@@ -96,12 +96,10 @@ func play_discard(cards: Array[Control]) -> void:
 		var destination := Vector2(-margin, card.get_viewport_rect().end.y + margin)
 		var parent_transform: Transform2D = card.get_parent().get_global_transform_with_canvas()
 		var target: Vector2 = parent_transform.affine_inverse() * destination - card.pivot_offset
-		var flight := Flight.new(card, destination, FlightConfig.DISCARD_ENABLED)
+		var flight := Flight.new(card, Config.DISCARD_DURATION, FlightConfig.DISCARD_ENABLED)
 		flights.append(flight)
-		var delay := index * Config.DISCARD_INTERVAL
 		var move := _discard_progress.bind(card, pose.position, target, flight)
-		timeline.tween_method(move, 0.0, 1.0, Config.DISCARD_DURATION).set_delay(delay)
-		flight.land(timeline, delay + Config.DISCARD_DURATION)
+		timeline.tween_method(move, 0.0, 1.0, Config.DISCARD_DURATION).set_delay(index * Config.DISCARD_INTERVAL)
 	await timeline.finished
 	for index in cards.size():
 		flights[index].finish()
@@ -126,11 +124,11 @@ func _restore(card: Control, pose: Dictionary) -> void:
 func _place_progress(progress: float, card: Control, pose: Dictionary, target: Vector2,
 		target_scale: Vector2, target_rotation: float, flight: RefCounted) -> void:
 	var travel := Math.spring(progress)
-	var arc := Vector2.UP * card.size.y * Config.PLACE_ARC_HEIGHT * sin(PI * travel)
-	card.position = pose.position.lerp(target, travel) + arc
+	var lift := Math.lift(progress, Config.PLACE_APEX)
+	card.position = pose.position.lerp(target, travel) + Vector2.UP * card.size.y * Config.PLACE_ARC_HEIGHT * lift
 	card.scale = pose.scale.lerp(target_scale, travel)
 	card.rotation = lerp_angle(pose.rotation, target_rotation, travel)
-	flight.update(progress)
+	flight.update(progress, lift)
 
 func _swap_progress(progress: float, first: Control, second: Control, from: Vector2, to: Vector2,
 		side: float, first_flight: RefCounted, second_flight: RefCounted) -> void:

@@ -1,8 +1,11 @@
 extends RefCounted
 
 const FLIGHT_LAYER = 20
-const PLACE_FLIGHT_DURATION = 0.22
-const PLACE_ARC_HEIGHT = 0.18
+# 放牌與撤銷出牌：離開桌面的高度在飛行進度 PLACE_APEX 時最高，之前快速升起、之後加速落下拍上目的地；
+# 最高時牌面抬到上方牌高 PLACE_ARC_HEIGHT 倍的位置，牌面放大與陰影偏移見 flight_animation_config。
+const PLACE_FLIGHT_DURATION = 0.26
+const PLACE_ARC_HEIGHT = 0.25
+const PLACE_APEX = 0.45
 const UNDO_PLACE_DURATION = 0.24
 # 讓位在回手飛行結束前完成，實際時間取兩者較短值。
 const UNDO_HAND_SHIFT_DURATION = 0.18
