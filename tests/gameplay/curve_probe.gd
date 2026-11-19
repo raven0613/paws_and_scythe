@@ -8,8 +8,8 @@ const LevelReward = preload("res://src/service/level_reward/level_reward.gd")
 const Market = preload("res://src/service/shop/cat_market.gd")
 const Player = preload("res://tests/support/probe_player.gd")
 
-# 逐關模擬：每位玩家以目前持有的貓牌量測六次結算，關卡目標取第 CLEAR_TURNS 次的中位累積分數；
-# 玩家以實際達標的結算次數領取過關獎勵，再依路線順序購買下一張貓牌。
+# 逐關模擬：每位玩家以目前持有的貓牌量測六次結算，建議目標取第 CLEAR_TURNS 次的中位累積分數；
+# 玩家以建議目標下實際達標的結算次數領取過關獎勵，再依路線順序購買下一張貓牌。
 # 簡化假設：商店總能提供路線上的下一張貓牌，玩家不重骰也不賣牌。
 func _init() -> void:
 	var players := _players()

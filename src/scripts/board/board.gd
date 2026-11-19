@@ -20,6 +20,7 @@ var _focused: Array[Control] = []
 var _home: Dictionary = {}
 var _view_area: RefCounted
 var _hover: Node
+var _drop_target: Variant = null
 
 func _ready() -> void:
 	_camera = Camera.new()
@@ -128,6 +129,33 @@ func has_active_placement_at(point: Vector2) -> bool:
 		if not placement.disabled and ViewArea.contains_point(placement, point):
 			return true
 	return false
+
+# 拖曳放牌的落點：point 位於可見背景時，取中心距離在 reach 倍格子對角線以內且最近的合法待放格。
+func drop_cell(point: Vector2, reach: float) -> Variant:
+	if not allows_camera_at(point):
+		return null
+	var result: Variant = null
+	var nearest := INF
+	for cell in _placements:
+		var placement: Control = _placements[cell]
+		var distance := placement_center(cell).distance_to(point)
+		var limit := placement.get_global_transform_with_canvas().get_scale().x * placement.size.length() * reach
+		if not placement.disabled and distance <= limit and distance < nearest:
+			result = cell
+			nearest = distance
+	return result
+
+func placement_center(cell: Vector2i) -> Vector2:
+	var placement: Control = _placements[cell]
+	return placement.get_global_transform_with_canvas() * (placement.size / 2)
+
+# 拖曳中鎖定的待放格放大並亮起，cell 為 null 時解除。
+func set_drop_target(cell: Variant) -> void:
+	if _drop_target != null and _placements.has(_drop_target):
+		_placements[_drop_target].set_drop_target(false)
+	_drop_target = cell
+	if cell != null:
+		_placements[cell].set_drop_target(true)
 
 func tap_at(point: Vector2) -> void:
 	for card in _cards.values():

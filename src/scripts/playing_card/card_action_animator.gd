@@ -31,6 +31,24 @@ func play_place(card: Control, destination: Transform2D, undo := false) -> void:
 	# 控制器在同一幀移交原卡牌，由目標容器排版。
 	_restore(card, pose)
 
+# 拖曳放開後從放開時的高度 lift 與擺動角度 tilt 接續：落入待放格時加速拍下並播放放牌落地回彈，
+# returning 為飛回手牌槽位並播放輕量回彈。第一幀在呼叫當下套用，與拖曳最後的姿態無縫銜接。
+func play_drop(card: Control, destination: Transform2D, lift: float, tilt: float, returning := false) -> void:
+	var pose := _capture(card)
+	var target: Transform2D = card.get_parent().get_global_transform_with_canvas().affine_inverse() * destination
+	var target_position := target * card.pivot_offset - card.pivot_offset
+	var duration: float = Config.DRAG_RETURN_DURATION if returning else Config.DROP_DURATION
+	var landing: Dictionary = FlightConfig.LIGHT_LANDING if returning else FlightConfig.PLACE_LANDING
+	var flight := Flight.new(card, duration, FlightConfig.DROP_ENABLED, landing)
+	var move := _drop_progress.bind(card, pose, target_position, target.get_scale(), target.get_rotation(), lift, tilt, flight)
+	move.call(0.0)
+	var timeline := create_tween().set_parallel()
+	timeline.tween_method(move, 0.0, 1.0, duration)
+	flight.land(timeline, duration)
+	await timeline.finished
+	flight.finish()
+	_restore(card, pose)
+
 func play_swap(first: Control, second: Control, undo := false) -> void:
 	var first_pose := _capture(first)
 	var second_pose := _capture(second)
@@ -129,6 +147,15 @@ func _place_progress(progress: float, card: Control, pose: Dictionary, target: V
 	card.scale = pose.scale.lerp(target_scale, travel)
 	card.rotation = lerp_angle(pose.rotation, target_rotation, travel)
 	flight.update(progress, lift)
+
+# 高度由放開時的 lift 以二次曲線加速降到桌面，抵達時以最快速度觸地。
+func _drop_progress(progress: float, card: Control, pose: Dictionary, target: Vector2, target_scale: Vector2,
+		target_rotation: float, lift: float, tilt: float, flight: RefCounted) -> void:
+	var travel := Math.spring(progress)
+	card.position = pose.position.lerp(target, travel)
+	card.scale = pose.scale.lerp(target_scale, travel)
+	card.rotation = lerp_angle(tilt, target_rotation, travel)
+	flight.update(progress, lift * (1.0 - progress * progress))
 
 func _swap_progress(progress: float, first: Control, second: Control, from: Vector2, to: Vector2,
 		side: float, first_flight: RefCounted, second_flight: RefCounted) -> void:

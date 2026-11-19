@@ -22,12 +22,12 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="pivot" type="Control" parent="."]
-editor_description = "面板中心；落下、傾斜與壓縮回彈作用於此節點，位置可在編輯器調整。"
+editor_description = "面板中心，預設與商店四個方塊的中心對齊；落下、傾斜與壓縮回彈作用於此節點，位置可在編輯器調整。"
 layout_mode = 0
-offset_left = 460.0
-offset_top = 326.0
-offset_right = 460.0
-offset_bottom = 326.0
+offset_left = 580.0
+offset_top = 298.0
+offset_right = 580.0
+offset_bottom = 298.0
 mouse_filter = 2
 
 [node name="panel" type="PanelContainer" parent="pivot"]

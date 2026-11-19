@@ -13,7 +13,9 @@ enum State { INITIAL, AVAILABLE }
 
 var cell := Vector2i.ZERO
 var _visibility_tween: Tween
+var _target_tween: Tween
 var _shown := false
+var _drop_target := false
 
 
 func _ready() -> void:
@@ -46,6 +48,19 @@ func set_input_enabled(enabled: bool, shown: bool) -> void:
 	_visibility_tween.tween_property(self, "scale", Vector2.ONE if shown else Config.HIDDEN_SCALE, Config.FADE_DURATION)
 
 
+# 拖曳中被鎖定時使用 Hover 配色並以 Back Out 放大，解除時縮回原尺寸。
+func set_drop_target(active: bool) -> void:
+	if active == _drop_target:
+		return
+	_drop_target = active
+	_refresh()
+	if _target_tween:
+		_target_tween.kill()
+	var scale_target := Vector2.ONE * (Config.DROP_TARGET_SCALE if active else 1.0)
+	_target_tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_target_tween.tween_property(self, "scale", scale_target, Config.DROP_TARGET_DURATION)
+
+
 func retire() -> void:
 	set_input_enabled(false, false)
 	if _visibility_tween and _visibility_tween.is_running():
@@ -57,7 +72,7 @@ func retire() -> void:
 func _refresh() -> void:
 	if not is_node_ready():
 		return
-	var highlighted := not disabled and (is_hovered() or has_focus())
+	var highlighted := _drop_target or (not disabled and (is_hovered() or has_focus()))
 	$background.self_modulate = Config.HOVER_COLOR if highlighted else Config.BASE_COLOR
 	$frame.self_modulate = Config.ACTIVE_COLOR if highlighted else Config.FRAME_COLOR
 	$plus.self_modulate = $frame.self_modulate

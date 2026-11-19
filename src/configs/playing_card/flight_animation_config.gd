@@ -3,6 +3,9 @@ extends RefCounted
 # 各動作的飛行形變與落地回彈開關。
 const DRAW_ENABLED = true
 const PLACE_ENABLED = true
+# 拖曳中隨游標速度的形變，以及放開後落入待放格或飛回手牌的形變與落地回彈。
+const DRAG_ENABLED = true
+const DROP_ENABLED = true
 const DISCARD_ENABLED = true
 const SWAP_ENABLED = true
 const UNDO_PLACE_ENABLED = true

@@ -17,6 +17,9 @@ const Shake = preload("res://src/service/motion/shake_motion.gd")
 var money := 0
 var _money_tween: Tween
 var _icon_tween: Tween
+var _board_full := false
+var _board_pulse: Tween
+var _board_alert: Tween
 
 func _ready() -> void:
 	_refresh_palette()
@@ -41,8 +44,39 @@ func _refresh_palette() -> void:
 func set_deck_count(value: int) -> void:
 	$deck_count.text = str(value)
 
+# 達到容量上限時彈跳一次並開始呼吸閃爍，低於上限時回到原色。
 func set_board_count(count: int, limit: int) -> void:
 	$board_count.text = Config.BOARD_COUNT_FORMAT % [count, limit]
+	var full := count >= limit
+	if full == _board_full:
+		return
+	_board_full = full
+	if _board_pulse:
+		_board_pulse.kill()
+	if not full:
+		_tint_board(deck_color)
+		return
+	alert_board_full()
+	_board_pulse = create_tween().set_loops().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_board_pulse.tween_method(_tint_board, Config.BOARD_FULL_COLOR, Config.BOARD_FULL_DIM_COLOR, Config.BOARD_FULL_PERIOD / 2)
+	_board_pulse.tween_method(_tint_board, Config.BOARD_FULL_DIM_COLOR, Config.BOARD_FULL_COLOR, Config.BOARD_FULL_PERIOD / 2)
+
+# 場上張數以右緣為軸放大回彈並旋轉抖動。
+func alert_board_full() -> void:
+	if _board_alert:
+		_board_alert.kill()
+	var label: Label = $board_count
+	label.pivot_offset = Vector2(label.size.x, label.size.y / 2)
+	label.scale = Vector2.ONE * Config.BOARD_ALERT_SCALE
+	_board_alert = create_tween().set_parallel()
+	_board_alert.tween_property(label, "scale", Vector2.ONE, Config.BOARD_ALERT_DURATION).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_board_alert.tween_method(_shake_board.bind(label), 0.0, 1.0, Config.BOARD_ALERT_DURATION)
+
+func _tint_board(color: Color) -> void:
+	$board_count.add_theme_color_override("font_color", color)
+
+func _shake_board(progress: float, label: Label) -> void:
+	label.rotation = Shake.pose(progress, Vector2.ZERO, Config.BOARD_ALERT_TILT, Config.BOARD_ALERT_CYCLES, 0.0, Config.BOARD_ALERT_DECAY).rotation
 
 func set_money(value: int) -> void:
 	if _money_tween:

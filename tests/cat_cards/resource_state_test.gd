@@ -72,17 +72,21 @@ func _test_discards() -> void:
 
 func _test_capacity() -> void:
 	var game = Run.new()
-	for offset in [-1, 0]:
-		game.start(Rules.TEST_SEED, ["compact"])
-		game.level = Rules.LEVEL_TARGETS.size()
-		_fill_board(game, game.board_limit() + offset)
-		game.settle()
-		_check(game.status == (Run.Status.PLAYING if offset < 0 else Run.Status.LOST), "Capacity is checked at the modified threshold after settlement")
+	game.start(Rules.TEST_SEED, ["compact"])
+	game.level = Rules.LEVEL_TARGETS.size()
+	var limit: int = game.board_limit()
+	_fill_board(game, limit - 1)
+	_check(game.can_place(game.hand[0], Vector2i(limit - 1, 0)), "Compact board accepts cards below its modified limit")
+	_fill_board(game, limit)
+	_check(not game.can_place(game.hand[0], Vector2i(limit, 0)), "Compact board rejects cards at its modified limit")
+	game.score = Rules.DIG_COST - 1 - game.preview().total
+	game.settle()
+	_check(game.status == Run.Status.LOST, "Full compact board without an affordable dig loses")
 	game.start(Rules.TEST_SEED, ["compact"])
 	_fill_board(game, game.board_limit())
 	game.score = game.target()
 	game.settle()
-	_check(game.status == Run.Status.LEVEL_CLEARED, "Victory takes priority over reaching modified capacity")
+	_check(game.status == Run.Status.LEVEL_CLEARED, "Victory takes priority over a full compact board")
 
 func _test_current_amounts() -> void:
 	var game = Run.new()

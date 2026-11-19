@@ -5,6 +5,7 @@ const PanelScene = preload("res://src/scenes/hover/hover_panel.tscn")
 var _panel: Control
 var _source: Control
 var _content: Callable
+var _paused := false
 
 func _ready() -> void:
 	layer = Config.LAYER
@@ -34,6 +35,11 @@ func _hide_for(source: Control) -> void:
 func _process(_delta: float) -> void:
 	refresh()
 
+# 拖曳手牌等期間暫停顯示，持續追蹤滑鼠所在的來源，恢復時直接顯示該來源。
+func set_paused(paused: bool) -> void:
+	_paused = paused
+	refresh()
+
 func refresh() -> void:
 	if _source == null:
 		return
@@ -41,7 +47,7 @@ func refresh() -> void:
 		_hide_for(_source)
 		return
 	var content: Array = _content.call()
-	if content[0].is_empty() and content[1].is_empty():
+	if _paused or (content[0].is_empty() and content[1].is_empty()):
 		_panel.hide()
 		return
 	var rect := _source.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, _source.size)

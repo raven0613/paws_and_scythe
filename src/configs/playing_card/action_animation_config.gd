@@ -6,6 +6,10 @@ const FLIGHT_LAYER = 20
 const PLACE_FLIGHT_DURATION = 0.26
 const PLACE_ARC_HEIGHT = 0.25
 const PLACE_APEX = 0.45
+# 拖曳放開：落入待放格以臨界阻尼彈簧在 DROP_DURATION 內從放開時的高度加速拍下，接放牌落地回彈；
+# 未落在待放格時在 DRAG_RETURN_DURATION 內飛回原手牌槽位，接輕量回彈。
+const DROP_DURATION = 0.16
+const DRAG_RETURN_DURATION = 0.26
 const UNDO_PLACE_DURATION = 0.24
 # 讓位在回手飛行結束前完成，實際時間取兩者較短值。
 const UNDO_HAND_SHIFT_DURATION = 0.18

@@ -25,6 +25,7 @@ var _hover: Node
 # 手牌區寬度依 _layout_count 計算；補位開始時即採用更新後的張數。
 var _layout_count := Config.DEFAULT_CARD_COUNT
 var _slides: Dictionary = {}
+var _held: Control
 var _background_tween: Tween
 var _background_target := 0.0
 
@@ -109,6 +110,12 @@ func select_card(card: Control) -> void:
 	_update_layout()
 	selection_changed.emit()
 
+# 拖曳中的牌由拖曳與落牌演出接手位置，排版略過這張牌並保留空出的槽位；card 為 null 時交回排版。
+func hold(card: Control) -> void:
+	if card != null:
+		_stop_slide(card)
+	_held = card
+
 # 離手的牌停在當下位置，交給出牌與棄牌動作接手。
 func _stop_slide(card: Control) -> void:
 	if _slides.has(card):
@@ -118,6 +125,8 @@ func _stop_slide(card: Control) -> void:
 func _update_layout() -> void:
 	for index in range(_cards.get_child_count()):
 		var card := _cards.get_child(index) as Control
+		if card == _held:
+			continue
 		card.visible = index < card_count
 		if not _slides.has(card):
 			card.position.x = _slot_position(index).x

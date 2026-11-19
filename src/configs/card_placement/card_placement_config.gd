@@ -11,3 +11,6 @@ const HOVER_COLOR = Color("54759c")
 const HINT_FONT_SIZE = 12
 const FADE_DURATION = 0.14
 const HIDDEN_SCALE = Vector2(0.92, 0.92)
+# 拖曳中被鎖定的待放格使用 Hover 配色，並以 Back Out 在 DROP_TARGET_DURATION 內放大到 DROP_TARGET_SCALE；解除時以同樣的補間縮回。
+const DROP_TARGET_SCALE = 1.12
+const DROP_TARGET_DURATION = 0.16

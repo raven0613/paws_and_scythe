@@ -17,6 +17,7 @@ const Economy = preload("res://src/scripts/gameplay/economy_presenter.gd")
 const CoinFlight = preload("res://src/scripts/money/coin_flight.gd")
 const TestEntry = preload("res://src/configs/gameplay/test_entry_config.gd")
 const BoxStyle = preload("res://src/scripts/ui/box_style.gd")
+const CardDrag = preload("res://src/scripts/hand_area/card_drag.gd")
 
 var game = Run.new()
 var _views: Dictionary = {}
@@ -27,6 +28,7 @@ var _card_animator := CardAnimator.new()
 var _group_presenter := GroupPresenter.new()
 var _economy := Economy.new()
 var _coins := CoinFlight.new()
+var _drag := CardDrag.new()
 var _feedback_active := false
 var _mode: StringName = &""
 var _swap_first: Variant = null
@@ -53,6 +55,9 @@ func _ready() -> void:
 	$hand_area.clear_preview()
 	$hand_area.selection_changed.connect(_on_hand_selection_changed)
 	$board.placement_requested.connect(_place_selected_card)
+	add_child(_drag)
+	_drag.setup($board)
+	_drag.released.connect(_drop_card)
 	$action_buttons.action_requested.connect(_on_action_requested)
 	$combo.group_hovered.connect(_on_group_hovered)
 	$camera_controls.auto_changed.connect($board.set_auto_follow)
@@ -128,6 +133,7 @@ func _view(card_id: int) -> Control:
 		_reserve.add_child(card)
 		card.set_card(card_id)
 		card.selection_requested.connect(_on_card_requested)
+		card.drag_requested.connect(_start_drag)
 		_views[card_id] = card
 	return _views[card_id]
 
@@ -236,6 +242,31 @@ func _place_selected_card(cell: Vector2i) -> void:
 		_clear_selection()
 		_finish_card_action()
 
+# 拖起手牌：清除選取與場上操作模式，由拖曳控制器接手；無法出牌時不拖起，場上已滿則提示場上張數。
+func _start_drag(card: Control, pointer: Vector2) -> void:
+	if not game.can_play():
+		if game.is_board_full():
+			$resources_display.alert_board_full()
+		return
+	_clear_selection()
+	$hand_area.hold(card)
+	# 先收起手牌 Hover，讓卡牌回到原本的圖層與姿態，再交給拖曳控制器拉到飛行圖層。
+	$hand_area.set_selection_enabled(false)
+	_drag.begin(card, pointer)
+	_update_input()
+
+# 放開手牌：落在合法待放格即出牌並由放開時的姿態拍入格子，其餘情況飛回原手牌槽位。
+func _drop_card(card: Control, cell: Variant, lift: float, tilt: float) -> void:
+	_begin_card_action()
+	if cell != null and game.place(card.card_id, cell):
+		$hand_area.close_gaps(game.hand)
+		await _card_animator.play_drop(card, $board.card_destination(cell), lift, tilt)
+	else:
+		var slot: Transform2D = $hand_area.card_destination(game.hand.find(card.card_id))
+		await _card_animator.play_drop(card, slot, lift, tilt, true)
+	$hand_area.hold(null)
+	_finish_card_action()
+
 func _on_action_requested(action_id: StringName) -> void:
 	if _feedback_active or _busy or game.status != Run.Status.PLAYING:
 		return
@@ -319,8 +350,10 @@ func _finish_deal() -> void:
 	else:
 		$gameplay_hud.show_outcome(game)
 
+# 拖曳手牌期間只顯示待放格，其餘操作與鏡頭輸入暫停。
 func _update_input() -> void:
-	var browsing: bool = not _busy and game.status == Run.Status.PLAYING
+	var dragging: bool = _drag.card != null
+	var browsing: bool = not _busy and not dragging and game.status == Run.Status.PLAYING
 	var active: bool = browsing and not _feedback_active
 	$combo.set_idle_enabled(active)
 	$board.set_hover_enabled(active)
@@ -333,8 +366,10 @@ func _update_input() -> void:
 	$board.set_camera_input_enabled(browsing)
 	$camera_controls.set_controls_enabled(browsing)
 	$hand_area.set_selection_enabled(browsing)
-	var can_place: bool = active and _mode == &"" and selected.size() == 1 and game.played.size() < Rules.MAX_PLAYS
-	$board.set_input_enabled(can_place, game.status == Run.Status.PLAYING)
+	for card_id in _views:
+		_views[card_id].draggable = active and game.hand.has(card_id)
+	var placing: bool = dragging or (active and _mode == &"" and selected.size() == 1 and game.can_play())
+	$board.set_input_enabled(placing, game.status == Run.Status.PLAYING)
 	for cell in game.board:
 		var card: Control = _views[game.board[cell]]
 		card.selection_enabled = active and _mode in [&"swap", &"remove"]
@@ -357,7 +392,7 @@ func _update_input() -> void:
 		actions.get_node(NodePath(action)).modulate = Color("ffe28a") if _mode == action else Color.WHITE
 
 func _on_group_hovered(cells: Array) -> void:
-	if not _busy and not _feedback_active:
+	if not _busy and not _feedback_active and _drag.card == null:
 		$board.focus_group(cells)
 
 func _refresh_marks() -> void:

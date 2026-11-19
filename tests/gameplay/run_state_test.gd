@@ -160,28 +160,35 @@ func _test_levels() -> void:
 			_check(game.status == Run.Status.WON and not game.advance(), "Final target ends the run")
 
 func _test_capacity() -> void:
-	for rescue in [false, true]:
-		var game = Run.new()
-		game.start(Config.TEST_SEED)
-		game.level = Config.LEVEL_TARGETS.size()
-		for i in Config.BOARD_LIMIT:
-			game.board[Vector2i(i * 2, 0)] = game.deck.draw_pile.pop_back()
-		_check(game.place(game.hand[0], Vector2i.RIGHT), "Capacity may be exceeded during operations")
-		if rescue:
-			game.score = Config.DIGS * Config.DIG_COST
-			for i in Config.DIGS:
-				game.dig(Vector2i(i * 2, 0))
+	var game := _full_board_game()
+	_check(game.board.size() == game.board_limit(), "The last free slot accepts a card")
+	_check(not game.can_place(game.hand[0], Vector2i.LEFT), "Full board rejects further placement")
+	_check(game.undo() and game.can_place(game.hand[0], Vector2i.RIGHT), "Undo reopens the last slot")
+	game.place(game.hand[0], Vector2i.RIGHT)
+	game.score = Config.DIG_COST
+	_check(game.dig(Vector2i(2, 0)) and game.can_place(game.hand[0], Vector2i(2, 0)), "Digging frees a slot for placement")
+	# 結算後滿格：付得起挖牌時繼續，付不起時敗北；達標仍優先判定。
+	var cases := [
+		{"score": Config.DIG_COST, "status": Run.Status.PLAYING, "message": "Full board continues while a dig is affordable"},
+		{"score": Config.DIG_COST - 1, "status": Run.Status.LOST, "message": "Full board without an affordable dig loses"},
+		{"score": Config.LEVEL_TARGETS[-1], "status": Run.Status.WON, "message": "Reaching the target takes priority over a full board"},
+	]
+	for case in cases:
+		game = _full_board_game()
+		game.score = case.score - game.preview().total
 		game.settle()
-		_check(game.status == (Run.Status.PLAYING if rescue else Run.Status.LOST), "Capacity is checked after final digs")
+		_check(game.status == case.status, case.message)
 		_check_unique(game)
+
+# 最終關的盤面差一張達上限，再由手牌放入最後一張。
+func _full_board_game() -> RefCounted:
 	var game = Run.new()
 	game.start(Config.TEST_SEED)
-	game.score = game.target()
-	for i in Config.BOARD_LIMIT:
+	game.level = Config.LEVEL_TARGETS.size()
+	for i in Config.BOARD_LIMIT - 1:
 		game.board[Vector2i(i * 2, 0)] = game.deck.draw_pile.pop_back()
 	game.place(game.hand[0], Vector2i.RIGHT)
-	game.settle()
-	_check(game.status == Run.Status.LEVEL_CLEARED, "Passing score takes priority over full board")
+	return game
 
 func _test_reserved_recycling() -> void:
 	var game = Run.new()

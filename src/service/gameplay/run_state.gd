@@ -69,7 +69,14 @@ func can_settle() -> bool:
 func can_place(card: int, cell: Vector2i) -> bool:
 	var cells: Array[Vector2i] = []
 	cells.assign(board.keys())
-	return status == Status.PLAYING and hand.has(card) and played.size() < Config.MAX_PLAYS and BoardRules.can_place(cells, cell)
+	return can_play() and hand.has(card) and BoardRules.can_place(cells, cell)
+
+# 本次仍有出牌額度且場上未達容量上限時可以出牌。
+func can_play() -> bool:
+	return status == Status.PLAYING and played.size() < Config.MAX_PLAYS and not is_board_full()
+
+func is_board_full() -> bool:
+	return board.size() >= board_limit()
 
 func place(card: int, cell: Vector2i) -> bool:
 	if not can_place(card, cell):
@@ -199,14 +206,15 @@ func settle(snapshot: Dictionary = {}) -> Dictionary:
 	_clear_turn()
 	if score >= target():
 		_clear_level()
-	elif board.size() >= board_limit():
-		_lose("場上牌數已達上限")
 	elif turns_left == 0:
 		_lose("結算次數已用完")
 	else:
 		hand.append_array(_draw(hand_limit - hand.size()))
 		if hand.is_empty():
 			_lose("牌庫耗盡，已無可出的手牌")
+		# 每次結算至少要出一張牌；場上已滿時需先挖牌騰出空位，付不起挖牌即無法再結算。
+		elif is_board_full() and not can_dig():
+			_lose("場上已滿且無法挖牌")
 	return result
 
 func _clear_turn() -> void:
