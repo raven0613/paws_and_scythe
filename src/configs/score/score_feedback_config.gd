@@ -6,9 +6,9 @@ const ROW_POP_DOWN = 0.28
 const COUNT_DURATION = 0.5
 const COUNT_TAIL = 10.0
 const COUNT_MAIN_RATIO = 0.65
-const NUMBER_POP_START = 0.55
-const NUMBER_POP_PEAK = 0.78
-const NUMBER_POP_SCALE = 1.2
+const NUMBER_POP_START = 0.2
+const NUMBER_POP_PEAK = 0.5
+const NUMBER_POP_SCALE = 1.5
 const STEP_HOLD = 0.2
 # 結算完成表演結束後，最終分數停留再飛往關卡面板：一般結算停留 FINAL_HOLD 秒，
 # 全像彩虹與銀河停留 HIGH_FINAL_HOLD 秒，讓火焰、銀河與暗角持續播放。
@@ -34,7 +34,7 @@ const PARTICLE_COLOR = Color("b5eaff")
 const PARTICLE_CORE_COLOR = Color("f5fcff")
 const PARTICLE_WAIT_ALPHA = 0.45
 const PARTICLE_GLOW_ALPHA = 0.07
-# 結算圖層由下往上：Combo 條標題與關卡分數等周邊標籤、衝擊波與熱浪的背景扭曲、銀河暗角、飛行粒子、中央分數與右側倍率。
+# 結算圖層由下往上：Combo 條標題與關卡分數等周邊標籤、衝擊波與熱浪的背景扭曲、銀河暗角、飛行粒子與高分入帳中的左上進度條、中央分數與右側倍率。
 const LABEL_LAYER = 11
 const DISTORTION_LAYER = 12
 const VIGNETTE_LAYER = 13

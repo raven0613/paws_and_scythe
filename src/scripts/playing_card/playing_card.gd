@@ -97,6 +97,9 @@ func _draw_marks() -> void:
 func group_visual() -> Node2D:
 	return $visual
 
+func group_shadow() -> Node2D:
+	return $visual/shadow
+
 # 整張卡面依 tilt 透視傾斜，在 visual 位置更新後呼叫；零為原本的平面卡面。
 func set_tilt(tilt: Vector2, perspective: float) -> void:
 	_tilt.apply(tilt, perspective)

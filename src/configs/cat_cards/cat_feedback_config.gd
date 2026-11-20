@@ -2,7 +2,6 @@ extends RefCounted
 
 const CARD_SIZE = Vector2(73, 92)
 const ACTIVE_COLOR = Color("ffe6a0")
-const REORDER_DURATION = 0.18
 # 貓牌 Hover：大小與位置維持原樣，依滑鼠位置透視傾斜，滑鼠所在的一側往後壓。
 # HOVER_TILT 為滑鼠在牌緣時左右（x）與上下（y）的最大傾斜弧度，HOVER_PERSPECTIVE 為鏡頭到卡面的距離（像素），越小透視越強；
 # 傾斜以每秒 HOVER_TILT_FOLLOW 的速率平滑跟隨，離開時在 HOVER_RELEASE_DURATION 內以 Quad Out 回正。

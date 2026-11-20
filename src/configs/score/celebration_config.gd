@@ -119,12 +119,14 @@ const ENERGY_FULL = 0.50
 # 依序為：頂端飄散的小方點、頂冠、從主體頂緣露出的色帶、包住數字的主體。
 # FIRE_LAYERS_HOLOGRAPHIC 與 FIRE_LAYERS_GALAXY 依同樣順序逐層對應，層數相同；全像彩虹使用彩虹組，
 # 銀河撞頂換成銀河後，各層的顏色與數值在 FIRE_BLEND_DURATION（galaxy_transition_config）內由彩虹組漸變到銀河組。
-# bottom／top：滿能量時方塊出發與升到頂的高度，以字高為單位，0 為數字字底、1 為字頂；漸強期間整團火焰以字底為基準等比例縮放。
+# bottom／top：滿能量時方塊出發與升到頂的高度，以字高為單位，0 為數字字底、1 為字頂。
 # width：分布寬度相對整串數字的比例；count：方塊數；size：邊長範圍（像素）；shrink：升到頂時相對初始邊長的比例。
 # lifetime：速度倍率為 1 時上升一次的秒數範圍；acceleration：上升位移為壽命進度的次方，越大底部越慢、上方越快。
 # spin：每秒轉動弧度範圍，方向隨機；spread：升到頂時的橫向偏移範圍（像素）。
 # FIRE_SPEED_HOLOGRAPHIC 與 FIRE_SPEED_GALAXY 為兩組火焰上升與轉動的速度倍率，漸變期間跟著顏色一起過渡。
 # FIRE_EMERGE 與 FIRE_FADE 為方塊在底部長出、到頂縮小消失各佔的壽命比例。
+# 漸強期間整團火焰以字底中央為基準等比例縮放，寬度、高度、橫向散開與方塊大小一起縮放；
+# 漸強開始時火焰直接以 FIRE_MIN_SCALE 倍燃起，隨漸強進度長到完整尺寸。
 const FIRE_SPEED_HOLOGRAPHIC = 0.7
 const FIRE_SPEED_GALAXY = 1.8
 const FIRE_LAYERS_HOLOGRAPHIC = [
@@ -150,12 +152,11 @@ const FIRE_LAYERS_GALAXY = [
 ]
 const FIRE_EMERGE = 0.08
 const FIRE_FADE = 0.2
+const FIRE_MIN_SCALE = 0.4
 const FIRE_INITIAL_ANGLE = Vector2(-PI, PI)
 
-# 火焰發光：所有方塊的光暈先合成整團火焰的輪廓，模糊後以疊加混色畫在火焰後方，光沿整團火焰的外形往外散，火焰本身同時提亮。
-# size：每個方塊的光暈邊長相對方塊邊長的倍數，決定輪廓往外擴的範圍；lighten：光暈顏色由該層火焰色往白色混合的比例；
-# blur：輪廓的模糊半徑（像素）；intensity：疊加強度；brighten：火焰方塊本身往白色提亮的比例。
-# 銀河等級的發光跟著火焰漸變，由彩虹組過渡到銀河組；FIRE_GLOW_RESOLUTION 為光暈貼圖邊長（像素）。
-const FIRE_GLOW_HOLOGRAPHIC = {"size": 1.0, "lighten": 1.8, "blur": 45.0, "intensity": 1.2, "brighten": 0.1}
-const FIRE_GLOW_GALAXY = {"size": 1.0, "lighten": 2.0, "blur": 50.0, "intensity": 1.5, "brighten": 0.15}
-const FIRE_GLOW_RESOLUTION = 64
+# 火焰發光如霓虹燈管：火焰方塊本身維持色相與飽和度提高亮度，外暈與該處火焰同色，由整團火焰的邊緣往外柔和淡出，畫在火焰後方。
+# brighten：方塊亮度往最亮推的比例；blur：外暈由火焰邊緣淡出到消失的距離（基準畫面像素）；halo_alpha：外暈在火焰邊緣最亮處的不透明度。
+# 銀河等級的發光跟著火焰漸變，由彩虹組過渡到銀河組。
+const FIRE_GLOW_HOLOGRAPHIC = {"brighten": 0.25, "blur": 30.0, "halo_alpha": 0.7}
+const FIRE_GLOW_GALAXY = {"brighten": 0.4, "blur": 40.0, "halo_alpha": 0.85}

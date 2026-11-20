@@ -117,6 +117,10 @@ func finish_count() -> void:
 	_rest()
 	_update_energy()
 
+# 本次結算的表演等級，左上進度條入帳沿用同一個等級。
+func tier() -> int:
+	return _tier
+
 func feedback_duration(final: bool) -> float:
 	return Math.duration(_tier, final)
 

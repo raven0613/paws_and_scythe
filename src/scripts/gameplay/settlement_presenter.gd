@@ -10,6 +10,7 @@ const BadgePalette = preload("res://src/service/cat_cards/activation/badge_palet
 const AwardSchedule = preload("res://src/service/score/award_schedule.gd")
 const CatText = preload("res://src/scripts/cat_cards/cat_score_text.gd")
 const Celebration = preload("res://src/service/score/celebration_math.gd")
+const Feel = preload("res://src/configs/score/celebration_config.gd")
 const OdometerConfig = preload("res://src/configs/score/odometer_config.gd")
 const Particles = preload("res://src/scripts/score/score_particles.gd")
 const HighConfig = preload("res://src/configs/score/high_card_config.gd")
@@ -74,8 +75,7 @@ func play(result: Dictionary, current_score: float) -> void:
 	_append_central_feedback(true)
 	_timeline.tween_callback(_fly_total)
 	_timeline.tween_method(_particles.progress.bind(TOTAL_WAVE), 0.0, 1.0, Config.FINAL_FLIGHT_DURATION)
-	_timeline.tween_callback(_level.begin_score_count.bind(_level_target))
-	_timeline.tween_method(_level.score_count_progress, 0.0, 1.0, Config.LEVEL_COUNT_DURATION)
+	_append_level_count()
 	_timeline.tween_callback(finish)
 
 # 同一次發動的逐組效果合成一段同時演出，連續的入帳事件合成依序入帳段，其餘事件各自一段。
@@ -271,6 +271,17 @@ func _append_central_feedback(final: bool) -> void:
 	if final:
 		_timeline.tween_interval(number.final_hold())
 
+# 粒子抵達左上後累積分數跑分；高分表演時進度條同時依等級震動發光，光芒在結算結束後淡出。
+func _append_level_count() -> void:
+	var tier: int = _score.get_node("number").tier()
+	var duration := Config.LEVEL_COUNT_DURATION
+	if tier != Feel.Tier.NORMAL:
+		_timeline.tween_callback(_level.begin_flare.bind(tier, duration))
+	_timeline.tween_callback(_level.begin_score_count.bind(_level_target))
+	_timeline.tween_method(_level.score_count_progress, 0.0, 1.0, duration)
+	if tier != Feel.Tier.NORMAL:
+		_timeline.parallel().tween_method(_level.flare_progress, 0.0, duration, duration)
+
 func _fly_row(row: Control, key: int) -> void:
 	_particles.begin(key, row.score_origin(), _score.get_node("number").particle_origin())
 
@@ -303,4 +314,5 @@ func finish() -> void:
 	_score.get_node("combo_counter").reset()
 	_score.hide()
 	_level.finish_score_count(_level_target)
+	_level.fade_flare()
 	completed.emit()

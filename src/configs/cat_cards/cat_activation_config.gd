@@ -33,28 +33,28 @@ const CARD_SHAKE_FREQUENCY = Vector3(71, 59, 53)
 # 從卡片中央以拋物線飛向 WALL 並從無長到原尺寸，LAUNCH_ARC 為拋物線在中點高出直線的距離；
 # 撞牆後等速彈向左下的 REBOUND，再彈向左上的 REST 減速到位。
 const BADGE_WALL = Vector2(22, 10)
-const BADGE_REBOUND = Vector2(2, 30)
-const BADGE_REST = Vector2(-4, -6)
+const BADGE_REBOUND = Vector2(10, 15)
+const BADGE_REST = Vector2(4, 0)
 const BADGE_LAUNCH_ARC = 40.0
-const BADGE_FLIGHT_DURATION = 0.2
+const BADGE_FLIGHT_DURATION = 0.25
 const BADGE_REBOUND_DURATION = 0.06
-const BADGE_SETTLE_DURATION = 0.09
+const BADGE_SETTLE_DURATION = 0.05
 
 # 標籤姿態：方塊飛行時由 LAUNCH_ROTATION 轉到 ROTATION；文字只跟隨相對 ROTATION 的轉動，到位後保持正向。
 # 到位時在 LANDING_PEAK（佔 LANDING_DURATION 的比例）放大到 LANDING_SCALE 再縮回原尺寸，
 # 同時以 LANDING_SWINGS 次來回旋轉 LANDING_ANGLE 並抖動 LANDING_SHAKE，兩者一起衰減；抖動頻率依序為 x、y。
 # 收回時以 EXIT_OVERSHOOT 先微微脹大再縮小消失。
-const BADGE_LAUNCH_ROTATION = -2.4
+const BADGE_LAUNCH_ROTATION = -2.0
 const BADGE_ROTATION = 0.52
 const BADGE_LANDING_DURATION = 0.25
 const BADGE_LANDING_PEAK = 0.15
-const BADGE_LANDING_SCALE = 1.45
-const BADGE_LANDING_ANGLE = 0.35
-const BADGE_LANDING_SWINGS = 1.5
+const BADGE_LANDING_SCALE = 1.5
+const BADGE_LANDING_ANGLE = 0.15
+const BADGE_LANDING_SWINGS = 0.5
 const BADGE_LANDING_SHAKE = Vector2(1, 1)
 const BADGE_LANDING_FREQUENCY = Vector2(83, 67)
 const BADGE_EXIT_DURATION = 0.16
-const BADGE_EXIT_OVERSHOOT = 1.7
+const BADGE_EXIT_OVERSHOOT = 1.0
 
 # 標籤外觀：主體方塊邊長固定，文字描邊後可超出方塊。
 const BADGE_SIZE = 27.0
@@ -68,7 +68,7 @@ const BADGE_TEXT_OUTLINE_SIZE = 6
 # RAINBOW_COLORS 為柔和偏鮮豔的色標；RAINBOW_LIGHTEN 依主體、第一節、第二節排列，為往白色混合的比例，逐節變淺。
 # GRADIENT_RESOLUTION 為漸層貼圖邊長（像素）。
 const BADGE_RAINBOW_TARGET = "total"
-const BADGE_RAINBOW_COLORS = [Color("f07167"), Color("f39a4f"), Color("f2c75c"), Color("8fcf7a"), Color("5fb3e0"), Color("a184de")]
+const BADGE_RAINBOW_COLORS = [Color("FF2A85"), Color("FFD500"), Color("00F0FF"), Color("9D4EDD")]
 const BADGE_RAINBOW_LIGHTEN = [0.0, 0.28, 0.5]
 const BADGE_GRADIENT_RESOLUTION = 64
 

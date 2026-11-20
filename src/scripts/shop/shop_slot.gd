@@ -88,7 +88,7 @@ func card_rect() -> Rect2:
 	return _card.get_global_rect()
 
 func card_texture() -> Texture2D:
-	return _card.get_node("visual/artwork").texture
+	return _card.get_node("carry/visual/artwork").texture
 
 func hide_card() -> void:
 	_card.hide()

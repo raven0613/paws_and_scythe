@@ -14,7 +14,7 @@
 
 ## 暗角
 
-暗角為帶透明度的超深藍紫 `VIGNETTE_COLOR`，鋪滿畫面，由畫面中心往外加深，用途是讓周圍稍微變暗、把視線聚焦到分數。圖層位於盤面背景、周邊 UI、Combo 條標題、關卡分數與衝擊波熱浪的背景扭曲之上，位於飛行粒子、中央分數與火焰碎片、右側倍率之下；發動中的貓牌與亮相中的牌位於暗角上方。
+暗角為帶透明度的超深藍紫 `VIGNETTE_COLOR`，鋪滿畫面，由畫面中心往外加深，用途是讓周圍稍微變暗、把視線聚焦到分數。圖層位於盤面背景、周邊 UI、Combo 條標題、關卡分數與衝擊波熱浪的背景扭曲之上，位於飛行粒子、中央分數與火焰碎片、右側倍率之下；發動中的貓牌、亮相中的牌與高分入帳中的左上進度條位於暗角上方。
 
 撞頂瞬間暗角以半徑 `VIGNETTE_RADIUS`、強度 `VIGNETTE_INTENSITY` 出現，隨即在 `VIGNETTE_BURST_DURATION` 內猛地彈開到 `VIGNETTE_BURST_RADIUS`，強度以 `VIGNETTE_FLICKER` 的幅度快速閃爍並在 `VIGNETTE_FLICKER_DURATION` 內衰減。半徑以畫面半高為 1、從畫面中心起算，`VIGNETTE_SOFTNESS` 為由透明到最暗的過渡寬度。`VIGNETTE_AFTERGLOW` 選擇彈開後的收尾：`Afterglow.LINGER` 在 `VIGNETTE_FADE_DURATION` 內收回 `VIGNETTE_LINGER_RADIUS` 並淡到 `VIGNETTE_LINGER_INTENSITY`，以淡淡的暗角聚焦分數到結算結束；`Afterglow.FADE` 在同樣時間內散去。
 

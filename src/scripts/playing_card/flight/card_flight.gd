@@ -3,7 +3,8 @@ extends RefCounted
 const Config = preload("res://src/configs/playing_card/flight_animation_config.gd")
 const Math = preload("res://src/service/playing_card/flight_math.gd")
 
-# 單張卡牌的飛行形變，作用於卡牌 visual 子節點，牌面、文字、花紋、陰影與附加圖層一起變形。
+# 單張卡牌的飛行形變，作用於卡牌 group_visual() 提供的整體節點，牌面、文字、花紋、陰影與附加圖層一起變形；
+# 離開桌面的陰影偏移作用於 group_shadow()，透視傾身經由卡牌的 set_tilt()。
 # 飛行中依牌中心的可見速度沿移動方向伸縮並透視傾身，可疊加離開桌面的高度；到站後播放落地回彈，結束時還原。
 var _card: Control
 var _visual: Node2D
@@ -24,7 +25,7 @@ func _init(card: Control, duration: float, enabled: bool, landing: Dictionary = 
 	_enabled = enabled
 	_landing = landing
 	_visual = card.group_visual()
-	_shadow = _visual.get_node("shadow")
+	_shadow = card.group_shadow()
 	_shadow_rest = _shadow.position
 
 # 卡牌位置更新後呼叫；lift 為離開桌面的高度，0 為桌面、1 為最高點。
