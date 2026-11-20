@@ -9,6 +9,8 @@ const ART_PATHS = [
 # 階段與操作由結算器解讀；條件與計量由 effect_rules 負責。
 # 逐組貓牌發動一次並讓所有符合的組同時套用。
 # badge_unit 為 true 的貓牌各組加成不同，發動標籤顯示卡面的單位數值 value；其餘標籤顯示本次實際加成。
+# NUMERIC_STAGES 的貓牌提供加分與倍率，效益可由上下舖等規則調整；stage 為 rule 的貓牌只以 rules 修改規則。
+const NUMERIC_STAGES = ["group", "settlement", "final"]
 const CARDS = {
 	"peace": {
 		"name": "安穩貓",
@@ -353,11 +355,20 @@ const CARDS = {
 		"badge_unit": true,
 		"text": "每組得分牌型內，相同數字連續排列時，第二張開始每多一張，該組分數 +{value}。",
 	},
+	"bunk": {
+		"name": "上下舖",
+		"rarity": "SSR",
+		"stage": "rule",
+		"text": "上排的貓牌效益加倍；下排的貓牌效益減半，本牌不受影響。效益為貓牌提供的加分與倍率數值。",
+		"rules": {"row_potency": {"upper": 2.0, "lower": 0.5}},
+	},
 }
 
-static func description(id: String) -> String:
+# overrides 取代卡池欄位後再填入說明，例如效益調整後的 value。
+static func description(id: String, overrides: Dictionary = {}) -> String:
 	var fields: Dictionary = CARDS[id].duplicate()
 	fields.merge(fields.get("rules", {}))
+	fields.merge(overrides, true)
 	for key in fields:
 		if fields[key] is float and is_equal_approx(fields[key], round(fields[key])):
 			fields[key] = int(fields[key])

@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://src/scenes/gameplay_controls/resources_display.tscn" id="15_resources"]
 [ext_resource type="PackedScene" path="res://src/scenes/shop/shop.tscn" id="16_shop"]
 [ext_resource type="PackedScene" path="res://src/scenes/level_reward/level_reward.tscn" id="17_reward"]
+[ext_resource type="PackedScene" uid="uid://dx8hjr2f42xyb" path="res://src/scenes/run_records/record_export.tscn" id="18_records"]
 
 [node name="gameplay" type="Control" unique_id=791794535]
 texture_filter = 1
@@ -125,7 +126,6 @@ grow_horizontal = 0
 layout_mode = 1
 
 [node name="settlement_score" parent="." unique_id=1846871130 instance=ExtResource("13_score")]
-visible = true
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -136,7 +136,7 @@ offset_right = 27.0
 offset_bottom = 219.0
 grow_horizontal = 2
 
-[node name="test_entry" type="Button" parent="."]
+[node name="test_entry" type="Button" parent="." unique_id=1225621529]
 editor_description = "測試入口；是否顯示由 test_entry_config.gd 設定。"
 layout_mode = 1
 anchors_preset = 1
@@ -148,8 +148,10 @@ offset_right = -8.0
 offset_bottom = 30.0
 grow_horizontal = 0
 
-[node name="shop" parent="." instance=ExtResource("16_shop")]
+[node name="shop" parent="." unique_id=1554081703 instance=ExtResource("16_shop")]
 layout_mode = 1
 
-[node name="level_reward" parent="." instance=ExtResource("17_reward")]
+[node name="level_reward" parent="." unique_id=1684763726 instance=ExtResource("17_reward")]
 layout_mode = 1
+
+[node name="record_export" parent="." unique_id=684657722 instance=ExtResource("18_records")]

@@ -29,10 +29,15 @@ func remove(id: String) -> bool:
 	ids.erase(id)
 	return true
 
-func reorder(ordered: Array) -> bool:
+func can_reorder(ordered: Array) -> bool:
 	if ordered.size() != ids.size() or not Catalog.valid_selection(ordered):
 		return false
 	if not ordered.all(func(id): return ids.has(id)):
+		return false
+	return true
+
+func reorder(ordered: Array) -> bool:
+	if not can_reorder(ordered):
 		return false
 	ids = ordered.duplicate()
 	return true

@@ -4,13 +4,16 @@ const Catalog = preload("res://src/configs/cat_cards/cat_catalog.gd")
 const Config = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
 const Numbers = preload("res://src/configs/gameplay/gameplay_ui_config.gd")
 const Cards = preload("res://src/service/gameplay/cards.gd")
+const Effects = preload("res://src/service/cat_cards/effect_rules.gd")
 
-# 發動標籤只顯示加分與倍率；最高分獨占與額外計分沒有標籤。標示 badge_unit 的貓牌顯示卡面的單位數值。
+# 發動標籤只顯示加分與倍率；最高分獨占與額外計分沒有標籤。標示 badge_unit 的貓牌顯示效益調整後的單位數值。
 static func badge(event: Dictionary) -> String:
 	if event.kind != "effect":
 		return ""
 	var card: Dictionary = Catalog.CARDS[event.source]
-	return _signed(event.op, card.value if card.get("badge_unit", false) else event.amount)
+	if card.get("badge_unit", false):
+		return _signed(event.op, Effects.boost(event.op, card.value, event.potency))
+	return _signed(event.op, event.amount)
 
 static func effect(event: Dictionary) -> String:
 	return _signed(event.op, event.amount)

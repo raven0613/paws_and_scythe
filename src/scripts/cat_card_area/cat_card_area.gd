@@ -8,6 +8,7 @@ const Config = preload("res://src/configs/cat_card_area/cat_card_area_config.gd"
 const Feedback = preload("res://src/configs/cat_cards/cat_feedback_config.gd")
 const Trade = preload("res://src/configs/cat_cards/cat_trade_config.gd")
 const Layout = preload("res://src/service/cat_card_area/cat_card_layout.gd")
+const Modifiers = preload("res://src/service/cat_cards/rule_modifiers.gd")
 const Market = preload("res://src/service/shop/cat_market.gd")
 const BoxStyle = preload("res://src/scripts/ui/box_style.gd")
 const PopBurst = preload("res://src/scripts/motion/pop_burst.gd")
@@ -38,14 +39,16 @@ func _ready() -> void:
 		add_child(_sell_button)
 	_update_layout()
 
+# 持有清單、排序或張數改變時重新設定卡面，Hover 立即反映新排別的效益標示。
 func show_loadout(ids: Array, state: Dictionary) -> void:
 	if _reorder_tween:
 		_reorder_tween.kill()
 	_hide_sell()
 	_ids = ids.duplicate()
 	card_count = ids.size()
+	var potency := Modifiers.potency(ids)
 	for index in ids.size():
-		_cards.get_child(index).configure(ids[index], state)
+		_cards.get_child(index).configure(ids[index], state, potency[ids[index]])
 	HoverInfo.refresh()
 
 func set_interaction_enabled(enabled: bool) -> void:

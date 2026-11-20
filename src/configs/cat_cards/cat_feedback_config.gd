@@ -25,5 +25,10 @@ const CANCEL_TEXT = "取消"
 const REPLAY_TEXT = "額外計分"
 const CURRENT_AMOUNT_TEXT = "目前為 +%s"
 const CURRENT_AMOUNT_MEASURES = ["settlements", "operations", "discards_used", "discards_left"]
+# 效益倍數大於 1 時在效果說明後方接 BOOST_TAG，小於 1 時接 REDUCE_TAG，各自以淺色字顯示；倍數為 1 時不標示。
+const BOOST_TAG = "（加倍）"
+const REDUCE_TAG = "（減半）"
+const BOOST_TAG_COLOR = Color("9ee6a0")
+const REDUCE_TAG_COLOR = Color("ff9e94")
 const SELECTION_FLOW = "%s / 最高分牌型保留得分與 Combo"
 const EXCLUSION_TEXT = "%s：此組得分與 Combo 為零"

@@ -29,6 +29,8 @@ func _init() -> void:
 				assert(point.y == 0.0, "Even-numbered cards fill the upper row.")
 				upper_right = point.x + card_size.x
 		assert(upper_right <= lower_right, "The upper row must end within the lower row.")
+		var upper_cards := Array(positions).filter(func(point): return point.y == 0.0).size()
+		assert(Layout.upper_count(count) == upper_cards, "The upper-row count matches the arranged positions.")
 		if count <= Config.BASE_CARD_COUNT:
 			for index in range(2, count):
 				assert(
@@ -37,5 +39,5 @@ func _init() -> void:
 				)
 		elif count > Config.BASE_CARD_COUNT:
 			assert(positions[2].x - positions[0].x < card_size.x, "Additional cards must overlap.")
-	print("Cat card layout passed: alternating rows, initial gap, fixed width and upper-right bound.")
+	print("Cat card layout passed: alternating rows, upper-row count, initial gap, fixed width and upper-right bound.")
 	quit()

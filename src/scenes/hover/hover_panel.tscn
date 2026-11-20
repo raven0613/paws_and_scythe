@@ -13,7 +13,10 @@ layout_mode = 0
 mouse_filter = 2
 autowrap_mode = 2
 
-[node name="description" type="Label" parent="."]
+[node name="description" type="RichTextLabel" parent="."]
 layout_mode = 0
 mouse_filter = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 2

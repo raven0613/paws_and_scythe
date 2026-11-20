@@ -49,14 +49,25 @@ func _hover_content() -> Array:
 	var definition: Dictionary = Catalog.CARDS[cat_id]
 	return ["%s / %s" % [definition.name, definition.rarity], description_text]
 
-func configure(id: String, state: Dictionary) -> void:
+# potency 為持有位置的效益倍數：說明與目前加成顯示調整後的數值，效果說明後方標示加倍或減半。
+func configure(id: String, state: Dictionary, potency := 1.0) -> void:
 	cat_id = id
 	$visual/artwork.texture = load(Catalog.art(id))
-	description_text = Catalog.description(id)
 	var definition: Dictionary = Catalog.CARDS[id]
-	if Config.CURRENT_AMOUNT_MEASURES.has(definition.measure):
-		var amount := Effects.amount(definition, state, -1)
+	var overrides := {}
+	if definition.has("value"):
+		overrides.value = Effects.boost(definition.op, definition.value, potency)
+	description_text = Catalog.description(id, overrides) + _potency_tag(potency)
+	if Config.CURRENT_AMOUNT_MEASURES.has(definition.get("measure")):
+		var amount := Effects.amount(definition, state, -1, potency)
 		description_text += "\n" + Config.CURRENT_AMOUNT_TEXT % Numbers.precise(amount)
+
+static func _potency_tag(potency: float) -> String:
+	if potency == 1.0:
+		return ""
+	var boosted := potency > 1.0
+	var color: Color = Config.BOOST_TAG_COLOR if boosted else Config.REDUCE_TAG_COLOR
+	return "[color=#%s]%s[/color]" % [color.to_html(), Config.BOOST_TAG if boosted else Config.REDUCE_TAG]
 
 func set_playback_speed(value: float) -> void:
 	_speed = value

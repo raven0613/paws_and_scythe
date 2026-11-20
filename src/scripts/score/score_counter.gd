@@ -120,6 +120,9 @@ func finish_count() -> void:
 func feedback_duration(final: bool) -> float:
 	return Math.duration(_tier, final)
 
+func final_hold() -> float:
+	return Math.final_hold(_tier)
+
 func feedback_progress(progress: float, final: bool) -> void:
 	if final and _high():
 		_finale(progress * Math.duration(_tier, true))

@@ -10,8 +10,10 @@ const NUMBER_POP_START = 0.55
 const NUMBER_POP_PEAK = 0.78
 const NUMBER_POP_SCALE = 1.2
 const STEP_HOLD = 0.2
-# 結算完成表演結束後，最終分數停留 FINAL_HOLD 秒再飛往關卡面板。
-const FINAL_HOLD = 1.0
+# 結算完成表演結束後，最終分數停留再飛往關卡面板：一般結算停留 FINAL_HOLD 秒，
+# 全像彩虹與銀河停留 HIGH_FINAL_HOLD 秒，讓火焰、銀河與暗角持續播放。
+const FINAL_HOLD = 0.25
+const HIGH_FINAL_HOLD = 1.0
 const LEVEL_COUNT_DURATION = 0.48
 # 依序入帳：各條每隔 AWARD_INTERVAL 發射一波粒子，飛行 AWARD_FLIGHT_DURATION 後中央接續累加；
 # 中間各段的跑分長度等於發射間隔，最後一段使用 COUNT_DURATION。

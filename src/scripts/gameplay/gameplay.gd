@@ -38,6 +38,7 @@ var _picker: Control
 var _settlement_snapshot: Dictionary = {}
 
 func _ready() -> void:
+	$record_export.setup(game)
 	_reserve.name = "card_reserve"
 	_reserve.visible = false
 	add_child(_reserve)
@@ -78,7 +79,7 @@ func _ready() -> void:
 	_economy.next_level_requested.connect(_next_level)
 	_picker = CatPicker.instantiate()
 	add_child(_picker)
-	_picker.confirmed.connect(_start_run)
+	_picker.confirmed.connect(_start_test_run)
 	_picker.cancelled.connect(_close_picker)
 	$test_entry.visible = TestEntry.SHOW_TEST_ENTRY
 	$test_entry.text = TestEntry.BUTTON_TEXT
@@ -101,13 +102,18 @@ func _on_economy_busy(busy: bool) -> void:
 	_update_input()
 
 func _on_cat_order_changed(ids: Array) -> void:
-	if not _busy and not _feedback_active and game.cats.reorder(ids):
+	if not _busy and not _feedback_active and game.reorder_cats(ids):
 		_refresh()
 
-func _start_run(selected_cats: Array) -> void:
+func _start_test_run(selected_cats: Array) -> void:
+	_start_run(selected_cats, "test")
+
+func _start_run(selected_cats: Array, mode: String = "human") -> void:
 	_busy = true
 	_clear_selection()
-	game.start(-1, selected_cats)
+	if DisplayServer.get_name() == "headless":
+		mode = "test"
+	game.start(-1, selected_cats, mode)
 	_economy.reset()
 	_card_animator.clear_paths()
 	$level_board.reset_score(game.score)

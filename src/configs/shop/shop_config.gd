@@ -43,4 +43,5 @@ const CAT_PRICES = {
 	"houses": 5,
 	"quads": 5,
 	"consecutive": 5,
+	"bunk": 13,
 }

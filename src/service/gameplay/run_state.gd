@@ -1,5 +1,8 @@
 extends RefCounted
 
+signal transaction_started(kind: String, detail: Dictionary)
+signal transaction_completed
+
 const Config = preload("res://src/configs/gameplay/game_rules.gd")
 const Deck = preload("res://src/service/gameplay/deck.gd")
 const Scoring = preload("res://src/service/gameplay/scoring.gd")
@@ -33,7 +36,8 @@ var hand_limit := Config.HAND_LIMIT
 var status := Status.PLAYING
 var loss_reason := ""
 
-func start(seed_value: int = -1, selected_cats: Array = []) -> void:
+func start(seed_value: int = -1, selected_cats: Array = [], mode: String = "human") -> void:
+	transaction_started.emit("start", {"mode": mode})
 	var valid := cats.select(selected_cats)
 	assert(valid, "Invalid cat selection")
 	if seed_value < 0:
@@ -45,6 +49,7 @@ func start(seed_value: int = -1, selected_cats: Array = []) -> void:
 	level = 1
 	money = Config.STARTING_MONEY
 	_begin_level()
+	transaction_completed.emit()
 
 func _begin_level() -> void:
 	cats.begin_level()
@@ -81,10 +86,12 @@ func is_board_full() -> bool:
 func place(card: int, cell: Vector2i) -> bool:
 	if not can_place(card, cell):
 		return false
+	transaction_started.emit("place", {"card": card, "cell": cell})
 	history.append({"kind": "place", "cell": cell, "card": card, "index": hand.find(card)})
 	hand.erase(card)
 	board[cell] = card
 	played.append(card)
+	transaction_completed.emit()
 	return true
 
 func swaps_left() -> int:
@@ -105,11 +112,13 @@ func can_dig() -> bool:
 func swap(a: Vector2i, b: Vector2i) -> bool:
 	if not can_swap() or a == b or not board.has(a) or not board.has(b):
 		return false
+	transaction_started.emit("swap", {"a": a, "b": b, "cost": next_swap_cost()})
 	var cost := next_swap_cost()
 	history.append({"kind": "swap", "a": a, "b": b, "cost": cost})
 	_swap(a, b)
 	score -= cost
 	swaps_used += 1
+	transaction_completed.emit()
 	return true
 
 func _swap(a: Vector2i, b: Vector2i) -> void:
@@ -120,10 +129,12 @@ func _swap(a: Vector2i, b: Vector2i) -> void:
 func dig(cell: Vector2i) -> bool:
 	if not can_dig() or not board.has(cell):
 		return false
+	transaction_started.emit("dig", {"cell": cell, "card": board[cell], "cost": Config.DIG_COST})
 	history.append({"kind": "dig", "cell": cell, "card": board[cell], "cost": Config.DIG_COST})
 	board.erase(cell)
 	score -= Config.DIG_COST
 	digs_used += 1
+	transaction_completed.emit()
 	return true
 
 func can_discard(cards: Array) -> bool:
@@ -139,6 +150,7 @@ func can_discard(cards: Array) -> bool:
 func discard(cards: Array) -> bool:
 	if not can_discard(cards):
 		return false
+	transaction_started.emit("discard", {"cards": cards})
 	deck.discard_pile.append_array(cards)
 	last_draw.clear()
 	var replacements: Array = _draw(cards.size())
@@ -150,11 +162,13 @@ func discard(cards: Array) -> bool:
 			else:
 				hand[i] = replacements.pop_back()
 	discards_left -= 1
+	transaction_completed.emit()
 	return true
 
 func undo() -> bool:
 	if status != Status.PLAYING or history.is_empty():
 		return false
+	transaction_started.emit("undo", {"action": history.back()})
 	var action: Dictionary = history.pop_back()
 	match action.kind:
 		"place":
@@ -169,6 +183,7 @@ func undo() -> bool:
 			board[action.cell] = action.card
 			score += action.cost
 			digs_used -= 1
+	transaction_completed.emit()
 	return true
 
 func reserved_cards() -> Array:
@@ -198,6 +213,7 @@ func settle(snapshot: Dictionary = {}) -> Dictionary:
 		return {}
 	last_draw.clear()
 	var result := preview() if snapshot.is_empty() else snapshot
+	transaction_started.emit("settle", {"result": result})
 	cats.commit(swaps_used + digs_used)
 	score += result.total
 	turns_left -= 1
@@ -215,6 +231,7 @@ func settle(snapshot: Dictionary = {}) -> Dictionary:
 		# 每次結算至少要出一張牌；場上已滿時需先挖牌騰出空位，付不起挖牌即無法再結算。
 		elif is_board_full() and not can_dig():
 			_lose("場上已滿且無法挖牌")
+	transaction_completed.emit()
 	return result
 
 func _clear_turn() -> void:
@@ -239,12 +256,16 @@ func _clear_level() -> void:
 func advance() -> bool:
 	if status != Status.LEVEL_CLEARED:
 		return false
+	transaction_started.emit("advance", {})
 	level += 1
 	_begin_level()
+	transaction_completed.emit()
 	return true
 
 func open_shop() -> void:
+	transaction_started.emit("shop_open", {})
 	shop.open(cats.ids)
+	transaction_completed.emit()
 
 func can_buy(slot: int) -> bool:
 	var id: String = shop.offers[slot]
@@ -253,8 +274,10 @@ func can_buy(slot: int) -> bool:
 func buy(slot: int) -> bool:
 	if not can_buy(slot):
 		return false
+	transaction_started.emit("buy", {"slot": slot, "cat": shop.offers[slot], "cost": Market.price(shop.offers[slot])})
 	money -= Market.price(shop.offers[slot])
 	cats.add(shop.take(slot))
+	transaction_completed.emit()
 	return true
 
 func can_reroll() -> bool:
@@ -263,8 +286,10 @@ func can_reroll() -> bool:
 func reroll() -> bool:
 	if not can_reroll():
 		return false
+	transaction_started.emit("reroll", {"cost": shop.reroll_cost()})
 	money -= shop.reroll_cost()
 	shop.reroll(cats.ids)
+	transaction_completed.emit()
 	return true
 
 # 操作階段與商店期間都可賣出貓牌；效果隨持有清單即時移除。
@@ -274,10 +299,19 @@ func can_sell(id: String) -> bool:
 func sell(id: String) -> bool:
 	if not can_sell(id):
 		return false
+	transaction_started.emit("sell", {"cat": id, "income": Market.sell_price(id)})
 	cats.remove(id)
 	money += Market.sell_price(id)
+	transaction_completed.emit()
 	return true
 
+func reorder_cats(ids: Array) -> bool:
+	if ids == cats.ids or not cats.can_reorder(ids):
+		return false
+	transaction_started.emit("reorder", {"cats": ids})
+	cats.reorder(ids)
+	transaction_completed.emit()
+	return true
 
 func _draw(count: int) -> Array:
 	var cards: Array = []

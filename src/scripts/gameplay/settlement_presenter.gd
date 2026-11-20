@@ -269,7 +269,7 @@ func _append_central_feedback(final: bool) -> void:
 		_timeline.parallel().tween_method(_pops.shrink, 0.0, 1.0, HighConfig.SHRINK_DURATION)
 		_pops_shown = false
 	if final:
-		_timeline.tween_interval(Config.FINAL_HOLD)
+		_timeline.tween_interval(number.final_hold())
 
 func _fly_row(row: Control, key: int) -> void:
 	_particles.begin(key, row.score_origin(), _score.get_node("number").particle_origin())

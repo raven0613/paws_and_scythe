@@ -8,6 +8,7 @@ const Scoring = preload("res://src/service/gameplay/scoring.gd")
 
 # 純計算：結果及事件共用完整精度，預覽與演出讀取相同快照。
 # 事件依演出順序排列：得分資格、高牌保底、得分牌型亮相、各組貓牌加成與額外計分、依序入帳、整次與總分效果。
+# 效益依持有位置的效益倍數調整，數值類事件以 potency 記錄套用的倍數。
 static func resolve(raw: Dictionary, board: Dictionary, ids: Array, state: Dictionary) -> Dictionary:
 	var result: Dictionary = raw.duplicate(true)
 	var selection := Modifiers.selection_source(ids)
@@ -15,6 +16,7 @@ static func resolve(raw: Dictionary, board: Dictionary, ids: Array, state: Dicti
 	if not selection.is_empty() and not scoring.is_empty():
 		scoring = [Modifiers.highest(raw.groups)]
 	var context := Context.build(raw, board, state, scoring)
+	context.potency = Modifiers.potency(ids)
 	result.events = []
 	result.subtotal = raw.high
 	result.base = 0.0
@@ -49,40 +51,45 @@ static func resolve(raw: Dictionary, board: Dictionary, ids: Array, state: Dicti
 		_append_repeats(result, context, ids, index)
 	for index in scoring:
 		_award_group(result, context, index)
-	for id in ids:
+	for id in _ordered(ids, "settlement"):
 		var effect: Dictionary = Catalog.CARDS[id]
-		if effect.stage == "settlement" and Effects.eligible(effect, context, -1):
+		if Effects.eligible(effect, context, -1):
 			_apply_global(result, effect, context, id)
 	var before: float = result.subtotal
 	result.total = before * result.multiplier
 	result.events.append(_event("combo_apply", "", "total", before, result.total, -1, "multiply", result.multiplier))
-	for id in ids:
+	for id in _ordered(ids, "final"):
 		var effect: Dictionary = Catalog.CARDS[id]
-		if effect.stage == "final" and Effects.eligible(effect, context, -1):
+		if Effects.eligible(effect, context, -1):
 			_apply_global(result, effect, context, id)
 	return result
 
-# 逐組貓牌依位置發動，每張讓所有符合的組從目前分數套用；activation 相同的事件屬於同一次發動。
+# 同一階段先發動加分、再發動乘法，同類依貓牌位置；加乘先後與排列位置無關。
+static func _ordered(ids: Array, stage: String) -> Array:
+	var staged := ids.filter(func(id): return Catalog.CARDS[id].stage == stage)
+	var adds := staged.filter(func(id): return Catalog.CARDS[id].op == "add")
+	return adds + staged.filter(func(id): return not adds.has(id))
+
+# 逐組貓牌依發動順序作用，每張讓所有符合的組從目前分數套用；activation 相同的事件屬於同一次發動。
 static func _group_pass(result: Dictionary, context: Dictionary, ids: Array, indices: Array) -> Array:
 	var current := {}
 	for index in indices:
 		current[index] = result.groups[index].original_score
 	var events: Array = []
 	var activation := 0
-	for id in ids:
+	for id in _ordered(ids, "group"):
 		var effect: Dictionary = Catalog.CARDS[id]
-		if effect.stage != "group":
-			continue
 		var emitted := false
 		for index in indices:
 			if not Effects.eligible(effect, context, index):
 				continue
-			var amount := Effects.amount(effect, context, index)
+			var amount := Effects.amount(effect, context, index, context.potency[id])
 			var after := Effects.apply(current[index], effect, amount)
 			if after == current[index]:
 				continue
 			var event := _event("effect", id, "group", current[index], after, index, effect.op, amount)
 			event.activation = activation
+			event.potency = context.potency[id]
 			events.append(event)
 			current[index] = after
 			emitted = true
@@ -96,9 +103,9 @@ static func _group_pass(result: Dictionary, context: Dictionary, ids: Array, ind
 # 額外計分從原始分數獨立重算逐組效果，再累加到該組目前合計。
 static func _append_repeats(result: Dictionary, context: Dictionary, ids: Array, index: int) -> void:
 	var group: Dictionary = result.groups[index]
-	for id in ids:
+	for id in _ordered(ids, "repeat"):
 		var effect: Dictionary = Catalog.CARDS[id]
-		if effect.stage != "repeat" or not Effects.eligible(effect, context, index):
+		if not Effects.eligible(effect, context, index):
 			continue
 		for repeat_index in int(Effects.amount(effect, context, index)):
 			var accumulated: float = group.total_score
@@ -120,12 +127,14 @@ static func _award_group(result: Dictionary, context: Dictionary, index: int) ->
 
 static func _apply_global(result: Dictionary, effect: Dictionary, context: Dictionary, id: String) -> void:
 	var before: float = result[effect.target]
-	var amount := Effects.amount(effect, context, -1)
+	var amount := Effects.amount(effect, context, -1, context.potency[id])
 	var after := Effects.apply(before, effect, amount)
 	if before == after:
 		return
 	result[effect.target] = after
-	result.events.append(_event("effect", id, effect.target, before, after, -1, effect.op, amount))
+	var event := _event("effect", id, effect.target, before, after, -1, effect.op, amount)
+	event.potency = context.potency[id]
+	result.events.append(event)
 
 static func _event(kind: String, source: String, target: String, before: float, after: float, group := -1, op := "", amount := 0.0) -> Dictionary:
 	return {"kind": kind, "source": source, "target": target, "before": before,

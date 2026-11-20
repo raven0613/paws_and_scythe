@@ -4,6 +4,7 @@ const Math = preload("res://src/service/score/celebration_math.gd")
 const Slam = preload("res://src/service/score/slam_math.gd")
 const Surge = preload("res://src/service/score/galaxy_surge.gd")
 const Config = preload("res://src/configs/score/celebration_config.gd")
+const Feedback = preload("res://src/configs/score/score_feedback_config.gd")
 const Rules = preload("res://src/configs/gameplay/game_rules.gd")
 var failures := 0
 
@@ -44,6 +45,10 @@ func _init() -> void:
 	_check(is_equal_approx(Math.duration(Config.Tier.HOLOGRAPHIC, true), Slam.duration()), "Holographic final feedback uses the full slam timeline")
 	_check(is_equal_approx(Math.duration(Config.Tier.GALAXY, true), Surge.lead(Config.Tier.GALAXY) + Slam.duration()), "Galaxy final feedback charges before the slam")
 	_check(Surge.lead(Config.Tier.GALAXY) > 0.0 and is_zero_approx(Surge.lead(Config.Tier.HOLOGRAPHIC)), "Only galaxy charges before the slam")
+	_check(Math.final_hold(Config.Tier.NORMAL) == Feedback.FINAL_HOLD, "Normal settlements use the short final hold")
+	for tier in [Config.Tier.HOLOGRAPHIC, Config.Tier.GALAXY]:
+		_check(Math.final_hold(tier) == Feedback.HIGH_FINAL_HOLD, "High-score settlements keep the long final hold")
+	_check(Feedback.FINAL_HOLD < Feedback.HIGH_FINAL_HOLD, "Normal settlements wait less than high-score settlements")
 	print("Celebration math: %d failures" % failures)
 	quit(1 if failures else 0)
 

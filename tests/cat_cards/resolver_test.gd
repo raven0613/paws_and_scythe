@@ -14,10 +14,9 @@ func _init() -> void:
 	var state := {"hand_count": 2, "settlements": 0, "swaps": 0, "digs": 0}
 	var result := Resolver.resolve(raw, board, [], state)
 	_check(result.total == raw.total, "Zero cats preserve ordinary scoring")
-	var first := Resolver.resolve(raw, board, ["matching", "alternating"], state)
-	var second := Resolver.resolve(raw, board, ["alternating", "matching"], state)
-	_check(first.total == (original + _value("matching")) * _value("alternating"), "Ordered add then multiply")
-	_check(second.total == original * _value("alternating") + _value("matching"), "Reordering changes arithmetic")
+	for ids in [["matching", "alternating"], ["alternating", "matching"]]:
+		result = Resolver.resolve(raw, board, ids, state)
+		_check(result.total == (original + _value("matching")) * _value("alternating"), "Group additions apply before multiplications in any position")
 	result = Resolver.resolve(raw, board, ["copy", "matching", "combo", "solo", "growth"], state)
 	var group_score := original + _value("matching")
 	var subtotal := group_score * (1 + _value("copy")) + _value("growth")

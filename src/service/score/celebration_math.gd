@@ -1,6 +1,7 @@
 extends RefCounted
 
 const Config = preload("res://src/configs/score/celebration_config.gd")
+const Feedback = preload("res://src/configs/score/score_feedback_config.gd")
 const Slam = preload("res://src/service/score/slam_math.gd")
 const Surge = preload("res://src/service/score/galaxy_surge.gd")
 
@@ -32,6 +33,10 @@ static func duration(tier: int, final: bool) -> float:
 	if final and high:
 		return Surge.lead(tier) + Slam.duration()
 	return Config.FINAL_DURATION if final else (Config.HIGH_STEP_DURATION if high else Config.STEP_DURATION)
+
+# 結算完成表演後最終分數的停留秒數，高分表演停留較久。
+static func final_hold(tier: int) -> float:
+	return Feedback.FINAL_HOLD if tier == Config.Tier.NORMAL else Feedback.HIGH_FINAL_HOLD
 
 static func impact(progress: float, high: bool, final: bool) -> Dictionary:
 	var amplitude: float = Config.FINAL_SCALE if final else (Config.HIGH_STEP_SCALE if high else Config.STEP_SCALE)

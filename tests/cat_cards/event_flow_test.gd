@@ -101,13 +101,17 @@ func _check_order(result: Dictionary, ids: Array) -> void:
 		_check(is_equal_approx(event.multiplier, Scoring.combo_multiplier(event.combo_count)), "Award carries the base multiplier of its combo count")
 	var effects: Array = events.filter(func(e): return e.kind == "effect" and e.target == "group")
 	var last_activation := -1
-	var last_position := -1
+	var last_position := {true: -1, false: -1}
+	var multiplied := false
 	var sources := {}
 	for event in effects:
+		var adds: bool = event.op == "add"
 		_check(event.activation >= last_activation, "Activations play in order")
-		_check(ids.find(event.source) >= last_position, "Group cats activate in equipped order")
+		_check(not (adds and multiplied), "Group additions activate before multiplications")
+		_check(ids.find(event.source) >= last_position[adds], "Cats of the same kind activate in equipped order")
 		last_activation = event.activation
-		last_position = ids.find(event.source)
+		last_position[adds] = ids.find(event.source)
+		multiplied = multiplied or not adds
 		sources[event.source] = sources.get(event.source, []) + [event.activation]
 	for id in sources:
 		var activations: Array = sources[id]
@@ -125,7 +129,7 @@ func _test_shared_activation() -> void:
 	var consecutive: Array = result.events.filter(func(e): return e.source == "consecutive")
 	_check(consecutive.size() == 2 and consecutive[0].activation == consecutive[1].activation, "Run bonuses differ per group within one activation")
 	_check(consecutive[0].amount != consecutive[1].amount, "Each group keeps its own run bonus")
-	_check(consecutive.all(func(e): return e.activation > compact[0].activation), "Later equipped cat activates after the earlier one")
+	_check(consecutive.all(func(e): return e.activation < compact[0].activation), "Later equipped additions activate before earlier multiplications")
 
 func _verify_calculation(event: Dictionary, original: float) -> void:
 	_check(event.has("calculation"), "Repeat retains its independent calculation details")
